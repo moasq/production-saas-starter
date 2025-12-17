@@ -19,7 +19,6 @@ type Client struct {
 	debug       bool
 }
 
-// NewClient creates a new Polar HTTP client
 func NewClient(config *Config) (*Client, error) {
 	if err := config.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)

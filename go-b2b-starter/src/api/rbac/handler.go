@@ -15,7 +15,6 @@ type Handler struct {
 	service auth.RBACService
 }
 
-// NewHandler creates a new RBAC handler
 func NewHandler(service auth.RBACService) *Handler {
 	return &Handler{
 		service: service,

@@ -17,7 +17,6 @@ type subscriptionRepository struct {
 	store adapters.SubscriptionStore
 }
 
-// NewSubscriptionRepository creates a new subscription repository
 func NewSubscriptionRepository(store adapters.SubscriptionStore) domain.SubscriptionRepository {
 	return &subscriptionRepository{
 		store: store,

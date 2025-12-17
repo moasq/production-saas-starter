@@ -14,7 +14,6 @@ type embeddingRepository struct {
 	store adapters.EmbeddingStore
 }
 
-// NewEmbeddingRepository creates a new embedding repository
 func NewEmbeddingRepository(store adapters.EmbeddingStore) domain.EmbeddingRepository {
 	return &embeddingRepository{store: store}
 }

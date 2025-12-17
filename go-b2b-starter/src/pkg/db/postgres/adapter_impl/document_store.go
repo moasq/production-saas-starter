@@ -12,7 +12,6 @@ type documentStore struct {
 	store sqlc.Store
 }
 
-// NewDocumentStore creates a new document store
 func NewDocumentStore(store sqlc.Store) adapters.DocumentStore {
 	return &documentStore{store: store}
 }

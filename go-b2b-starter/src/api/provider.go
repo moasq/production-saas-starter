@@ -24,7 +24,6 @@ type moduleRoutes struct {
 	CognitiveRoutes     *cognitiveAPI.Routes
 }
 
-// Init initializes the API by setting up dependencies and registering routes
 // 1. Sets up all module dependencies
 // 2. Registers API routes and handlers
 // 3. Registers tools routes and handlers

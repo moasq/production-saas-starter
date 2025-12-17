@@ -81,7 +81,6 @@ func (e *OrganizationError) Unwrap() error {
 	return e.Cause
 }
 
-// NewOrganizationError creates a new organization error
 func NewOrganizationError(errorType, message string, orgID *int32, cause error) *OrganizationError {
 	return &OrganizationError{
 		Type:           errorType,
@@ -108,7 +107,6 @@ func (e *AccountError) Unwrap() error {
 	return e.Cause
 }
 
-// NewAccountError creates a new account error
 func NewAccountError(errorType, message string, accountID, orgID *int32, cause error) *AccountError {
 	return &AccountError{
 		Type:           errorType,

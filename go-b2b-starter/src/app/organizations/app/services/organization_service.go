@@ -12,7 +12,6 @@ type organizationService struct {
 	accountRepo domain.AccountRepository
 }
 
-// NewOrganizationService creates a new organization service
 func NewOrganizationService(orgRepo domain.OrganizationRepository, accountRepo domain.AccountRepository) OrganizationService {
 	return &organizationService{
 		orgRepo:     orgRepo,

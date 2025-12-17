@@ -393,7 +393,6 @@ type RBACService interface {
 // defaultRBACService implements the RBACService interface
 type defaultRBACService struct{}
 
-// NewRBACService creates a new RBAC service
 func NewRBACService() RBACService {
 	return &defaultRBACService{}
 }

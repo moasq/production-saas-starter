@@ -13,7 +13,6 @@ type organizationAdapter struct {
 	orgStore adapters.OrganizationStore
 }
 
-// NewOrganizationAdapter creates a new organization adapter
 func NewOrganizationAdapter(orgStore adapters.OrganizationStore) domain.OrganizationAdapter {
 	return &organizationAdapter{
 		orgStore: orgStore,

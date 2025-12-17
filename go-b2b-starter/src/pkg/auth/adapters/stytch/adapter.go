@@ -60,8 +60,6 @@ type StytchAuthAdapter struct {
 // Ensure StytchAuthAdapter implements auth.AuthProvider.
 var _ auth.AuthProvider = (*StytchAuthAdapter)(nil)
 
-// NewStytchAuthAdapter creates a new Stytch authentication adapter.
-//
 // It initializes the Stytch client, JWKS cache, and RBAC policy service.
 // Returns an error if configuration or client initialization fails.
 func NewStytchAuthAdapter(

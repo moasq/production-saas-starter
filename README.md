@@ -75,7 +75,7 @@ graph TD
  
  You will need:
  *   **Docker & Docker Compose** (Required for Database)
- *   **Go 1.23+** (Required for Backend)
+ *   **Go 1.25+** (Required for Backend)
  *   **Node.js 20+ & pnpm** (Required for Frontend)
  *   **Make** (Required for running commands)
  

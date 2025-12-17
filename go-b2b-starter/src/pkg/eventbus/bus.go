@@ -27,7 +27,6 @@ type InMemoryEventBus struct {
 	closed      bool
 }
 
-// NewInMemoryEventBus creates a new in-memory event bus
 func NewInMemoryEventBus(middleware ...EventMiddleware) EventBus {
 	return &InMemoryEventBus{
 		subscribers: make(map[string][]EventHandler[Event]),

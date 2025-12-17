@@ -14,7 +14,6 @@ import (
 // before signature verification.
 type JWTParser struct{}
 
-// NewJWTParser creates a new JWT parser.
 func NewJWTParser() *JWTParser {
 	return &JWTParser{}
 }

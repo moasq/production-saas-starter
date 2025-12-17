@@ -26,7 +26,6 @@ type ragService struct {
 	assistantProvider domain.AssistantProvider
 }
 
-// NewRAGService creates a new RAG service
 func NewRAGService(
 	chatRepo domain.ChatRepository,
 	embeddingRepo domain.EmbeddingRepository,

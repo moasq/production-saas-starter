@@ -4,7 +4,6 @@ import (
 	"go.uber.org/dig"
 )
 
-// Init initializes the billing module.
 //
 // The billing module handles subscription lifecycle management with Polar.sh:
 //   - Webhook processing for subscription events

@@ -23,7 +23,6 @@ type DocumentUploaded struct {
 	ExtractedText  string `json:"extracted_text"`
 }
 
-// NewDocumentUploaded creates a new DocumentUploaded event
 func NewDocumentUploaded(documentID, organizationID, fileAssetID int32, title, extractedText string) *DocumentUploaded {
 	return &DocumentUploaded{
 		BaseEvent: eventbus.BaseEvent{
@@ -48,7 +47,6 @@ type DocumentProcessed struct {
 	EmbeddingID    int32 `json:"embedding_id"`
 }
 
-// NewDocumentProcessed creates a new DocumentProcessed event
 func NewDocumentProcessed(documentID, organizationID, embeddingID int32) *DocumentProcessed {
 	return &DocumentProcessed{
 		BaseEvent: eventbus.BaseEvent{
@@ -71,7 +69,6 @@ type DocumentFailed struct {
 	Error          string `json:"error"`
 }
 
-// NewDocumentFailed creates a new DocumentFailed event
 func NewDocumentFailed(documentID, organizationID int32, err string) *DocumentFailed {
 	return &DocumentFailed{
 		BaseEvent: eventbus.BaseEvent{

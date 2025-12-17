@@ -21,7 +21,6 @@ type embeddingService struct {
 	textVectorizer domain.TextVectorizer
 }
 
-// NewEmbeddingService creates a new embedding service
 func NewEmbeddingService(
 	embeddingRepo domain.EmbeddingRepository,
 	textVectorizer domain.TextVectorizer,

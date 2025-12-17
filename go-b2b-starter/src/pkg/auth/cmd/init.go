@@ -12,7 +12,6 @@ import (
 	"go.uber.org/dig"
 )
 
-// Init initializes the auth module and registers core dependencies.
 //
 // This sets up:
 //   - stytch.Config

@@ -44,7 +44,6 @@ type memberService struct {
 	logger           loggerDomain.Logger
 }
 
-// NewMemberService creates a new instance of the member service.
 func NewMemberService(
 	authOrgRepo domain.AuthOrganizationRepository,
 	authMemberRepo domain.AuthMemberRepository,
@@ -531,7 +530,6 @@ func (s *memberService) DeleteOrganizationMember(
 	return nil
 }
 
-// CheckEmailExists checks if an email exists in the system
 // Returns true if email is found in any organization, false otherwise
 func (s *memberService) CheckEmailExists(ctx context.Context, email string) (bool, error) {
 	// Validate email format

@@ -13,7 +13,6 @@ type openAITextVectorizer struct {
 	llmClient llmdomain.LLMClient
 }
 
-// NewTextVectorizer creates a new TextVectorizer implementation
 func NewTextVectorizer(llmClient llmdomain.LLMClient) domain.TextVectorizer {
 	return &openAITextVectorizer{llmClient: llmClient}
 }

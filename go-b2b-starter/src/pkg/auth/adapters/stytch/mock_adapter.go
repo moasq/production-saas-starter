@@ -21,7 +21,6 @@ type MockAuthAdapter struct {
 // Ensure MockAuthAdapter implements auth.AuthProvider.
 var _ auth.AuthProvider = (*MockAuthAdapter)(nil)
 
-// NewMockAuthAdapter creates a new mock auth adapter for development.
 func NewMockAuthAdapter(log logger.Logger) *MockAuthAdapter {
 	return &MockAuthAdapter{
 		logger: log,

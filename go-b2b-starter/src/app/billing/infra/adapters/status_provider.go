@@ -17,7 +17,6 @@ type StatusProviderAdapter struct {
 	service services.BillingService
 }
 
-// NewStatusProviderAdapter creates a new StatusProviderAdapter.
 func NewStatusProviderAdapter(service services.BillingService) paywall.SubscriptionStatusProvider {
 	return &StatusProviderAdapter{service: service}
 }

@@ -180,7 +180,6 @@ func (h *AccountHandler) UpdateAccount(c *gin.Context) {
 	response.Success(c, http.StatusOK, account)
 }
 
-// DeleteAccount deletes an account
 func (h *AccountHandler) DeleteAccount(c *gin.Context) {
 	reqCtx := auth.GetRequestContext(c)
 	if reqCtx == nil {
@@ -244,7 +243,6 @@ func (h *AccountHandler) UpdateAccountLastLogin(c *gin.Context) {
 	response.Success(c, http.StatusOK, account)
 }
 
-// CheckAccountPermission checks account permissions
 func (h *AccountHandler) CheckAccountPermission(c *gin.Context) {
 	reqCtx := auth.GetRequestContext(c)
 	if reqCtx == nil {

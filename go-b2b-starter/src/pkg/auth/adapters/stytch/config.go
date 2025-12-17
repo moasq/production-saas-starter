@@ -144,7 +144,6 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-// NewConfigFromExisting creates a new Config from the existing stytch.Config type.
 // This allows gradual migration from the old config type.
 func NewConfigFromExisting(projectID, secret, env, baseURL, jwksURL string, sessionDurationMinutes int32, disableVerification bool, apiTimeout time.Duration) *Config {
 	return &Config{

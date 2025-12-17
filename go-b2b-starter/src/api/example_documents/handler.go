@@ -129,7 +129,6 @@ func (h *Handler) ListDocuments(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// DeleteDocument deletes a document
 // @Summary Delete document
 // @Description Deletes a document and its associated file
 // @Tags Documents

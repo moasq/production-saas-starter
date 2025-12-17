@@ -23,7 +23,6 @@ type PostgresManager struct {
 	connPool *pgxpool.Pool
 }
 
-// NewPostgresManager creates a new PostgresManager
 func NewPostgresManager(config Config, connPool *pgxpool.Pool) *PostgresManager {
 	return &PostgresManager{
 		config:   config,

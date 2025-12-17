@@ -26,7 +26,6 @@ type RBACPolicyService struct {
 	logger logger.Logger
 }
 
-// NewRBACPolicyService creates a new RBAC policy service
 func NewRBACPolicyService(
 	client *Client,
 	redisClient redis.Client,

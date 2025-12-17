@@ -63,8 +63,6 @@ type Middleware struct {
 	config      *MiddlewareConfig
 }
 
-// NewMiddleware creates a new auth middleware instance.
-//
 // Parameters:
 //   - provider: The auth provider for token verification (e.g., Stytch adapter)
 //   - orgResolver: Resolves org by provider ID (optional, required for RequireOrganization)

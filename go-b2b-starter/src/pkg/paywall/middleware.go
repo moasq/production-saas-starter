@@ -45,8 +45,6 @@ type Middleware struct {
 	config   *MiddlewareConfig
 }
 
-// NewMiddleware creates a new subscription middleware instance.
-//
 // Parameters:
 //   - provider: The subscription status provider (implements SubscriptionStatusProvider)
 //   - config: Middleware configuration (optional, uses defaults if nil)

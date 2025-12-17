@@ -39,7 +39,6 @@ type OrganizationContext struct {
 	AccountRole    string `json:"account_role"`
 }
 
-// GetID returns the organization's database ID.
 // Implements auth.OrganizationEntity interface.
 func (o *Organization) GetID() int32 {
 	return o.ID
@@ -59,7 +58,6 @@ func (o *Organization) Validate() error {
 	return nil
 }
 
-// GetID returns the account's database ID.
 // Implements auth.AccountEntity interface.
 func (a *Account) GetID() int32 {
 	return a.ID

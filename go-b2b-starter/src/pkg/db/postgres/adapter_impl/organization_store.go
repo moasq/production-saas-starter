@@ -13,7 +13,6 @@ type organizationStore struct {
 	store sqlc.Store
 }
 
-// NewOrganizationStore creates a new organization store
 func NewOrganizationStore(store sqlc.Store) adapters.OrganizationStore {
 	return &organizationStore{store: store}
 }
@@ -63,7 +62,6 @@ type accountStore struct {
 	store sqlc.Store
 }
 
-// NewAccountStore creates a new account store
 func NewAccountStore(store sqlc.Store) adapters.AccountStore {
 	return &accountStore{store: store}
 }

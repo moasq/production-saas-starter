@@ -12,7 +12,6 @@ type embeddingStore struct {
 	store sqlc.Store
 }
 
-// NewEmbeddingStore creates a new embedding store
 func NewEmbeddingStore(store sqlc.Store) adapters.EmbeddingStore {
 	return &embeddingStore{store: store}
 }
@@ -46,7 +45,6 @@ type chatStore struct {
 	store sqlc.Store
 }
 
-// NewChatStore creates a new chat store
 func NewChatStore(store sqlc.Store) adapters.ChatStore {
 	return &chatStore{store: store}
 }

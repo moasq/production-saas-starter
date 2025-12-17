@@ -25,7 +25,6 @@ type documentService struct {
 	logger      logger.Logger
 }
 
-// NewDocumentService creates a new document service
 func NewDocumentService(
 	docRepo domain.DocumentRepository,
 	fileService filedomain.FileService,

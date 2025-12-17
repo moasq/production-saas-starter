@@ -14,7 +14,6 @@ import (
 // Module handles dependency injection for billing services
 type Module struct{}
 
-// NewModule creates a new services module
 func NewModule() *Module {
 	return &Module{}
 }

@@ -17,7 +17,6 @@ type polarAdapter struct {
 	client *polarpkg.Client
 }
 
-// NewPolarAdapter creates a new Polar API adapter
 func NewPolarAdapter(client *polarpkg.Client) *polarAdapter {
 	return &polarAdapter{
 		client: client,

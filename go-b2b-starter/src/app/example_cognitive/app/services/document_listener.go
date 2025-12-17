@@ -9,7 +9,6 @@ type documentListener struct {
 	embeddingService EmbeddingService
 }
 
-// NewDocumentListener creates a new document listener
 func NewDocumentListener(
 	embeddingService EmbeddingService,
 ) DocumentListener {

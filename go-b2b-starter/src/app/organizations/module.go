@@ -16,7 +16,6 @@ type Module struct {
 	container *dig.Container
 }
 
-// NewModule creates a new organization module
 func NewModule(container *dig.Container) *Module {
 	return &Module{
 		container: container,

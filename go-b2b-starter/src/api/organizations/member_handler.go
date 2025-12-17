@@ -218,7 +218,6 @@ func (h *MemberHandler) GetProfile(c *gin.Context) {
 	response.Success(c, http.StatusOK, profile)
 }
 
-// DeleteMember deletes an organization member.
 // @Summary Delete organization member
 // @Description Removes a member from the organization (deletes from both Stytch and internal database). Only admins can delete members.
 // @Tags auth
@@ -287,7 +286,6 @@ func (h *MemberHandler) DeleteMember(c *gin.Context) {
 	response.Success(c, http.StatusNoContent, nil)
 }
 
-// CheckEmail checks if an email exists in the system
 // @Summary Check if email exists
 // @Description Checks if an email exists in any organization. Returns 200 OK (empty response) if exists, 404 Not Found if doesn't exist. This is a public endpoint used during login flow.
 // @Tags auth

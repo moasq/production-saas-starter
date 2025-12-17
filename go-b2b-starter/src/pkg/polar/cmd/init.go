@@ -7,7 +7,6 @@ import (
 	"go.uber.org/dig"
 )
 
-// Init initializes the Polar package and registers dependencies
 func Init(container *dig.Container) error {
 	// Provide Polar configuration using viper
 	if err := container.Provide(func() (*polar.Config, error) {

@@ -31,7 +31,6 @@ type RBACPolicyService struct {
 	logger logger.Logger
 }
 
-// NewRBACPolicyService creates a new RBAC policy service.
 func NewRBACPolicyService(client *b2bstytchapi.API, redisClient redis.Client, logger logger.Logger) *RBACPolicyService {
 	return &RBACPolicyService{
 		client: client,

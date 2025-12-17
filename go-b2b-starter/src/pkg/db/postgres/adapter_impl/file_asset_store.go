@@ -13,7 +13,6 @@ type fileAssetStore struct {
 	store sqlc.Store
 }
 
-// NewFileAssetStore creates a new file asset store wrapper
 func NewFileAssetStore(store sqlc.Store) adapters.FileAssetStore {
 	return &fileAssetStore{
 		store: store,

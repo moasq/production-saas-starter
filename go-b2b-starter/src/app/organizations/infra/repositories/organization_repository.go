@@ -16,7 +16,6 @@ type organizationRepository struct {
 	orgStore adapters.OrganizationStore
 }
 
-// NewOrganizationRepository creates a new organization repository
 func NewOrganizationRepository(orgStore adapters.OrganizationStore) domain.OrganizationRepository {
 	return &organizationRepository{
 		orgStore: orgStore,

@@ -22,7 +22,6 @@ type r2Repository struct {
 	bucketName string
 }
 
-// NewR2Repository creates a new Cloudflare R2 repository using AWS SDK v2
 func NewR2Repository(cfg *fileconfig.Config) (domain.R2Repository, error) {
 	// Create custom AWS config for R2
 	r2Cfg, err := config.LoadDefaultConfig(context.Background(),
@@ -74,7 +73,6 @@ func (r *r2Repository) ensureBucket(ctx context.Context) error {
 	return nil
 }
 
-// UploadObject uploads a file to R2
 func (r *r2Repository) UploadObject(ctx context.Context, objectKey string, content io.Reader, size int64, contentType string) error {
 	_, err := r.client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket:        aws.String(r.bucketName),
@@ -105,7 +103,6 @@ func (r *r2Repository) DownloadObject(ctx context.Context, objectKey string) (io
 	return result.Body, nil
 }
 
-// DeleteObject deletes a file from R2
 func (r *r2Repository) DeleteObject(ctx context.Context, objectKey string) error {
 	_, err := r.client.DeleteObject(ctx, &s3.DeleteObjectInput{
 		Bucket: aws.String(r.bucketName),

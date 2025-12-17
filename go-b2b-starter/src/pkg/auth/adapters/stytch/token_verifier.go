@@ -29,7 +29,6 @@ type TokenVerifier struct {
 	logger        logger.Logger
 }
 
-// NewTokenVerifier creates a new token verifier with two-tier verification.
 func NewTokenVerifier(
 	client *b2bstytchapi.API,
 	jwksCache *JWKSCache,

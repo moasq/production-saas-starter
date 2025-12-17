@@ -53,7 +53,6 @@ type serializedPublicKey struct {
 	E string `json:"e"` // Exponent (base64url encoded)
 }
 
-// NewJWKSCache creates a new JWKS cache manager.
 func NewJWKSCache(jwksURL string, redisClient redis.Client, logger logger.Logger) *JWKSCache {
 	return &JWKSCache{
 		jwksURL: jwksURL,

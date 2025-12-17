@@ -13,7 +13,6 @@ type chatRepository struct {
 	store adapters.ChatStore
 }
 
-// NewChatRepository creates a new chat repository
 func NewChatRepository(store adapters.ChatStore) domain.ChatRepository {
 	return &chatRepository{store: store}
 }

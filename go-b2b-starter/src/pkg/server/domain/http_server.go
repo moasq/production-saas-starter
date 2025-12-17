@@ -24,7 +24,6 @@ type HTTPServer struct {
 	ipProtection     *middleware.IPProtection
 }
 
-// NewHTTPServer creates a new HTTP server instance
 func NewHTTPServer(
 	config *config.Config,
 	router *gin.Engine,

@@ -12,7 +12,6 @@ type subscriptionStore struct {
 	store sqlc.Store
 }
 
-// NewSubscriptionStore creates a new subscription store
 func NewSubscriptionStore(store sqlc.Store) adapters.SubscriptionStore {
 	return &subscriptionStore{store: store}
 }

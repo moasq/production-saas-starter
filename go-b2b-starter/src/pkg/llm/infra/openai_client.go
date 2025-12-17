@@ -52,7 +52,6 @@ type CircuitBreaker struct {
 	resetTimeout    time.Duration
 }
 
-// NewCircuitBreaker creates a new circuit breaker
 func NewCircuitBreaker(maxFailures int, resetTimeout time.Duration) *CircuitBreaker {
 	return &CircuitBreaker{
 		maxFailures:  maxFailures,

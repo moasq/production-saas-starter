@@ -30,7 +30,6 @@ type Document struct {
 	UpdatedAt      time.Time              `json:"updated_at"`
 }
 
-// GetID returns the document's database ID
 func (d *Document) GetID() int32 {
 	return d.ID
 }
@@ -52,17 +51,14 @@ func (d *Document) Validate() error {
 	return nil
 }
 
-// IsProcessed checks if the document has been processed
 func (d *Document) IsProcessed() bool {
 	return d.Status == DocumentStatusProcessed
 }
 
-// IsPending checks if the document is pending processing
 func (d *Document) IsPending() bool {
 	return d.Status == DocumentStatusPending
 }
 
-// HasText checks if the document has extracted text
 func (d *Document) HasText() bool {
 	return d.ExtractedText != ""
 }

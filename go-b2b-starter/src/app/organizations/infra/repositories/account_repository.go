@@ -17,7 +17,6 @@ type accountRepository struct {
 	orgStore     adapters.OrganizationStore
 }
 
-// NewAccountRepository creates a new account repository
 func NewAccountRepository(accountStore adapters.AccountStore, orgStore adapters.OrganizationStore) domain.AccountRepository {
 	return &accountRepository{
 		accountStore: accountStore,

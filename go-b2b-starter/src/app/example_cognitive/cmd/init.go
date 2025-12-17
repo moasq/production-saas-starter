@@ -12,7 +12,6 @@ import (
 	"github.com/moasq/go-b2b-starter/pkg/eventbus"
 )
 
-// Init initializes the cognitive module
 func Init(container *dig.Container) error {
 	module := cognitive.NewModule(container)
 	if err := module.RegisterDependencies(); err != nil {

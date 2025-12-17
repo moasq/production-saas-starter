@@ -42,7 +42,6 @@ type ChatSession struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 }
 
-// GetID returns the chat session's database ID
 func (s *ChatSession) GetID() int32 {
 	return s.ID
 }
@@ -69,7 +68,6 @@ type ChatMessage struct {
 	CreatedAt      time.Time `json:"created_at"`
 }
 
-// GetID returns the chat message's database ID
 func (m *ChatMessage) GetID() int32 {
 	return m.ID
 }
@@ -88,12 +86,10 @@ func (m *ChatMessage) Validate() error {
 	return nil
 }
 
-// IsUserMessage checks if the message is from the user
 func (m *ChatMessage) IsUserMessage() bool {
 	return m.Role == ChatRoleUser
 }
 
-// IsAssistantMessage checks if the message is from the assistant
 func (m *ChatMessage) IsAssistantMessage() bool {
 	return m.Role == ChatRoleAssistant
 }

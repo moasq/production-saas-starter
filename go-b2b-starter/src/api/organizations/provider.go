@@ -12,7 +12,6 @@ type Provider struct {
 	container *dig.Container
 }
 
-// NewProvider creates a new organization API provider
 func NewProvider(container *dig.Container) *Provider {
 	return &Provider{
 		container: container,

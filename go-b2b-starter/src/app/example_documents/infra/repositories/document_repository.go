@@ -14,7 +14,6 @@ type documentRepository struct {
 	store adapters.DocumentStore
 }
 
-// NewDocumentRepository creates a new document repository
 func NewDocumentRepository(store adapters.DocumentStore) domain.DocumentRepository {
 	return &documentRepository{store: store}
 }

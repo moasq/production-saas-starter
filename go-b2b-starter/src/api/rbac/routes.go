@@ -11,7 +11,6 @@ type Routes struct {
 	handler *Handler
 }
 
-// NewRoutes creates a new Routes instance
 func NewRoutes(handler *Handler) *Routes {
 	return &Routes{
 		handler: handler,

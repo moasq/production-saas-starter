@@ -77,7 +77,6 @@ type billingService struct {
 	logger       logger.Logger
 }
 
-// NewBillingService creates a new billing service
 func NewBillingService(
 	repo domain.SubscriptionRepository,
 	orgAdapter domain.OrganizationAdapter,
