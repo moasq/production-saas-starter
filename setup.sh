@@ -26,7 +26,7 @@ wait_for_postgres() {
     echo -e "${BLUE}→ Waiting for PostgreSQL to be ready...${NC}"
     local max_attempts=30
     local attempt=0
-    
+
     cd "$BACKEND_DIR"
 
     while [ $attempt -lt $max_attempts ]; do
@@ -97,6 +97,7 @@ echo ""
 
 # Phase 3: Run Database Migrations
 echo -e "${BLUE}🗄️  Phase 3: Running Database Migrations${NC}"
+cd "$BACKEND_DIR"
 make migrateup
 
 if [ $? -ne 0 ]; then
