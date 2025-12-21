@@ -7,8 +7,8 @@ POSTGRES_USER ?= user
 POSTGRES_PASSWORD ?= password
 CONTAINER_NAME ?= deps-postgis-1
 MIGRATION_NAME ?= init_schema
-MIGRATION_DIR ?= ./src/pkg/db/postgres/sqlc/migrations
-SQLC_DIR ?= src/pkg/db/postgres/sqlc
+MIGRATION_DIR ?= ./internal/db/postgres/sqlc/migrations
+SQLC_DIR ?= internal/db/postgres/sqlc
 
 # Start the necessary docker containers
 run-deps:
@@ -42,20 +42,19 @@ create-module:
 
 # Run the server
 server:
-	go run src/main/main.go
+	go run ./cmd/api/main.go
 
 # build the app
 build:
-	go build -o bin/ src/main/main.go
+	go build -o bin/api ./cmd/api/main.go
 
 # install dependencies
 deps:
 	go mod tidy
 
 # swagger
-# swagger
 swagger:
-	@docker compose -f $(COMPOSE_FILE) run --rm cli swag init -g main/main.go -d src --parseDependency --parseInternal --exclude src/api/example_resource -o src/docs/gen
+	@docker compose -f $(COMPOSE_FILE) run --rm cli swag init -g cmd/api/main.go -d . --parseDependency --parseInternal -o internal/docs/gen
 
 # Run the server with Air (Live Reload)
 dev:

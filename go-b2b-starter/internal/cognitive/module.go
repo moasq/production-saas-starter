@@ -1,0 +1,94 @@
+package cognitive
+
+import (
+	"go.uber.org/dig"
+
+	"github.com/moasq/go-b2b-starter/internal/cognitive/app/services"
+	"github.com/moasq/go-b2b-starter/internal/cognitive/domain"
+	"github.com/moasq/go-b2b-starter/internal/cognitive/infra/ai"
+	"github.com/moasq/go-b2b-starter/internal/cognitive/infra/repositories"
+	"github.com/moasq/go-b2b-starter/internal/db/adapters"
+	llmdomain "github.com/moasq/go-b2b-starter/internal/llm/domain"
+)
+
+// Module provides cognitive module dependencies
+type Module struct {
+	container *dig.Container
+}
+
+func NewModule(container *dig.Container) *Module {
+	return &Module{
+		container: container,
+	}
+}
+
+// RegisterDependencies registers all cognitive module dependencies
+func (m *Module) RegisterDependencies() error {
+	// Register embedding repository
+	if err := m.container.Provide(func(
+		embeddingStore adapters.EmbeddingStore,
+	) domain.EmbeddingRepository {
+		return repositories.NewEmbeddingRepository(embeddingStore)
+	}); err != nil {
+		return err
+	}
+
+	// Register chat repository
+	if err := m.container.Provide(func(
+		chatStore adapters.ChatStore,
+	) domain.ChatRepository {
+		return repositories.NewChatRepository(chatStore)
+	}); err != nil {
+		return err
+	}
+
+	// Register AI adapters (infra layer)
+	if err := m.container.Provide(func(
+		llmClient llmdomain.LLMClient,
+	) domain.TextVectorizer {
+		return ai.NewTextVectorizer(llmClient)
+	}); err != nil {
+		return err
+	}
+
+	if err := m.container.Provide(func(
+		llmClient llmdomain.LLMClient,
+	) domain.AssistantProvider {
+		return ai.NewAssistantProvider(llmClient)
+	}); err != nil {
+		return err
+	}
+
+	// Register embedding service
+	if err := m.container.Provide(func(
+		embeddingRepo domain.EmbeddingRepository,
+		textVectorizer domain.TextVectorizer,
+	) services.EmbeddingService {
+		return services.NewEmbeddingService(embeddingRepo, textVectorizer)
+	}); err != nil {
+		return err
+	}
+
+	// Register RAG service
+	if err := m.container.Provide(func(
+		chatRepo domain.ChatRepository,
+		embeddingRepo domain.EmbeddingRepository,
+		textVectorizer domain.TextVectorizer,
+		assistantProvider domain.AssistantProvider,
+	) services.RAGService {
+		return services.NewRAGService(chatRepo, embeddingRepo, textVectorizer, assistantProvider)
+	}); err != nil {
+		return err
+	}
+
+	// Register document listener
+	if err := m.container.Provide(func(
+		embeddingService services.EmbeddingService,
+	) services.DocumentListener {
+		return services.NewDocumentListener(embeddingService)
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}

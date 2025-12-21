@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 
 # Build the application with additional flags for production
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o /main ./src/main/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o /main ./cmd/api/main.go
 
 # Final stage - using Alpine for smaller image with necessary system files
 FROM alpine:3.20
