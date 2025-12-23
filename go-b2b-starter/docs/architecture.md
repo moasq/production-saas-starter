@@ -1,8 +1,8 @@
-# Architecture Guide
+# Backend Architecture
 
-The codebase uses Clean Architecture with dependency injection to maintain separation of concerns and testability.
+The backend is a **Modular Monolith** using **idiomatic Go project layout** with Clear separation between business features and infrastructure.
 
-## Project Layout (Go Standard 2026)
+## High-Level Structure
 
 ```
 go-b2b-starter/
@@ -11,19 +11,11 @@ go-b2b-starter/
 │       └── main.go       # Main entry point
 │
 ├── internal/             # Private application code (import boundary)
+│   ├── modules/          # Feature modules (business domains)
+│   ├── platform/         # Cross-cutting infrastructure
+│   ├── db/               # Database layer (SQLC, DI registration)
 │   ├── bootstrap/        # Application initialization
-│   ├── api/              # Route registration
-│   │
-│   ├── auth/             # Authentication & RBAC module
-│   ├── billing/          # Subscription & billing module
-│   ├── organizations/    # Multi-tenant organizations
-│   ├── documents/        # Document management
-│   ├── cognitive/        # AI/RAG features
-│   │
-│   ├── db/               # Database layer (SQLC)
-│   ├── server/           # HTTP server & middleware
-│   ├── redis/            # Redis client
-│   └── stytch/           # Auth provider adapter
+│   └── api/              # API route registration
 │
 ├── pkg/                  # Public reusable packages
 │   ├── httperr/          # HTTP error types
@@ -33,239 +25,411 @@ go-b2b-starter/
 └── go.mod                # Single consolidated module
 ```
 
-## Clean Architecture Layers
+## Architectural Layers
 
-The project is organized into four distinct layers:
+### Feature Modules (`internal/modules/`)
 
-**1. Domain Layer** - Business entities and rules (innermost)
-**2. Application Layer** - Use cases and business logic
-**3. Infrastructure Layer** - External services and data access
-**4. API Layer** - HTTP handlers and routes (outermost)
-
-### Dependency Flow
-
-Dependencies point **inward only**:
+Business domain modules following **Clean Architecture**. Each module represents a distinct business capability:
 
 ```
-API → Application → Domain ← Infrastructure
+internal/modules/
+├── auth/             # Authentication & RBAC
+├── billing/          # Polar.sh subscriptions & quota management
+├── organizations/    # Multi-tenant organization management
+├── documents/        # PDF document processing
+├── cognitive/        # RAG (Retrieval-Augmented Generation) & embeddings
+├── files/            # File storage (R2 + metadata)
+└── paywall/          # Subscription middleware
 ```
 
-- Domain layer has zero external dependencies
-- Infrastructure implements domain interfaces
-- Outer layers depend on inner layers, never the reverse
+**Characteristics of Feature Modules:**
+- Business domain logic
+- Domain entities with business rules
+- API endpoints
+- Use cases and workflows
+- Follow Clean Architecture layers (domain → app → infra)
 
-## Layer Responsibilities
+### Platform Services (`internal/platform/`)
 
-### Domain Layer (`internal/{module}/domain/`)
+Cross-cutting infrastructure components used by multiple modules:
 
-The core business logic layer.
+```
+internal/platform/
+├── server/           # HTTP server & middleware
+├── eventbus/         # Event pub/sub system
+├── logger/           # Structured logging
+├── redis/            # Redis cache client
+├── stytch/           # Stytch auth provider client
+├── polar/            # Polar.sh billing provider client
+├── llm/              # LLM integration (OpenAI)
+└── ocr/              # OCR service (Mistral)
+```
 
-**Contains:**
-- Entities with business rules
-- Repository interfaces (contracts)
-- Domain errors
-- Validation logic
+**Characteristics of Platform Components:**
+- Infrastructure concerns
+- Used by multiple modules
+- No business logic
+- Provide technical capabilities
 
-**Key principle**: No external dependencies. Pure business logic only.
+### Database Layer (`internal/db/`)
 
-### Application Layer (`internal/{module}/app/`)
+Centralized database layer using SQLC:
 
-Orchestrates domain operations to implement use cases.
+```
+internal/db/
+├── postgres/
+│   ├── sqlc/
+│   │   ├── migrations/    # SQL migration files
+│   │   ├── query/         # SQL queries with SQLC annotations
+│   │   └── gen/          # Generated Go code
+│   └── postgres.go       # DB connection and pooling
+├── inject.go             # DI registration for all repositories
+└── core/
+    └── errors.go         # Database error types
+```
 
-**Contains:**
-- Service interfaces and implementations
-- Request/response types
-- Transaction boundaries
-- Business workflow coordination
+**Key Responsibilities:**
+- SQLC code generation
+- Repository DI registration
+- Database connection management
+- Transaction support
 
-**Key principle**: Uses domain interfaces, never infrastructure directly.
+## Module Structure (Clean Architecture)
 
-### Infrastructure Layer (`internal/{module}/infra/`)
+Each feature module in `internal/modules/` follows **Clean Architecture**:
 
-Implements domain interfaces using concrete technologies.
+```mermaid
+graph TD
+    A[Handler] --> B[Service]
+    B --> C[Repository Interface]
+    C --> D[Repository Implementation]
+    D --> E[SQLC Store]
+    E --> F[PostgreSQL]
+```
 
-**Contains:**
-- Repository implementations
-- Database adapters
-- External service clients
-- Type conversions (domain ↔ database)
+### Layer Details
 
-**Key principle**: Depends on domain interfaces. Hidden behind abstractions.
+```
+internal/modules/billing/
+├── cmd/                  # Module initialization (DI wiring)
+│   └── init.go
+│
+├── app/                  # Application Layer (Use Cases)
+│   └── services/
+│       └── billing_service.go
+│
+├── domain/               # Domain Layer (Core Business Logic)
+│   ├── entity.go         # Data structures
+│   ├── repository.go     # Interface definitions
+│   ├── errors.go         # Domain errors
+│   └── events/           # Domain events
+│
+├── infra/                # Infrastructure Layer (External)
+│   ├── repositories/     # Repository implementations
+│   │   └── subscription_repository.go
+│   └── polar/           # Polar.sh adapter
+│       └── polar_adapter.go
+│
+├── handler.go            # HTTP handlers (Delivery Layer)
+├── routes.go             # Route registration
+└── module.go             # Dependency injection setup
+```
 
-### Handler Layer (`internal/{module}/handler.go`)
+## Key Principles
 
-Handles HTTP concerns.
+### 1. `internal/` Boundary
 
-**Contains:**
-- HTTP handlers
-- Route definitions
-- Request validation
-- Response formatting
+Code in `internal/` cannot be imported by external packages. This enforces encapsulation and prevents unintended dependencies.
 
-**Key principle**: Thin layer that delegates to application services.
+### 2. Dependency Rule (Clean Architecture)
+
+```mermaid
+graph LR
+    A[Domain] --> B[Application]
+    B --> C[Infrastructure]
+    C --> D[Delivery/Handler]
+```
+
+**Direction of dependencies:**
+- Domain → Nothing (pure business logic)
+- Application → Domain (uses domain interfaces)
+- Infrastructure → Domain (implements domain interfaces)
+- Handlers → Application (calls services)
+
+**Key Point**: Inner layers never depend on outer layers. Infrastructure implements interfaces defined in domain.
+
+### 3. Feature-Based Organization
+
+Modules are organized by **business feature** (billing, auth, organizations), not by technical layer (controllers, services, models).
+
+This promotes:
+- High cohesion within features
+- Low coupling between features
+- Easy to understand and navigate
+- Clear ownership and boundaries
+
+### 4. Single `go.mod`
+
+One module for the entire project eliminates workspace complexity and simplifies dependency management.
+
+## Request Flow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Middleware
+    participant Handler
+    participant Service
+    participant Repository
+    participant Database
+
+    Client->>Middleware: HTTP Request
+    Middleware->>Middleware: Auth & Validation
+    Middleware->>Handler: Authenticated Request
+    Handler->>Handler: Parse & Validate
+    Handler->>Service: Call Use Case
+    Service->>Service: Business Logic
+    Service->>Repository: Get/Save Data (Interface)
+    Repository->>Database: SQL Query (SQLC)
+    Database-->>Repository: Result
+    Repository-->>Service: Domain Entity
+    Service-->>Handler: DTO Response
+    Handler-->>Client: JSON Response
+```
+
+### Flow Breakdown
+
+1. **Client Request**: HTTP request arrives at server
+2. **Middleware**: Auth, logging, rate limiting, CORS
+3. **Handler**: Parse request, extract context (org ID, user ID)
+4. **Service**: Execute business logic, orchestrate operations
+5. **Repository**: Data access using domain interfaces
+6. **Database**: SQLC-generated type-safe queries
+
+## Initialization Flow
+
+```mermaid
+graph TD
+    A[cmd/api/main.go] --> B[bootstrap.Execute]
+    B --> C[InitMods]
+    C --> D[Infrastructure Layer]
+    C --> E[Platform Services]
+    C --> F[Feature Modules]
+    C --> G[API Routes]
+
+    D --> D1[Logger]
+    D --> D2[Server]
+    D --> D3[Database]
+
+    E --> E1[Redis]
+    E --> E2[EventBus]
+    E --> E3[Stytch]
+    E --> E4[Polar]
+
+    F --> F1[Auth Module]
+    F --> F2[Billing Module]
+    F --> F3[Organizations Module]
+    F --> F4[Documents Module]
+
+    G --> G1[Register Routes]
+    G --> G2[Setup Middleware]
+```
+
+### Initialization Order (Critical)
+
+```
+cmd/api/main.go
+    └── bootstrap.Execute()
+        ├── 1. Infrastructure (no dependencies)
+        │   ├── logger.Inject()
+        │   ├── server.Inject()
+        │   └── db.Inject()              # Registers all domain repositories
+        │
+        ├── 2. Platform Services
+        │   ├── redis.Inject()
+        │   ├── llm.Inject()
+        │   ├── ocr.Inject()
+        │   ├── polar.Inject()
+        │   └── eventbus.Inject()
+        │
+        ├── 3. Feature Modules (order matters!)
+        │   ├── files.SetupDependencies()
+        │   ├── auth.SetupDependencies()
+        │   ├── organizations.RegisterDependencies()
+        │   ├── billing.Configure()
+        │   ├── cognitive.RegisterDependencies()
+        │   └── documents.RegisterDependencies()
+        │
+        ├── 4. Event Subscriptions
+        │   └── cognitive.SetupEventSubscriptions()
+        │
+        └── 5. HTTP Server Setup
+            ├── server.SetupMiddleware()
+            └── api.RegisterRoutes()
+```
+
+**Why Order Matters:**
+- `db.Inject()` must run early (registers all repositories)
+- `auth` must be before modules that need auth middleware
+- `files` must be before `documents` (documents depend on files)
+- Event subscriptions must be after all modules are loaded
 
 ## Dependency Injection
 
-Uses [uber-go/dig](https://github.com/uber-go/dig) for automatic dependency injection.
-
-### Core Pattern
+The project uses **uber-go/dig** for dependency injection:
 
 ```go
 // 1. Define interface in domain
-type ResourceRepository interface {
-    GetByID(ctx context.Context, id int32) (*Resource, error)
+package domain
+type ProductRepository interface {
+    Create(ctx context.Context, p *Product) (*Product, error)
 }
 
 // 2. Implement in infrastructure
-type resourceRepository struct {
-    queries *db.Queries
+package repositories
+func NewProductRepository(store sqlc.Store) domain.ProductRepository {
+    return &productRepository{store: store}
 }
 
-// 3. Register in DI container
-container.Provide(func(queries *db.Queries) domain.ResourceRepository {
-    return NewResourceRepository(queries)
+// 3. Register in DI (internal/db/inject.go)
+container.Provide(func(sqlcStore sqlc.Store) productDomain.ProductRepository {
+    return productRepos.NewProductRepository(sqlcStore)
 })
 
-// 4. Inject into services
-container.Provide(func(repo domain.ResourceRepository) services.ResourceService {
-    return services.NewResourceService(repo)
-})
+// 4. Inject into service
+package services
+func NewProductService(repo domain.ProductRepository) ProductService {
+    return &productService{repo: repo}
+}
 ```
 
-### Benefits
-
+**Benefits:**
 - Automatic dependency resolution
-- Easy testing with mocks
+- Easy testing (inject mocks)
 - Clear dependency graph
-- No manual wiring
+- Compile-time safety
 
-## Module Pattern
+## Modules vs Platform Decision
 
-Each business module follows a standard structure:
-
-```
-internal/{module}/
-├── domain/           # Entities, interfaces
-├── app/services/     # Business logic
-├── infra/            # Implementations
-├── cmd/init.go       # Initialization
-├── handler.go        # HTTP handlers
-├── routes.go         # Route registration
-└── provider.go       # DI registration
+```mermaid
+graph TD
+    A{Is it a business domain feature?}
+    A -->|Yes| B[Create in internal/modules/]
+    A -->|No| C{Used by multiple modules?}
+    C -->|Yes| D[Create in internal/platform/]
+    C -->|No| E{Part of existing module?}
+    E -->|Yes| F[Add to that module]
+    E -->|No| D
 ```
 
-### Module Registration
+### Examples
 
-Every module has initialization in `cmd/init.go` that registers its dependencies:
+| Component | Location | Reason |
+|-----------|----------|--------|
+| Product Catalog | `modules/products/` | Business domain feature |
+| Invoice Processing | `modules/invoices/` | Business domain feature |
+| Subscription Management | `modules/billing/` | Business domain feature |
+| Event Bus | `platform/eventbus/` | Used by all modules |
+| Logging | `platform/logger/` | Cross-cutting infrastructure |
+| Stytch Client | `platform/stytch/` | Auth provider client |
+| Auth Module | `modules/auth/` | Business auth logic using Stytch |
 
-- Repositories (infrastructure → domain interface)
-- Services (application layer)
-- Handlers (HTTP layer)
+## Communication Between Modules
 
-### Initialization Order
+Modules communicate through:
 
-Defined in `internal/bootstrap/init_mods.go`:
-
-1. **Infrastructure** - Database, logging, server
-2. **Shared Services** - File storage, event bus, payments
-3. **Authentication** - Redis, Stytch, auth middleware
-4. **Domain Modules** - Organizations, billing, etc.
-5. **API Layer** - Route registration
-
-**Why order matters**: Each phase depends on previous phases being initialized.
-
-## Resolver Pattern
-
-Bridges authentication with domain modules without creating circular dependencies.
-
-### Problem
-
-Auth middleware needs to convert provider IDs (Stytch) to database IDs, but can't depend on domain modules directly.
-
-### Solution
-
-Define minimal interfaces in auth package:
+### 1. Event Bus (Loosely Coupled)
 
 ```go
-// Auth defines what it needs
-type OrganizationResolver interface {
-    ResolveByProviderID(ctx context.Context, providerID string) (int32, error)
+// Module A publishes event
+eventBus.Publish(ctx, events.NewDocumentUploadedEvent(docID, orgID))
+
+// Module B subscribes
+eventBus.Subscribe("document.uploaded", func(ctx context.Context, event Event) error {
+    docEvent := event.(*DocumentUploadedEvent)
+    return embeddingService.GenerateForDocument(ctx, docEvent.DocumentID)
+})
+```
+
+**Use When:**
+- Asynchronous operations
+- One-to-many communication
+- Loose coupling desired
+
+### 2. Direct Service Injection (Tightly Coupled)
+
+```go
+// Service A uses Service B
+func NewInvoiceService(
+    repo domain.InvoiceRepository,
+    billingService billing.BillingService,  // Direct dependency
+) InvoiceService {
+    return &invoiceService{
+        repo: repo,
+        billing: billingService,
+    }
 }
 ```
 
-Domain modules implement via adapters:
+**Use When:**
+- Synchronous operations
+- One-to-one communication
+- Strong dependency relationship
+
+### 3. Shared Platform Components
 
 ```go
-// Module provides implementation
-type orgResolverAdapter struct {
-    repo domain.ResourceRepository
+// Multiple modules use platform logger
+func NewDocumentService(
+    repo domain.DocumentRepository,
+    logger logger.Logger,  // Platform component
+) DocumentService {
+    return &documentService{repo: repo, logger: logger}
 }
 ```
 
-Wired together in `init_mods.go` during initialization.
+## Multi-Tenancy
 
-## Best Practices
-
-### Constructor Pattern
-
-Always return interfaces, not concrete types:
+Every module supports multi-tenancy through **Organization ID**:
 
 ```go
-// ✅ Good
-func NewResourceService(repo domain.ResourceRepository) services.ResourceService {
-    return &resourceService{repo: repo}
+// Organization context in middleware
+type RequestContext struct {
+    OrganizationID int32  // From JWT token
+    AccountID      int32  // User account ID
+    Identity       *Identity
 }
 
-// ❌ Bad
-func NewResourceService(repo domain.ResourceRepository) *resourceService {
-    return &resourceService{repo: repo}
-}
+// Used in handlers
+reqCtx := auth.GetRequestContext(c)
+products, err := service.ListByOrganization(ctx, reqCtx.OrganizationID)
+
+// Enforced in repository
+SELECT * FROM products WHERE organization_id = $1 AND id = $2
 ```
 
-### Context Handling
+**Benefits:**
+- Data isolation per organization
+- Single database for all tenants
+- Efficient resource usage
+- Simplified deployment
 
-Context is always the first parameter:
+## File Structure Summary
 
-```go
-func (s *service) CreateResource(ctx context.Context, req *Request) error
-```
-
-### Error Wrapping
-
-Add context to errors before returning:
-
-```go
-if err := s.repo.Create(ctx, resource); err != nil {
-    return fmt.Errorf("failed to create resource: %w", err)
-}
-```
-
-### Explicit Dependencies
-
-All dependencies through constructor parameters:
-
-```go
-func NewResourceService(
-    repo domain.ResourceRepository,
-    eventBus eventbus.EventBus,
-    logger logger.Logger,
-) services.ResourceService
-```
-
-Never use global variables or hidden dependencies.
-
-## File Locations
-
-| Pattern | File |
-|---------|------|
-| DI container setup | `internal/bootstrap/root.go` |
-| Module initialization order | `internal/bootstrap/init_mods.go` |
-| Module DI registration | `internal/*/cmd/init.go` |
-| Package initialization | `pkg/*/init.go` |
-| API route setup | `internal/api/routes.go` |
+| Layer | Path | Purpose |
+|-------|------|---------|
+| Entry point | `cmd/api/main.go` | Application startup |
+| Feature modules | `internal/modules/*/` | Business domains |
+| Platform services | `internal/platform/*/` | Infrastructure |
+| Database layer | `internal/db/` | SQLC, migrations, DI |
+| Bootstrap | `internal/bootstrap/` | Initialization |
+| API routes | `internal/api/` | Route registration |
+| Shared utilities | `pkg/*/` | Public packages |
 
 ## Next Steps
 
-- **Database operations**: See [Database Guide](./database.md)
-- **Authentication setup**: See [Authentication Guide](./authentication.md)
-- **Building APIs**: See [API Development Guide](./api-development.md)
+- **Adding a Module**: See [Adding a Module Guide](./adding-a-module.md)
+- **Database Operations**: See [Database Guide](./database.md)
+- **API Development**: See [API Development Guide](./api-development.md)
+- **Authentication**: See [Authentication Guide](./authentication.md)
+- **Event Bus**: See [Event Bus Guide](./event-bus.md)

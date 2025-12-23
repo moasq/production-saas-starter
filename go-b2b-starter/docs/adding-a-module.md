@@ -7,18 +7,18 @@ This guide shows how to create a new feature module following Clean Architecture
 Before creating a new module, determine whether it should be a **feature module** or a **platform component**.
 
 ### Create a Module (`internal/modules/`) when:
-✅ Implementing a business domain feature
-✅ Has domain entities with business rules
-✅ Exposes API endpoints
-✅ Contains use cases and workflows
-✅ **Examples**: billing, documents, organizations, invoices, products
+- Implementing a business domain feature
+- Has domain entities with business rules
+- Exposes API endpoints
+- Contains use cases and workflows
+- **Examples**: billing, documents, organizations, invoices, products
 
 ### Create a Platform Component (`internal/platform/`) when:
-✅ Infrastructure or cross-cutting concern
-✅ Used by multiple modules
-✅ No business logic (pure infrastructure)
-✅ Provides technical capability
-✅ **Examples**: logger, eventbus, redis, http server
+- Infrastructure or cross-cutting concern
+- Used by multiple modules
+- No business logic (pure infrastructure)
+- Provides technical capability
+- **Examples**: logger, eventbus, redis, http server
 
 ### Decision Tree
 
@@ -697,7 +697,6 @@ After creating a new module, you should have:
 
 ## Next Steps
 
-- **Architecture Details**: See [Architecture Guide](./01-architecture.md)
+- **Architecture Details**: See [Architecture Guide](./architecture.md)
 - **Database Operations**: See [Database Guide](./database.md)
 - **API Development**: See [API Development Guide](./api-development.md)
-- **Testing Guide**: See [Testing Guide](./testing.md)
