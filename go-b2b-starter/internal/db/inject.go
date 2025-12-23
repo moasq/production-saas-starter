@@ -9,6 +9,21 @@ import (
 	"github.com/jackc/pgx/v5/stdlib"
 	"go.uber.org/dig"
 
+	// Domain interfaces - these are the interfaces we provide
+	billingDomain "github.com/moasq/go-b2b-starter/internal/modules/billing/domain"
+	cognitiveDomain "github.com/moasq/go-b2b-starter/internal/modules/cognitive/domain"
+	documentDomain "github.com/moasq/go-b2b-starter/internal/modules/documents/domain"
+	fileDomain "github.com/moasq/go-b2b-starter/internal/modules/files/domain"
+	orgDomain "github.com/moasq/go-b2b-starter/internal/modules/organizations/domain"
+
+	// Repository implementations from module infra layers
+	billingRepos "github.com/moasq/go-b2b-starter/internal/modules/billing/infra/repositories"
+	cognitiveRepos "github.com/moasq/go-b2b-starter/internal/modules/cognitive/infra/repositories"
+	documentRepos "github.com/moasq/go-b2b-starter/internal/modules/documents/infra/repositories"
+	fileInfra "github.com/moasq/go-b2b-starter/internal/modules/files/infra"
+	orgRepos "github.com/moasq/go-b2b-starter/internal/modules/organizations/infra/repositories"
+
+	// Legacy adapters - kept temporarily for backward compatibility
 	"github.com/moasq/go-b2b-starter/internal/db/adapters"
 	"github.com/moasq/go-b2b-starter/internal/db/postgres"
 	adapterImpl "github.com/moasq/go-b2b-starter/internal/db/postgres/adapter_impl"
@@ -72,14 +87,67 @@ func provideDBManager(config postgres.Config, pool *pgxpool.Pool) *postgres.Post
 	return postgres.NewPostgresManager(config, pool)
 }
 
-// registerDomainStores registers all domain-specific stores
+// registerDomainStores registers all domain-specific repositories.
+// These repositories implement domain ports using SQLC internally - no SQLC types leak out.
 func registerDomainStores(container *dig.Container) error {
-	// Register VisaStore - DISABLED: visa management backed up
-	// if err := container.Provide(func(sqlcStore sqlc.Store) adapters.VisaStore {
-	//     return adapterImpl.NewVisaStore(sqlcStore)
-	// }); err != nil {
-	//     return fmt.Errorf("failed to provide visa store: %w", err)
-	// }
+	// ============================================
+	// NEW: Sealed repository implementations
+	// These use domain interfaces and hide SQLC internals
+	// ============================================
+
+	// Register DocumentRepository - implements documents/domain.DocumentRepository
+	if err := container.Provide(func(sqlcStore sqlc.Store) documentDomain.DocumentRepository {
+		return documentRepos.NewDocumentRepository(sqlcStore)
+	}); err != nil {
+		return fmt.Errorf("failed to provide document repository: %w", err)
+	}
+
+	// Register OrganizationRepository - implements organizations/domain.OrganizationRepository
+	if err := container.Provide(func(sqlcStore sqlc.Store) orgDomain.OrganizationRepository {
+		return orgRepos.NewOrganizationRepository(sqlcStore)
+	}); err != nil {
+		return fmt.Errorf("failed to provide organization repository: %w", err)
+	}
+
+	// Register AccountRepository - implements organizations/domain.AccountRepository
+	if err := container.Provide(func(sqlcStore sqlc.Store) orgDomain.AccountRepository {
+		return orgRepos.NewAccountRepository(sqlcStore)
+	}); err != nil {
+		return fmt.Errorf("failed to provide account repository: %w", err)
+	}
+
+	// Register SubscriptionRepository - implements billing/domain.SubscriptionRepository
+	if err := container.Provide(func(sqlcStore sqlc.Store) billingDomain.SubscriptionRepository {
+		return billingRepos.NewSubscriptionRepository(sqlcStore)
+	}); err != nil {
+		return fmt.Errorf("failed to provide subscription repository: %w", err)
+	}
+
+	// Register EmbeddingRepository - implements cognitive/domain.EmbeddingRepository
+	if err := container.Provide(func(sqlcStore sqlc.Store) cognitiveDomain.EmbeddingRepository {
+		return cognitiveRepos.NewEmbeddingRepository(sqlcStore)
+	}); err != nil {
+		return fmt.Errorf("failed to provide embedding repository: %w", err)
+	}
+
+	// Register ChatRepository - implements cognitive/domain.ChatRepository
+	if err := container.Provide(func(sqlcStore sqlc.Store) cognitiveDomain.ChatRepository {
+		return cognitiveRepos.NewChatRepository(sqlcStore)
+	}); err != nil {
+		return fmt.Errorf("failed to provide chat repository: %w", err)
+	}
+
+	// Register FileMetadataRepository - implements files/domain.FileMetadataRepository
+	if err := container.Provide(func(sqlcStore sqlc.Store) fileDomain.FileMetadataRepository {
+		return fileInfra.NewFileMetadataRepository(sqlcStore)
+	}); err != nil {
+		return fmt.Errorf("failed to provide file metadata repository: %w", err)
+	}
+
+	// ============================================
+	// LEGACY: Adapter stores (kept for backward compatibility)
+	// TODO: Migrate callers to use domain interfaces, then remove these
+	// ============================================
 
 	// Register FileAssetStore - thin wrapper for file management operations
 	if err := container.Provide(func(sqlcStore sqlc.Store) adapters.FileAssetStore {

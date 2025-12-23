@@ -1,28 +1,6 @@
 basePath: /api
 definitions:
-  api_example_cognitive.ChatRequest:
-    properties:
-      context_history:
-        type: integer
-      max_documents:
-        type: integer
-      message:
-        type: string
-      session_id:
-        type: integer
-      use_rag:
-        type: boolean
-    required:
-    - message
-    type: object
-  api_subscriptions.VerifyPaymentRequest:
-    properties:
-      session_id:
-        type: string
-    required:
-    - session_id
-    type: object
-  github_com_moasq_go-b2b-starter_app_billing_domain.BillingStatus:
+  github_com_moasq_go-b2b-starter_internal_modules_billing_domain.BillingStatus:
     properties:
       canProcessInvoices:
         type: boolean
@@ -42,7 +20,7 @@ definitions:
       reason:
         type: string
     type: object
-  github_com_moasq_go-b2b-starter_app_example_cognitive_domain.ChatMessage:
+  github_com_moasq_go-b2b-starter_internal_modules_cognitive_domain.ChatMessage:
     properties:
       content:
         type: string
@@ -55,26 +33,26 @@ definitions:
           type: integer
         type: array
       role:
-        $ref: '#/definitions/github_com_moasq_go-b2b-starter_app_example_cognitive_domain.ChatRole'
+        $ref: '#/definitions/github_com_moasq_go-b2b-starter_internal_modules_cognitive_domain.ChatRole'
       session_id:
         type: integer
       tokens_used:
         type: integer
     type: object
-  github_com_moasq_go-b2b-starter_app_example_cognitive_domain.ChatResponse:
+  github_com_moasq_go-b2b-starter_internal_modules_cognitive_domain.ChatResponse:
     properties:
       message:
-        $ref: '#/definitions/github_com_moasq_go-b2b-starter_app_example_cognitive_domain.ChatMessage'
+        $ref: '#/definitions/github_com_moasq_go-b2b-starter_internal_modules_cognitive_domain.ChatMessage'
       referenced_docs:
         items:
-          $ref: '#/definitions/github_com_moasq_go-b2b-starter_app_example_cognitive_domain.SimilarDocument'
+          $ref: '#/definitions/github_com_moasq_go-b2b-starter_internal_modules_cognitive_domain.SimilarDocument'
         type: array
       session_id:
         type: integer
       tokens_used:
         type: integer
     type: object
-  github_com_moasq_go-b2b-starter_app_example_cognitive_domain.ChatRole:
+  github_com_moasq_go-b2b-starter_internal_modules_cognitive_domain.ChatRole:
     enum:
     - user
     - assistant
@@ -84,7 +62,7 @@ definitions:
     - ChatRoleUser
     - ChatRoleAssistant
     - ChatRoleSystem
-  github_com_moasq_go-b2b-starter_app_example_cognitive_domain.SimilarDocument:
+  github_com_moasq_go-b2b-starter_internal_modules_cognitive_domain.SimilarDocument:
     properties:
       chunk_index:
         type: integer
@@ -110,11 +88,11 @@ definitions:
       updated_at:
         type: string
     type: object
-  github_com_moasq_go-b2b-starter_app_example_documents_app_services.ListDocumentsResponse:
+  github_com_moasq_go-b2b-starter_internal_modules_documents_app_services.ListDocumentsResponse:
     properties:
       documents:
         items:
-          $ref: '#/definitions/github_com_moasq_go-b2b-starter_app_example_documents_domain.Document'
+          $ref: '#/definitions/github_com_moasq_go-b2b-starter_internal_modules_documents_domain.Document'
         type: array
       limit:
         type: integer
@@ -123,7 +101,7 @@ definitions:
       total:
         type: integer
     type: object
-  github_com_moasq_go-b2b-starter_app_example_documents_domain.Document:
+  github_com_moasq_go-b2b-starter_internal_modules_documents_domain.Document:
     properties:
       content_type:
         type: string
@@ -145,13 +123,13 @@ definitions:
       organization_id:
         type: integer
       status:
-        $ref: '#/definitions/github_com_moasq_go-b2b-starter_app_example_documents_domain.DocumentStatus'
+        $ref: '#/definitions/github_com_moasq_go-b2b-starter_internal_modules_documents_domain.DocumentStatus'
       title:
         type: string
       updated_at:
         type: string
     type: object
-  github_com_moasq_go-b2b-starter_app_example_documents_domain.DocumentStatus:
+  github_com_moasq_go-b2b-starter_internal_modules_documents_domain.DocumentStatus:
     enum:
     - pending
     - processing
@@ -163,7 +141,7 @@ definitions:
     - DocumentStatusProcessing
     - DocumentStatusProcessed
     - DocumentStatusFailed
-  github_com_moasq_go-b2b-starter_app_organizations_app_services.AddMemberResponse:
+  github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.AddMemberResponse:
     properties:
       email:
         type: string
@@ -178,7 +156,7 @@ definitions:
       role_slug:
         type: string
     type: object
-  github_com_moasq_go-b2b-starter_app_organizations_app_services.BootstrapOrganizationRequest:
+  github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.BootstrapOrganizationRequest:
     properties:
       org_display_name:
         description: Organization details
@@ -193,7 +171,7 @@ definitions:
     - owner_email
     - owner_name
     type: object
-  github_com_moasq_go-b2b-starter_app_organizations_app_services.BootstrapOrganizationResponse:
+  github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.BootstrapOrganizationResponse:
     properties:
       display_name:
         type: string
@@ -212,16 +190,16 @@ definitions:
       owner_name:
         type: string
     type: object
-  github_com_moasq_go-b2b-starter_app_organizations_app_services.ListMembersResponse:
+  github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.ListMembersResponse:
     properties:
       members:
         items:
-          $ref: '#/definitions/github_com_moasq_go-b2b-starter_app_organizations_app_services.MemberInfo'
+          $ref: '#/definitions/github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.MemberInfo'
         type: array
       total:
         type: integer
     type: object
-  github_com_moasq_go-b2b-starter_app_organizations_app_services.MemberInfo:
+  github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.MemberInfo:
     properties:
       created_at:
         type: string
@@ -242,7 +220,7 @@ definitions:
       updated_at:
         type: string
     type: object
-  github_com_moasq_go-b2b-starter_app_organizations_app_services.ProfileOrganization:
+  github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.ProfileOrganization:
     properties:
       name:
         type: string
@@ -253,7 +231,7 @@ definitions:
       status:
         type: string
     type: object
-  github_com_moasq_go-b2b-starter_app_organizations_app_services.ProfileResponse:
+  github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.ProfileResponse:
     properties:
       account_id:
         description: Internal account details
@@ -271,7 +249,7 @@ definitions:
         type: string
       organization:
         allOf:
-        - $ref: '#/definitions/github_com_moasq_go-b2b-starter_app_organizations_app_services.ProfileOrganization'
+        - $ref: '#/definitions/github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.ProfileOrganization'
         description: Organization details
       permissions:
         items:
@@ -286,7 +264,14 @@ definitions:
       updated_at:
         type: string
     type: object
-  github_com_moasq_go-b2b-starter_pkg_auth.PermissionCheckRequest:
+  github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  internal_modules_auth.PermissionCheckRequest:
     properties:
       permission_id:
         type: string
@@ -296,7 +281,7 @@ definitions:
     - permission_id
     - role_id
     type: object
-  github_com_moasq_go-b2b-starter_pkg_auth.PermissionCheckResponse:
+  internal_modules_auth.PermissionCheckResponse:
     properties:
       has_permission:
         type: boolean
@@ -305,7 +290,7 @@ definitions:
       role_id:
         type: string
     type: object
-  github_com_moasq_go-b2b-starter_pkg_auth.PermissionDTO:
+  internal_modules_auth.PermissionDTO:
     properties:
       action:
         type: string
@@ -320,23 +305,23 @@ definitions:
       resource:
         type: string
     type: object
-  github_com_moasq_go-b2b-starter_pkg_auth.PermissionsByCategoryResponse:
+  internal_modules_auth.PermissionsByCategoryResponse:
     properties:
       categories:
         additionalProperties:
           items:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.PermissionDTO'
+            $ref: '#/definitions/internal_modules_auth.PermissionDTO'
           type: array
         type: object
     type: object
-  github_com_moasq_go-b2b-starter_pkg_auth.PermissionsResponse:
+  internal_modules_auth.PermissionsResponse:
     properties:
       permissions:
         items:
-          $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.PermissionDTO'
+          $ref: '#/definitions/internal_modules_auth.PermissionDTO'
         type: array
     type: object
-  github_com_moasq_go-b2b-starter_pkg_auth.RBACMetadata:
+  internal_modules_auth.RBACMetadata:
     properties:
       description:
         type: string
@@ -349,7 +334,7 @@ definitions:
       total_roles:
         type: integer
     type: object
-  github_com_moasq_go-b2b-starter_pkg_auth.RoleDTO:
+  internal_modules_auth.RoleDTO:
     properties:
       description:
         type: string
@@ -359,19 +344,19 @@ definitions:
         type: string
       permissions:
         items:
-          $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.PermissionDTO'
+          $ref: '#/definitions/internal_modules_auth.PermissionDTO'
         type: array
     type: object
-  github_com_moasq_go-b2b-starter_pkg_auth.RolePermissionsResponse:
+  internal_modules_auth.RolePermissionsResponse:
     properties:
       restrictions:
-        $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.RoleRestrictions'
+        $ref: '#/definitions/internal_modules_auth.RoleRestrictions'
       role:
-        $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.RoleDTO'
+        $ref: '#/definitions/internal_modules_auth.RoleDTO'
       statistics:
-        $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.RoleStatistics'
+        $ref: '#/definitions/internal_modules_auth.RoleStatistics'
     type: object
-  github_com_moasq_go-b2b-starter_pkg_auth.RoleRestrictions:
+  internal_modules_auth.RoleRestrictions:
     properties:
       cannot_do:
         items:
@@ -382,7 +367,7 @@ definitions:
       scope:
         type: string
     type: object
-  github_com_moasq_go-b2b-starter_pkg_auth.RoleStatistics:
+  internal_modules_auth.RoleStatistics:
     properties:
       can_approve:
         type: boolean
@@ -393,19 +378,34 @@ definitions:
       total_permissions:
         type: integer
     type: object
-  github_com_moasq_go-b2b-starter_pkg_auth.RolesResponse:
+  internal_modules_auth.RolesResponse:
     properties:
       roles:
         items:
-          $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.RoleDTO'
+          $ref: '#/definitions/internal_modules_auth.RoleDTO'
         type: array
     type: object
-  github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError:
+  internal_modules_billing.VerifyPaymentRequest:
     properties:
-      code:
+      session_id:
         type: string
+    required:
+    - session_id
+    type: object
+  internal_modules_cognitive.ChatRequest:
+    properties:
+      context_history:
+        type: integer
+      max_documents:
+        type: integer
       message:
         type: string
+      session_id:
+        type: integer
+      use_rag:
+        type: boolean
+    required:
+    - message
     type: object
 externalDocs:
   description: OpenAPI
@@ -436,15 +436,15 @@ paths:
         "200":
           description: Current billing and quota status
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_app_billing_domain.BillingStatus'
+            $ref: '#/definitions/github_com_moasq_go-b2b-starter_internal_modules_billing_domain.BillingStatus'
         "400":
           description: Invalid request parameters or missing organization context
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError'
+            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError'
+            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError'
       summary: Get current billing and quota status
       tags:
       - subscriptions
@@ -461,26 +461,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/api_subscriptions.VerifyPaymentRequest'
+          $ref: '#/definitions/internal_modules_billing.VerifyPaymentRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Verification result with updated billing status
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_app_billing_domain.BillingStatus'
+            $ref: '#/definitions/github_com_moasq_go-b2b-starter_internal_modules_billing_domain.BillingStatus'
         "400":
           description: Invalid request parameters or checkout session failed
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError'
+            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError'
         "404":
           description: Checkout session not found
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError'
+            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError'
+            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError'
       summary: Verify payment from checkout session
       tags:
       - subscriptions
@@ -532,7 +532,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_app_organizations_app_services.ListMembersResponse'
+            $ref: '#/definitions/github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.ListMembersResponse'
         "400":
           description: Missing organization context
           schema:
@@ -587,7 +587,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_app_organizations_app_services.AddMemberResponse'
+            $ref: '#/definitions/github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.AddMemberResponse'
         "400":
           description: Invalid request payload or missing organization context
           schema:
@@ -661,7 +661,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_app_organizations_app_services.ProfileResponse'
+            $ref: '#/definitions/github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.ProfileResponse'
         "400":
           description: Missing required context (organization or claims)
           schema:
@@ -693,14 +693,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/github_com_moasq_go-b2b-starter_app_organizations_app_services.BootstrapOrganizationRequest'
+          $ref: '#/definitions/github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.BootstrapOrganizationRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_app_organizations_app_services.BootstrapOrganizationResponse'
+            $ref: '#/definitions/github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.BootstrapOrganizationResponse'
         "400":
           description: Invalid request payload
           schema:
@@ -726,22 +726,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/api_example_cognitive.ChatRequest'
+          $ref: '#/definitions/internal_modules_cognitive.ChatRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_app_example_cognitive_domain.ChatResponse'
+            $ref: '#/definitions/github_com_moasq_go-b2b-starter_internal_modules_cognitive_domain.ChatResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError'
+            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError'
+            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError'
       summary: Chat with AI
       tags:
       - Cognitive
@@ -770,7 +770,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError'
+            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError'
       summary: List chat sessions
       tags:
       - Cognitive
@@ -790,16 +790,16 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/github_com_moasq_go-b2b-starter_app_example_cognitive_domain.ChatMessage'
+              $ref: '#/definitions/github_com_moasq_go-b2b-starter_internal_modules_cognitive_domain.ChatMessage'
             type: array
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError'
+            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError'
+            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError'
       summary: Get session history
       tags:
       - Cognitive
@@ -827,11 +827,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_app_example_documents_app_services.ListDocumentsResponse'
+            $ref: '#/definitions/github_com_moasq_go-b2b-starter_internal_modules_documents_app_services.ListDocumentsResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError'
+            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError'
       summary: List documents
       tags:
       - Documents
@@ -850,11 +850,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError'
+            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError'
+            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError'
       summary: Delete document
       tags:
       - Documents
@@ -880,15 +880,15 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_app_example_documents_domain.Document'
+            $ref: '#/definitions/github_com_moasq_go-b2b-starter_internal_modules_documents_domain.Document'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError'
+            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError'
+            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError'
       summary: Upload PDF document
       tags:
       - Documents
@@ -904,14 +904,14 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.PermissionCheckRequest'
+          $ref: '#/definitions/internal_modules_auth.PermissionCheckRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Permission check result
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.PermissionCheckResponse'
+            $ref: '#/definitions/internal_modules_auth.PermissionCheckResponse'
         "400":
           description: Invalid request
           schema:
@@ -931,7 +931,7 @@ paths:
         "200":
           description: RBAC system metadata
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.RBACMetadata'
+            $ref: '#/definitions/internal_modules_auth.RBACMetadata'
       summary: Get RBAC system metadata
       tags:
       - RBAC
@@ -945,7 +945,7 @@ paths:
         "200":
           description: All permissions
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.PermissionsResponse'
+            $ref: '#/definitions/internal_modules_auth.PermissionsResponse'
         "500":
           description: Internal error
           schema:
@@ -965,7 +965,7 @@ paths:
         "200":
           description: Permissions by category
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.PermissionsByCategoryResponse'
+            $ref: '#/definitions/internal_modules_auth.PermissionsByCategoryResponse'
         "500":
           description: Internal error
           schema:
@@ -986,7 +986,7 @@ paths:
         "200":
           description: Roles with permissions
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.RolesResponse'
+            $ref: '#/definitions/internal_modules_auth.RolesResponse'
         "500":
           description: Internal error
           schema:
@@ -1012,7 +1012,7 @@ paths:
         "200":
           description: Role details with statistics
           schema:
-            $ref: '#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.RolePermissionsResponse'
+            $ref: '#/definitions/internal_modules_auth.RolePermissionsResponse'
         "400":
           description: Invalid role ID
           schema:

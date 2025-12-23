@@ -2,7 +2,7 @@ package api
 
 import (
 	docs "github.com/moasq/go-b2b-starter/internal/docs/gen"
-	"github.com/moasq/go-b2b-starter/internal/server/domain"
+	"github.com/moasq/go-b2b-starter/internal/platform/server/domain"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"

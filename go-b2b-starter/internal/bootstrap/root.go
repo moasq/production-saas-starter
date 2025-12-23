@@ -6,7 +6,7 @@ import (
 	"github.com/joho/godotenv"
 	"go.uber.org/dig"
 
-	server "github.com/moasq/go-b2b-starter/internal/server/domain"
+	server "github.com/moasq/go-b2b-starter/internal/platform/server/domain"
 )
 
 func Execute() {

@@ -6,7 +6,7 @@ import (
 	"go.uber.org/dig"
 
 	"github.com/moasq/go-b2b-starter/internal/docs/api"
-	server "github.com/moasq/go-b2b-starter/internal/server/domain"
+	server "github.com/moasq/go-b2b-starter/internal/platform/server/domain"
 )
 
 func Init(container *dig.Container) {

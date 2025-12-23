@@ -41,19 +41,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Current billing and quota status",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_app_billing_domain.BillingStatus"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_internal_modules_billing_domain.BillingStatus"
                         }
                     },
                     "400": {
                         "description": "Invalid request parameters or missing organization context",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError"
                         }
                     }
                 }
@@ -79,7 +79,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api_subscriptions.VerifyPaymentRequest"
+                            "$ref": "#/definitions/internal_modules_billing.VerifyPaymentRequest"
                         }
                     }
                 ],
@@ -87,25 +87,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Verification result with updated billing status",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_app_billing_domain.BillingStatus"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_internal_modules_billing_domain.BillingStatus"
                         }
                     },
                     "400": {
                         "description": "Invalid request parameters or checkout session failed",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError"
                         }
                     },
                     "404": {
                         "description": "Checkout session not found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError"
                         }
                     }
                 }
@@ -178,7 +178,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_app_organizations_app_services.ListMembersResponse"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.ListMembersResponse"
                         }
                     },
                     "400": {
@@ -255,7 +255,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_app_organizations_app_services.AddMemberResponse"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.AddMemberResponse"
                         }
                     },
                     "400": {
@@ -360,7 +360,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_app_organizations_app_services.ProfileResponse"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.ProfileResponse"
                         }
                     },
                     "400": {
@@ -407,7 +407,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_app_organizations_app_services.BootstrapOrganizationRequest"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.BootstrapOrganizationRequest"
                         }
                     }
                 ],
@@ -415,7 +415,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_app_organizations_app_services.BootstrapOrganizationResponse"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.BootstrapOrganizationResponse"
                         }
                     },
                     "400": {
@@ -455,7 +455,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api_cognitive.ChatRequest"
+                            "$ref": "#/definitions/internal_modules_cognitive.ChatRequest"
                         }
                     }
                 ],
@@ -463,19 +463,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_app_example_cognitive_domain.ChatResponse"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_internal_modules_cognitive_domain.ChatResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError"
                         }
                     }
                 }
@@ -518,7 +518,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError"
                         }
                     }
                 }
@@ -549,20 +549,20 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/github_com_moasq_go-b2b-starter_app_example_cognitive_domain.ChatMessage"
+                                "$ref": "#/definitions/github_com_moasq_go-b2b-starter_internal_modules_cognitive_domain.ChatMessage"
                             }
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError"
                         }
                     }
                 }
@@ -604,13 +604,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_app_example_documents_app_services.ListDocumentsResponse"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_internal_modules_documents_app_services.ListDocumentsResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError"
                         }
                     }
                 }
@@ -649,19 +649,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_app_example_documents_domain.Document"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_internal_modules_documents_domain.Document"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError"
                         }
                     }
                 }
@@ -690,13 +690,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError"
                         }
                     }
                 }
@@ -722,7 +722,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.PermissionCheckRequest"
+                            "$ref": "#/definitions/internal_modules_auth.PermissionCheckRequest"
                         }
                     }
                 ],
@@ -730,7 +730,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Permission check result",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.PermissionCheckResponse"
+                            "$ref": "#/definitions/internal_modules_auth.PermissionCheckResponse"
                         }
                     },
                     "400": {
@@ -759,7 +759,7 @@ const docTemplate = `{
                     "200": {
                         "description": "RBAC system metadata",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.RBACMetadata"
+                            "$ref": "#/definitions/internal_modules_auth.RBACMetadata"
                         }
                     }
                 }
@@ -779,7 +779,7 @@ const docTemplate = `{
                     "200": {
                         "description": "All permissions",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.PermissionsResponse"
+                            "$ref": "#/definitions/internal_modules_auth.PermissionsResponse"
                         }
                     },
                     "500": {
@@ -808,7 +808,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Permissions by category",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.PermissionsByCategoryResponse"
+                            "$ref": "#/definitions/internal_modules_auth.PermissionsByCategoryResponse"
                         }
                     },
                     "500": {
@@ -837,7 +837,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Roles with permissions",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.RolesResponse"
+                            "$ref": "#/definitions/internal_modules_auth.RolesResponse"
                         }
                     },
                     "500": {
@@ -875,7 +875,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Role details with statistics",
                         "schema": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.RolePermissionsResponse"
+                            "$ref": "#/definitions/internal_modules_auth.RolePermissionsResponse"
                         }
                     },
                     "400": {
@@ -901,41 +901,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "api_cognitive.ChatRequest": {
-            "type": "object",
-            "required": [
-                "message"
-            ],
-            "properties": {
-                "context_history": {
-                    "type": "integer"
-                },
-                "max_documents": {
-                    "type": "integer"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "session_id": {
-                    "type": "integer"
-                },
-                "use_rag": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "api_subscriptions.VerifyPaymentRequest": {
-            "type": "object",
-            "required": [
-                "session_id"
-            ],
-            "properties": {
-                "session_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_moasq_go-b2b-starter_app_billing_domain.BillingStatus": {
+        "github_com_moasq_go-b2b-starter_internal_modules_billing_domain.BillingStatus": {
             "type": "object",
             "properties": {
                 "canProcessInvoices": {
@@ -964,7 +930,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_moasq_go-b2b-starter_app_example_cognitive_domain.ChatMessage": {
+        "github_com_moasq_go-b2b-starter_internal_modules_cognitive_domain.ChatMessage": {
             "type": "object",
             "properties": {
                 "content": {
@@ -983,7 +949,7 @@ const docTemplate = `{
                     }
                 },
                 "role": {
-                    "$ref": "#/definitions/github_com_moasq_go-b2b-starter_app_example_cognitive_domain.ChatRole"
+                    "$ref": "#/definitions/github_com_moasq_go-b2b-starter_internal_modules_cognitive_domain.ChatRole"
                 },
                 "session_id": {
                     "type": "integer"
@@ -993,16 +959,16 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_moasq_go-b2b-starter_app_example_cognitive_domain.ChatResponse": {
+        "github_com_moasq_go-b2b-starter_internal_modules_cognitive_domain.ChatResponse": {
             "type": "object",
             "properties": {
                 "message": {
-                    "$ref": "#/definitions/github_com_moasq_go-b2b-starter_app_example_cognitive_domain.ChatMessage"
+                    "$ref": "#/definitions/github_com_moasq_go-b2b-starter_internal_modules_cognitive_domain.ChatMessage"
                 },
                 "referenced_docs": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_moasq_go-b2b-starter_app_example_cognitive_domain.SimilarDocument"
+                        "$ref": "#/definitions/github_com_moasq_go-b2b-starter_internal_modules_cognitive_domain.SimilarDocument"
                     }
                 },
                 "session_id": {
@@ -1013,7 +979,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_moasq_go-b2b-starter_app_example_cognitive_domain.ChatRole": {
+        "github_com_moasq_go-b2b-starter_internal_modules_cognitive_domain.ChatRole": {
             "type": "string",
             "enum": [
                 "user",
@@ -1026,7 +992,7 @@ const docTemplate = `{
                 "ChatRoleSystem"
             ]
         },
-        "github_com_moasq_go-b2b-starter_app_example_cognitive_domain.SimilarDocument": {
+        "github_com_moasq_go-b2b-starter_internal_modules_cognitive_domain.SimilarDocument": {
             "type": "object",
             "properties": {
                 "chunk_index": {
@@ -1065,13 +1031,13 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_moasq_go-b2b-starter_app_example_documents_app_services.ListDocumentsResponse": {
+        "github_com_moasq_go-b2b-starter_internal_modules_documents_app_services.ListDocumentsResponse": {
             "type": "object",
             "properties": {
                 "documents": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_moasq_go-b2b-starter_app_example_documents_domain.Document"
+                        "$ref": "#/definitions/github_com_moasq_go-b2b-starter_internal_modules_documents_domain.Document"
                     }
                 },
                 "limit": {
@@ -1085,7 +1051,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_moasq_go-b2b-starter_app_example_documents_domain.Document": {
+        "github_com_moasq_go-b2b-starter_internal_modules_documents_domain.Document": {
             "type": "object",
             "properties": {
                 "content_type": {
@@ -1117,7 +1083,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "status": {
-                    "$ref": "#/definitions/github_com_moasq_go-b2b-starter_app_example_documents_domain.DocumentStatus"
+                    "$ref": "#/definitions/github_com_moasq_go-b2b-starter_internal_modules_documents_domain.DocumentStatus"
                 },
                 "title": {
                     "type": "string"
@@ -1127,7 +1093,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_moasq_go-b2b-starter_app_example_documents_domain.DocumentStatus": {
+        "github_com_moasq_go-b2b-starter_internal_modules_documents_domain.DocumentStatus": {
             "type": "string",
             "enum": [
                 "pending",
@@ -1142,7 +1108,7 @@ const docTemplate = `{
                 "DocumentStatusFailed"
             ]
         },
-        "github_com_moasq_go-b2b-starter_app_organizations_app_services.AddMemberResponse": {
+        "github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.AddMemberResponse": {
             "type": "object",
             "properties": {
                 "email": {
@@ -1165,7 +1131,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_moasq_go-b2b-starter_app_organizations_app_services.BootstrapOrganizationRequest": {
+        "github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.BootstrapOrganizationRequest": {
             "type": "object",
             "required": [
                 "org_display_name",
@@ -1186,7 +1152,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_moasq_go-b2b-starter_app_organizations_app_services.BootstrapOrganizationResponse": {
+        "github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.BootstrapOrganizationResponse": {
             "type": "object",
             "properties": {
                 "display_name": {
@@ -1215,13 +1181,13 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_moasq_go-b2b-starter_app_organizations_app_services.ListMembersResponse": {
+        "github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.ListMembersResponse": {
             "type": "object",
             "properties": {
                 "members": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_moasq_go-b2b-starter_app_organizations_app_services.MemberInfo"
+                        "$ref": "#/definitions/github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.MemberInfo"
                     }
                 },
                 "total": {
@@ -1229,7 +1195,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_moasq_go-b2b-starter_app_organizations_app_services.MemberInfo": {
+        "github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.MemberInfo": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -1261,7 +1227,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_moasq_go-b2b-starter_app_organizations_app_services.ProfileOrganization": {
+        "github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.ProfileOrganization": {
             "type": "object",
             "properties": {
                 "name": {
@@ -1278,7 +1244,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_moasq_go-b2b-starter_app_organizations_app_services.ProfileResponse": {
+        "github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.ProfileResponse": {
             "type": "object",
             "properties": {
                 "account_id": {
@@ -1305,7 +1271,7 @@ const docTemplate = `{
                     "description": "Organization details",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_app_organizations_app_services.ProfileOrganization"
+                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_internal_modules_organizations_app_services.ProfileOrganization"
                         }
                     ]
                 },
@@ -1329,7 +1295,18 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_moasq_go-b2b-starter_pkg_auth.PermissionCheckRequest": {
+        "github_com_moasq_go-b2b-starter_pkg_httperr.HTTPError": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_modules_auth.PermissionCheckRequest": {
             "type": "object",
             "required": [
                 "permission_id",
@@ -1344,7 +1321,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_moasq_go-b2b-starter_pkg_auth.PermissionCheckResponse": {
+        "internal_modules_auth.PermissionCheckResponse": {
             "type": "object",
             "properties": {
                 "has_permission": {
@@ -1358,7 +1335,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_moasq_go-b2b-starter_pkg_auth.PermissionDTO": {
+        "internal_modules_auth.PermissionDTO": {
             "type": "object",
             "properties": {
                 "action": {
@@ -1381,7 +1358,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_moasq_go-b2b-starter_pkg_auth.PermissionsByCategoryResponse": {
+        "internal_modules_auth.PermissionsByCategoryResponse": {
             "type": "object",
             "properties": {
                 "categories": {
@@ -1389,24 +1366,24 @@ const docTemplate = `{
                     "additionalProperties": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.PermissionDTO"
+                            "$ref": "#/definitions/internal_modules_auth.PermissionDTO"
                         }
                     }
                 }
             }
         },
-        "github_com_moasq_go-b2b-starter_pkg_auth.PermissionsResponse": {
+        "internal_modules_auth.PermissionsResponse": {
             "type": "object",
             "properties": {
                 "permissions": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.PermissionDTO"
+                        "$ref": "#/definitions/internal_modules_auth.PermissionDTO"
                     }
                 }
             }
         },
-        "github_com_moasq_go-b2b-starter_pkg_auth.RBACMetadata": {
+        "internal_modules_auth.RBACMetadata": {
             "type": "object",
             "properties": {
                 "description": {
@@ -1426,7 +1403,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_moasq_go-b2b-starter_pkg_auth.RoleDTO": {
+        "internal_modules_auth.RoleDTO": {
             "type": "object",
             "properties": {
                 "description": {
@@ -1441,26 +1418,26 @@ const docTemplate = `{
                 "permissions": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.PermissionDTO"
+                        "$ref": "#/definitions/internal_modules_auth.PermissionDTO"
                     }
                 }
             }
         },
-        "github_com_moasq_go-b2b-starter_pkg_auth.RolePermissionsResponse": {
+        "internal_modules_auth.RolePermissionsResponse": {
             "type": "object",
             "properties": {
                 "restrictions": {
-                    "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.RoleRestrictions"
+                    "$ref": "#/definitions/internal_modules_auth.RoleRestrictions"
                 },
                 "role": {
-                    "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.RoleDTO"
+                    "$ref": "#/definitions/internal_modules_auth.RoleDTO"
                 },
                 "statistics": {
-                    "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.RoleStatistics"
+                    "$ref": "#/definitions/internal_modules_auth.RoleStatistics"
                 }
             }
         },
-        "github_com_moasq_go-b2b-starter_pkg_auth.RoleRestrictions": {
+        "internal_modules_auth.RoleRestrictions": {
             "type": "object",
             "properties": {
                 "cannot_do": {
@@ -1477,7 +1454,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_moasq_go-b2b-starter_pkg_auth.RoleStatistics": {
+        "internal_modules_auth.RoleStatistics": {
             "type": "object",
             "properties": {
                 "can_approve": {
@@ -1494,25 +1471,48 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_moasq_go-b2b-starter_pkg_auth.RolesResponse": {
+        "internal_modules_auth.RolesResponse": {
             "type": "object",
             "properties": {
                 "roles": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_moasq_go-b2b-starter_pkg_auth.RoleDTO"
+                        "$ref": "#/definitions/internal_modules_auth.RoleDTO"
                     }
                 }
             }
         },
-        "github_com_moasq_go-b2b-starter_pkg_common_errors.HTTPError": {
+        "internal_modules_billing.VerifyPaymentRequest": {
             "type": "object",
+            "required": [
+                "session_id"
+            ],
             "properties": {
-                "code": {
+                "session_id": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_modules_cognitive.ChatRequest": {
+            "type": "object",
+            "required": [
+                "message"
+            ],
+            "properties": {
+                "context_history": {
+                    "type": "integer"
+                },
+                "max_documents": {
+                    "type": "integer"
                 },
                 "message": {
                     "type": "string"
+                },
+                "session_id": {
+                    "type": "integer"
+                },
+                "use_rag": {
+                    "type": "boolean"
                 }
             }
         }

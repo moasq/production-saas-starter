@@ -3,12 +3,12 @@ package api
 import (
 	"go.uber.org/dig"
 
-	"github.com/moasq/go-b2b-starter/internal/auth"
-	"github.com/moasq/go-b2b-starter/internal/billing"
-	"github.com/moasq/go-b2b-starter/internal/cognitive"
-	"github.com/moasq/go-b2b-starter/internal/documents"
-	"github.com/moasq/go-b2b-starter/internal/organizations"
-	server "github.com/moasq/go-b2b-starter/internal/server/domain"
+	"github.com/moasq/go-b2b-starter/internal/modules/auth"
+	"github.com/moasq/go-b2b-starter/internal/modules/billing"
+	"github.com/moasq/go-b2b-starter/internal/modules/cognitive"
+	"github.com/moasq/go-b2b-starter/internal/modules/documents"
+	"github.com/moasq/go-b2b-starter/internal/modules/organizations"
+	server "github.com/moasq/go-b2b-starter/internal/platform/server/domain"
 )
 
 // moduleRoutes holds handlers for all API modules

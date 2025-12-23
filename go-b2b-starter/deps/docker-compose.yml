@@ -29,7 +29,7 @@ services:
       dockerfile: Dockerfile
     image: go-b2b-starter-cli
     volumes:
-      - ../:/workspace
+      - ${PWD}:/workspace
     working_dir: /workspace
     environment:
       - POSTGRES_HOST=postgres
