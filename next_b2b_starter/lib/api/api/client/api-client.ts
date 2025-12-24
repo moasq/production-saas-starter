@@ -10,6 +10,7 @@ import {
   decodeAccessToken,
   isTokenExpired,
 } from "@/lib/auth/token-utils";
+import { apiLogger } from "@/lib/utils/api-logger";
 
 export interface ApiClientConfig {
   baseUrl: string;
@@ -85,6 +86,8 @@ export class ApiClient {
     options: RequestInit & { skipAuth?: boolean }
   ): Promise<T> {
     const url = `${this.config.baseUrl}${endpoint}`;
+    const requestId = apiLogger.generateRequestId();
+    const requestStartTime = Date.now();
 
     const headers: Record<string, string> = {
       ...this.config.defaultHeaders,
@@ -115,29 +118,81 @@ export class ApiClient {
       credentials: "include",
     };
 
-    const response = await fetch(url, requestInit);
+    // Log outgoing request
+    apiLogger.logRequest(requestId, {
+      method: options.method || "GET",
+      url,
+      headers,
+      body: options.body,
+      timestamp: requestStartTime,
+    });
 
-    if (response.status === 401 && !skipAuth) {
-      const tokenState = classifyTokenState(attachedAccessToken);
-      if (tokenState === "expired" || tokenState === "invalid") {
-        console.warn("[API] Request received unauthorized due to token state", {
+    try {
+      const response = await fetch(url, requestInit);
+      const responseTime = Date.now();
+
+      // Extract response headers
+      const responseHeaders: Record<string, string> = {};
+      response.headers.forEach((value, key) => {
+        responseHeaders[key] = value;
+      });
+
+      // Clone response to read body for logging
+      const responseClone = response.clone();
+      let responseBody: any;
+      try {
+        responseBody = await responseClone.json();
+      } catch {
+        // Response is not JSON
+        responseBody = null;
+      }
+
+      // Log response
+      apiLogger.logResponse(requestId, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: responseHeaders,
+        body: responseBody,
+        duration: responseTime - requestStartTime,
+        timestamp: responseTime,
+      });
+
+      if (response.status === 401 && !skipAuth) {
+        return this.handleUnauthorizedResponse<T>({
           url,
-          tokenState,
+          requestInit,
+          headers,
+          attachedAccessToken,
         });
       }
-      return this.handleUnauthorizedResponse<T>({
-        url,
-        requestInit,
-        headers,
-        attachedAccessToken,
+
+      if (!response.ok) {
+        const error = await this.buildApiError(response);
+
+        // Log error response
+        apiLogger.logError(requestId, {
+          message: error.message,
+          status: response.status,
+          details: error,
+          duration: Date.now() - requestStartTime,
+          timestamp: Date.now(),
+        });
+
+        throw error;
+      }
+
+      return response.json() as Promise<T>;
+    } catch (error) {
+      // Log network or other errors
+      apiLogger.logError(requestId, {
+        message: error instanceof Error ? error.message : "Unknown error",
+        details: error,
+        duration: Date.now() - requestStartTime,
+        timestamp: Date.now(),
       });
-    }
 
-    if (!response.ok) {
-      throw await this.buildApiError(response);
+      throw error;
     }
-
-    return response.json() as Promise<T>;
   }
 
   private prepareBody(body: any): BodyInit | undefined {
@@ -184,12 +239,6 @@ export class ApiClient {
     attachedAccessToken: string | null;
   }): Promise<T> {
     const tokenState = classifyTokenState(attachedAccessToken);
-    if (tokenState === "expired" || tokenState === "invalid") {
-      console.info("[API] Attempting token refresh before retry", {
-        url,
-        tokenState,
-      });
-    }
 
     const refreshedToken =
       tokenState === "valid"
@@ -201,10 +250,6 @@ export class ApiClient {
       throw new Error("Session expired");
     }
 
-    console.info("[API] Retrying request with refreshed token", {
-      url,
-      tokenState,
-    });
     headers["Authorization"] = `Bearer ${refreshedToken}`;
 
     const retryResponse = await fetch(url, {
@@ -264,7 +309,6 @@ export async function resolveAccessToken(
   const { forceRefresh = false } = options;
 
   if (!forceRefresh && cachedToken && cachedPayload && !isTokenExpired(cachedPayload)) {
-    console.debug("[Auth] Using cached access token");
     return cachedToken;
   }
 
@@ -272,7 +316,6 @@ export async function resolveAccessToken(
     const storedToken = await readStoredAccessToken();
 
     if (storedToken) {
-      console.debug("[Auth] Evaluating stored access token freshness");
       const payload = decodeAccessToken(storedToken);
       if (payload && !isTokenExpired(payload)) {
         updateCachedToken(storedToken, payload);
@@ -281,15 +324,10 @@ export async function resolveAccessToken(
           persistBrowserSessionJwt(storedToken);
         }
 
-        console.debug("[Auth] Stored token still valid");
         return storedToken;
       }
     }
   }
-
-  console.info("[Auth] Stored token missing or expired, initiating refresh", {
-    forceRefresh,
-  });
 
   const refreshedToken = await refreshToken();
   if (refreshedToken) {
@@ -311,10 +349,8 @@ async function refreshTokenWithRetry(attempt: number = 0): Promise<string | null
     const token = await performTokenRefresh();
 
     if (!token) {
-      console.warn(`[Auth] Token refresh attempt ${attempt + 1} returned no token`);
       if (attempt < MAX_REFRESH_RETRIES - 1) {
         const delay = REFRESH_RETRY_DELAYS[attempt];
-        console.info(`[Auth] Retrying token refresh in ${delay}ms (attempt ${attempt + 2}/${MAX_REFRESH_RETRIES})`);
         await sleep(delay);
         return refreshTokenWithRetry(attempt + 1);
       }
@@ -323,15 +359,9 @@ async function refreshTokenWithRetry(attempt: number = 0): Promise<string | null
 
     const payload = decodeAccessToken(token);
     if (!payload || isTokenExpired(payload)) {
-      console.error(`[Auth] Refreshed token invalid or expired (attempt ${attempt + 1})`, {
-        hasPayload: Boolean(payload),
-        isExpired: payload ? isTokenExpired(payload) : null,
-      });
-
       // Retry if token is invalid and we have retries left
       if (attempt < MAX_REFRESH_RETRIES - 1) {
         const delay = REFRESH_RETRY_DELAYS[attempt];
-        console.info(`[Auth] Retrying token refresh in ${delay}ms (attempt ${attempt + 2}/${MAX_REFRESH_RETRIES})`);
         resetCachedToken();
         await sleep(delay);
         return refreshTokenWithRetry(attempt + 1);
@@ -347,14 +377,10 @@ async function refreshTokenWithRetry(attempt: number = 0): Promise<string | null
       persistBrowserSessionJwt(token);
     }
 
-    console.info(`[Auth] Token refresh succeeded on attempt ${attempt + 1}`);
     return token;
-  } catch (error) {
-    console.error(`[Auth] Token refresh attempt ${attempt + 1} failed:`, error);
-
+  } catch {
     if (attempt < MAX_REFRESH_RETRIES - 1) {
       const delay = REFRESH_RETRY_DELAYS[attempt];
-      console.info(`[Auth] Retrying token refresh in ${delay}ms (attempt ${attempt + 2}/${MAX_REFRESH_RETRIES})`);
       await sleep(delay);
       return refreshTokenWithRetry(attempt + 1);
     }
@@ -366,8 +392,6 @@ async function refreshTokenWithRetry(attempt: number = 0): Promise<string | null
 
 export async function refreshToken(): Promise<string | null> {
   if (!refreshPromise) {
-    console.info("[Auth] Starting token refresh flow with retry logic");
-
     // Set up timeout for the refresh promise
     if (refreshPromiseTimeout) {
       clearTimeout(refreshPromiseTimeout);
@@ -384,14 +408,11 @@ export async function refreshToken(): Promise<string | null> {
 
     // Add timeout to prevent hanging on shared refresh promise
     refreshPromiseTimeout = setTimeout(() => {
-      console.warn("[Auth] Refresh promise timeout reached, clearing shared promise");
       if (refreshPromise) {
         refreshPromise = null;
       }
       refreshPromiseTimeout = null;
     }, REFRESH_PROMISE_TIMEOUT_MS);
-  } else {
-    console.debug("[Auth] Waiting for existing refresh promise to complete");
   }
 
   return refreshPromise;

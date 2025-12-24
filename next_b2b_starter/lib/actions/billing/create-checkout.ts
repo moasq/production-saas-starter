@@ -1,10 +1,16 @@
-import { NextResponse } from "next/server";
+"use server";
 
+import { redirect } from "next/navigation";
 import { getMemberSession } from "@/lib/auth/stytch/server";
 import { getServerPermissions } from "@/lib/auth/server-permissions";
 import { getPolarClient } from "@/lib/polar/client";
 import { getDefaultPlan, getPlanById, getPlanByProductId, type PolarPlan } from "@/lib/polar/plans";
 import { getActiveSubscription } from "@/lib/polar/subscription";
+import {
+  createActionError,
+  createActionSuccess,
+  type ActionResult
+} from "@/lib/utils/server-action-helpers";
 
 function getAppBaseUrl(): string {
   return (
@@ -14,35 +20,59 @@ function getAppBaseUrl(): string {
   );
 }
 
-export async function GET(request: Request) {
+interface CreateCheckoutParams {
+  planId?: string;
+  products?: string[];
+}
+
+interface CheckoutData {
+  checkoutId: string;
+  checkoutUrl: string;
+}
+
+/**
+ * Create Checkout Server Action
+ *
+ * Creates a Polar checkout session for a subscription plan.
+ * Validates permissions, checks for existing subscriptions, and redirects to Polar checkout.
+ *
+ * @param params - Optional planId or products array
+ */
+export async function createCheckout(
+  params?: CreateCheckoutParams
+): Promise<ActionResult<CheckoutData> | never> {
   const client = getPolarClient();
+
   if (!client || !process.env.POLAR_ACCESS_TOKEN) {
-    return NextResponse.json(
-      { error: "Polar billing is not configured." },
-      { status: 503 }
+    return createActionError(
+      "Polar billing is not configured.",
+      "Missing Polar client or access token"
     );
   }
 
+  // Authenticate user
   const session = await getMemberSession();
   if (!session?.session_jwt) {
     console.info("[Polar] Checkout attempted without authentication");
-    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    return createActionError("Authentication required.");
   }
 
+  // Check permissions
   const permissions = await getServerPermissions(session);
   const profile = permissions.profile;
+
   if (!profile) {
     console.warn("[Polar] Checkout aborted - profile unavailable");
-    return NextResponse.json({ error: "Profile not available." }, { status: 401 });
+    return createActionError("Profile not available.");
   }
 
   if (!permissions.canManageSubscriptions) {
     console.info("[Polar] Checkout forbidden - insufficient permissions", {
       memberId: profile.member_id,
     });
-    return NextResponse.json(
-      { error: "You do not have access to manage subscriptions." },
-      { status: 403 }
+    return createActionError(
+      "You do not have access to manage subscriptions.",
+      "Missing subscription management permissions"
     );
   }
 
@@ -116,12 +146,9 @@ export async function GET(request: Request) {
       productIds: availablePlans.map((p) => p.productId),
     });
 
-    const url = new URL(request.url);
-    const planId = url.searchParams.get("plan");
-    const products = url.searchParams
-      .getAll("products")
-      .map((product) => product.trim())
-      .filter(Boolean);
+    // Determine which plan/products to use
+    const planId = params?.planId;
+    const products = params?.products?.map((p) => p.trim()).filter(Boolean) ?? [];
 
     let selectedPlan = getPlanById(availablePlans, planId);
 
@@ -135,9 +162,9 @@ export async function GET(request: Request) {
         selectedPlan = defaultPlan;
         products.push(defaultPlan.productId);
       } else {
-        return NextResponse.json(
-          { error: "No Polar product configured." },
-          { status: 503 }
+        return createActionError(
+          "No Polar product configured.",
+          "No products available for checkout"
         );
       }
     }
@@ -169,17 +196,13 @@ export async function GET(request: Request) {
         requestedPlanId: selectedPlan?.id,
       });
 
-      return NextResponse.json(
-        {
-          error: "You already have an active subscription.",
-          shouldUpdate: true,
-          subscriptionId: existingSubscription.subscription.id,
-          currentProductId: existingSubscription.subscription.productId,
-          message: "Please use the plan switcher to upgrade or downgrade your existing subscription.",
-        },
-        { status: 400 }
+      return createActionError(
+        "You already have an active subscription. Please use the plan switcher to upgrade or downgrade your existing subscription.",
+        `Existing subscription: ${existingSubscription.subscription.id}`
       );
     }
+
+    // Prepare metadata
     const accountId =
       typeof profile.account_id === "number"
         ? String(profile.account_id)
@@ -208,6 +231,7 @@ export async function GET(request: Request) {
       planId: selectedPlan?.id ?? null,
     });
 
+    // Create Polar checkout session
     const checkout = await client.checkouts.create({
       products,
       successUrl: `${getAppBaseUrl()}/dashboard?checkout_id={CHECKOUT_ID}`,
@@ -226,12 +250,17 @@ export async function GET(request: Request) {
       url: checkout.url,
     });
 
-    return NextResponse.redirect(checkout.url, { status: 303 });
+    // Redirect to Polar checkout page
+    redirect(checkout.url);
   } catch (error) {
+    // Re-throw redirect errors - Next.js uses these internally
+    if (error instanceof Error && error.message === "NEXT_REDIRECT") {
+      throw error;
+    }
     console.error("[Polar] Failed to create checkout session", error);
-    return NextResponse.json(
-      { error: "Failed to start Polar checkout session." },
-      { status: 500 }
+    return createActionError(
+      "Failed to start Polar checkout session.",
+      error instanceof Error ? error.message : "Unknown error"
     );
   }
 }

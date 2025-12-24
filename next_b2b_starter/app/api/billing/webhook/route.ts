@@ -3,18 +3,14 @@ import { Webhooks } from "@polar-sh/nextjs";
 
 const webhookSecret = process.env.POLAR_WEBHOOK_SECRET;
 
-async function handleSubscriptionEvent(eventType: string, payload: unknown) {
-  try {
-    console.info(`[Polar] ${eventType}`, {
-      subscriptionId:
-        typeof payload === "object" && payload && "id" in payload
-          ? (payload as { id: string }).id
-          : undefined,
-    });
-    // TODO: forward to backend persistence layer when available.
-  } catch (error) {
-    console.error("[Polar] Failed to handle webhook event", error);
-  }
+async function handleSubscriptionEvent(_eventType: string, _payload: unknown) {
+  // TODO: Forward webhook events to Go backend for persistence.
+  // Options:
+  // 1. Call backend API: POST /api/webhooks/polar with { eventType, payload }
+  // 2. Configure Polar.sh to send webhooks directly to Go backend
+  //
+  // Backend already has ProcessWebhookEvent service ready in:
+  // src/app/billing/app/services/process_webhook_event_service.go
 }
 
 export const POST = webhookSecret

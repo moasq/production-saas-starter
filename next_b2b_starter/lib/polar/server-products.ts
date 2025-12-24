@@ -1,42 +1,39 @@
-import { NextResponse } from "next/server";
+/**
+ * Server-side Products Fetching
+ *
+ * This module provides server-side data fetching for Polar products.
+ * Use this in Server Components and Server Actions.
+ * For Client Components, use the useProductsQuery hook instead.
+ */
 
 import { getMemberSession } from "@/lib/auth/stytch/server";
 import { getServerPermissions } from "@/lib/auth/server-permissions";
 import { getPolarClient } from "@/lib/polar/client";
+import type { PolarPlan } from "./plans";
 
-export interface PolarProductResponse {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number; // USD per month
-  interval: "month" | "year";
-  productId: string;
-  priceId: string | null;
-  includedSeats: number | null;
-  includedInvoices: number | null;
-  benefits: string[];
-  metadata: Record<string, unknown>;
+interface FetchProductsResult {
+  success: boolean;
+  products?: PolarPlan[];
+  error?: string;
 }
 
 /**
- * Get Products from Polar
+ * Fetch products from Polar (Server-side)
  *
- * GET /api/billing/products
+ * Fetches all active products from Polar with authentication and permission checks.
+ * This function can only be called from Server Components or Server Actions.
  *
- * Returns all active products from Polar with their pricing and metadata.
- * Products include plan details like included seats, invoices, and benefits.
- *
- * This endpoint provides secure access to Polar products without exposing API keys to the frontend.
+ * @returns Products array or error
  */
-export async function GET() {
+export async function fetchProducts(): Promise<FetchProductsResult> {
   // Authentication check
   const session = await getMemberSession();
   if (!session?.session_jwt) {
     console.info("[Polar Products] Unauthenticated request");
-    return NextResponse.json(
-      { error: "Authentication required." },
-      { status: 401 }
-    );
+    return {
+      success: false,
+      error: "Authentication required.",
+    };
   }
 
   const permissions = await getServerPermissions(session);
@@ -44,41 +41,38 @@ export async function GET() {
     console.warn("[Polar Products] Backend unavailable", {
       error: permissions.backendError,
     });
-    return NextResponse.json(
-      {
-        error: "Service temporarily unavailable",
-        details: permissions.backendError,
-      },
-      { status: 503 }
-    );
+    return {
+      success: false,
+      error: "Service temporarily unavailable",
+    };
   }
 
   const profile = permissions.profile;
   if (!profile) {
     console.warn("[Polar Products] Profile unavailable");
-    return NextResponse.json(
-      { error: "Profile not available." },
-      { status: 401 }
-    );
+    return {
+      success: false,
+      error: "Profile not available.",
+    };
   }
 
   if (!permissions.canManageSubscriptions) {
     console.info("[Polar Products] Forbidden - insufficient permissions", {
       memberId: profile.member_id,
     });
-    return NextResponse.json(
-      { error: "You do not have access to manage subscriptions." },
-      { status: 403 }
-    );
+    return {
+      success: false,
+      error: "You do not have access to manage subscriptions.",
+    };
   }
 
   const client = getPolarClient();
   if (!client) {
     console.warn("[Polar Products] Polar client unavailable");
-    return NextResponse.json(
-      { error: "Billing service not configured." },
-      { status: 503 }
-    );
+    return {
+      success: false,
+      error: "Billing service not configured.",
+    };
   }
 
   try {
@@ -101,9 +95,9 @@ export async function GET() {
       })),
     });
 
-    // Transform products to frontend-friendly format
-    const transformedProducts: PolarProductResponse[] = products.reduce(
-      (acc, product) => {
+    // Transform products to PolarPlan format
+    const transformedProducts: PolarPlan[] = products
+      .reduce((acc, product) => {
         const price = product.prices?.[0];
         if (!price || !price.id) {
           console.warn("[Polar Products] Product has no usable price", {
@@ -113,7 +107,7 @@ export async function GET() {
           return acc;
         }
 
-        const metadata = product.metadata ?? {};
+        const metadata = (product.metadata ?? {}) as Record<string, unknown>;
 
         const includedSeats =
           typeof metadata.included_seats === "number"
@@ -138,7 +132,7 @@ export async function GET() {
 
         const planId = typeof metadata.plan_id === "string" ? metadata.plan_id : product.id;
 
-        acc.push({
+        const plan: PolarPlan = {
           id: planId,
           name: product.name,
           description: product.description ?? null,
@@ -152,44 +146,27 @@ export async function GET() {
           includedSeats,
           includedInvoices,
           benefits,
-          metadata: metadata as Record<string, unknown>,
-        });
+          metadata,
+        };
 
+        acc.push(plan);
         return acc;
-      },
-      [] as PolarProductResponse[]
-    ).sort((a, b) => a.price - b.price);
+      }, [] as PolarPlan[])
+      .sort((a, b) => a.price - b.price);
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: {
-          products: transformedProducts,
-        },
-      },
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control": "private, max-age=300", // Cache for 5 minutes
-        },
-      }
-    );
+    return {
+      success: true,
+      products: transformedProducts,
+    };
   } catch (error) {
     console.error("[Polar Products] Failed to fetch products", {
       error: error instanceof Error ? error.message : String(error),
       organizationId: profile.organization?.organization_id,
     });
 
-    return NextResponse.json(
-      {
-        success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to fetch products",
-      },
-      { status: 500 }
-    );
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to fetch products",
+    };
   }
 }

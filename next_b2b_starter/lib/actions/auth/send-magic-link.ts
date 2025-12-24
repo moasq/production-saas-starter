@@ -1,37 +1,42 @@
-import { NextRequest, NextResponse } from "next/server";
+"use server";
+
 import {
   getStytchB2BClient,
   getOrganizationIdsForMemberSearch,
 } from "@/lib/auth/stytch/server";
+import {
+  createActionSuccess,
+  createActionError,
+  type ActionResult,
+} from "@/lib/utils/server-action-helpers";
 
 /**
- * POST /api/auth/magic-link
+ * Send Magic Link Server Action
  *
  * Validates that an email belongs to an existing member before sending a magic link.
  * This prevents unknown users from receiving authentication emails.
+ *
+ * @param email - The email address to send the magic link to
+ * @returns ActionResult with success message or error
  */
-export async function POST(request: NextRequest) {
+export async function sendMagicLink(
+  email: string
+): Promise<ActionResult<{ message: string }>> {
   try {
-    const body = await request.json();
-    const { email } = body;
-
+    // Validate input
     if (!email || typeof email !== "string") {
-      return NextResponse.json(
-        { error: "Email address is required" },
-        { status: 400 }
-      );
+      return createActionError("Email address is required");
     }
 
     const client = getStytchB2BClient();
     const organizationIds = await getOrganizationIdsForMemberSearch();
 
     if (!organizationIds.length) {
-      console.error("[Magic Link] No organization IDs configured for member search.");
-      return NextResponse.json(
-        {
-          error: "Unable to process request. Please try again later.",
-        },
-        { status: 500 }
+      console.error(
+        "[Magic Link] No organization IDs configured for member search."
+      );
+      return createActionError(
+        "Unable to process request. Please try again later."
       );
     }
 
@@ -54,16 +59,20 @@ export async function POST(request: NextRequest) {
     if (!searchResult.members || searchResult.members.length === 0) {
       // Return success to prevent user enumeration
       // But don't actually send an email
-      return NextResponse.json({
-        success: true,
-        message: "If an account exists with that email, a magic link has been sent.",
+      console.info(
+        "[Magic Link] No member found for email (not revealing to client):",
+        email
+      );
+      return createActionSuccess({
+        message:
+          "If an account exists with that email, a magic link has been sent.",
       });
     }
 
     // Member exists - prepare login redirect URL
     const redirectUrl = process.env.NEXT_PUBLIC_APP_BASE_URL
       ? `${process.env.NEXT_PUBLIC_APP_BASE_URL}/authenticate`
-      : `${request.nextUrl.origin}/authenticate`;
+      : "http://localhost:3000/authenticate";
 
     const memberOrganizationIds = Array.from(
       new Set(
@@ -78,9 +87,9 @@ export async function POST(request: NextRequest) {
         "[Magic Link] Member search succeeded but no organization IDs were returned for email:",
         email
       );
-      return NextResponse.json({
-        success: true,
-        message: "If an account exists with that email, a magic link has been sent.",
+      return createActionSuccess({
+        message:
+          "If an account exists with that email, a magic link has been sent.",
       });
     }
 
@@ -105,20 +114,19 @@ export async function POST(request: NextRequest) {
       )
     );
 
-    return NextResponse.json({
-      success: true,
-      message: "If an account exists with that email, a magic link has been sent.",
+    console.info("[Magic Link] Successfully sent magic link to:", email);
+
+    return createActionSuccess({
+      message:
+        "If an account exists with that email, a magic link has been sent.",
     });
   } catch (error: any) {
     console.error("[Magic Link] Error sending magic link:", error);
 
     // Return generic error to prevent user enumeration
-    return NextResponse.json(
-      {
-        error: "Unable to process request. Please try again later.",
-        details: process.env.NODE_ENV === "development" ? error.message : undefined,
-      },
-      { status: 500 }
+    return createActionError(
+      "Unable to process request. Please try again later.",
+      process.env.NODE_ENV === "development" ? error.message : undefined
     );
   }
 }

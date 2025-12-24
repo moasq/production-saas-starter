@@ -1,11 +1,12 @@
-import { NextResponse } from "next/server";
+"use server";
 
 import { getMemberSession } from "@/lib/auth/stytch/server";
 import { apiClient } from "@/lib/api/api/client/api-client";
-
-interface VerifyPaymentRequest {
-  session_id: string;
-}
+import {
+  createActionError,
+  createActionSuccess,
+  type ActionResult
+} from "@/lib/utils/server-action-helpers";
 
 interface BillingStatus {
   organization_id: number;
@@ -17,68 +18,68 @@ interface BillingStatus {
   checked_at: string;
 }
 
-export async function POST(request: Request) {
+/**
+ * Verify Payment Server Action
+ *
+ * Verifies a payment from a Polar checkout session by calling the Go backend.
+ * Updates the organization's subscription status in the database.
+ *
+ * @param sessionId - The Polar checkout session ID
+ */
+export async function verifyPayment(
+  sessionId: string
+): Promise<ActionResult<BillingStatus>> {
+  // Authenticate user
   const session = await getMemberSession();
   if (!session?.session_jwt) {
     console.info("[Billing] verify-payment attempted without authentication");
-    return NextResponse.json(
-      { error: "Authentication required." },
-      { status: 401 }
-    );
+    return createActionError("Authentication required.");
   }
 
-  let body: VerifyPaymentRequest;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json(
-      { error: "Invalid request body." },
-      { status: 400 }
-    );
-  }
-
-  if (!body.session_id || typeof body.session_id !== "string") {
-    return NextResponse.json(
-      { error: "session_id is required." },
-      { status: 400 }
+  // Validate session_id
+  if (!sessionId || typeof sessionId !== "string") {
+    return createActionError(
+      "session_id is required.",
+      "Invalid or missing session_id parameter"
     );
   }
 
   try {
     console.info("[Billing] Verifying payment from checkout session", {
-      sessionId: body.session_id,
+      sessionId,
     });
 
+    // Call Go backend to verify payment
     const billingStatus = await apiClient.post<BillingStatus>(
       "/subscriptions/verify-payment",
-      { session_id: body.session_id }
+      { session_id: sessionId }
     );
 
     console.info("[Billing] Payment verification successful", {
-      sessionId: body.session_id,
+      sessionId,
       hasActiveSubscription: billingStatus.has_active_subscription,
       reason: billingStatus.reason,
     });
 
-    return NextResponse.json(billingStatus);
+    return createActionSuccess(billingStatus);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("[Billing] Payment verification failed", {
-      sessionId: body.session_id,
+      sessionId,
       error: errorMessage,
     });
 
     // Check if it's a 404 (session not found)
     if (errorMessage.includes("404")) {
-      return NextResponse.json(
-        { error: "Checkout session not found." },
-        { status: 404 }
+      return createActionError(
+        "Checkout session not found.",
+        errorMessage
       );
     }
 
-    return NextResponse.json(
-      { error: "Failed to verify payment." },
-      { status: 500 }
+    return createActionError(
+      "Failed to verify payment.",
+      errorMessage
     );
   }
 }

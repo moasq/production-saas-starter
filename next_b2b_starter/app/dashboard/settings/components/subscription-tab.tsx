@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { format } from "date-fns";
 import {
   AlertTriangle,
@@ -38,6 +38,7 @@ import { Input } from "@/components/ui/input";
 import type { SubscriptionGateState } from "@/lib/polar/current-subscription";
 import { getPlanById, getPlanByProductId } from "@/lib/polar/plans";
 import { useProductsQuery } from "@/lib/hooks/queries/use-products-query";
+import { cancelSubscription } from "@/lib/actions/billing/cancel-subscription";
 
 interface SubscriptionTabProps {
   state: SubscriptionGateState | null;
@@ -60,6 +61,7 @@ export function SubscriptionTab({
   );
   const [isCancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [cancelInput, setCancelInput] = useState("");
+  const [isPending, startTransition] = useTransition();
 
   const { data: products } = useProductsQuery();
 
@@ -442,50 +444,37 @@ export function SubscriptionTab({
     setActionError(null);
     setActionState(cancel ? "cancelling" : "resuming");
 
-    try {
-      const response = await fetch("/api/billing/subscription/cancel", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
+    startTransition(async () => {
+      try {
+        const result = await cancelSubscription({
           cancelAtPeriodEnd: cancel,
-        }),
-      });
+        });
 
-      if (!response.ok) {
-        const payload = await response.json().catch(() => null);
+        if (!result.success) {
+          throw new Error(result.error);
+        }
+
+        if (cancel) {
+          toast.success("Cancellation scheduled successfully.");
+          setCancelInput("");
+          setCancelDialogOpen(false);
+        } else {
+          toast.success("Subscription resumed — you will remain active.");
+        }
+
+        await onRefresh();
+      } catch (updateError) {
+        console.error("[Settings] Failed to update subscription cancellation", updateError);
         const message =
-          payload && typeof payload === "object" && payload && "error" in payload
-            ? (payload as { error?: string }).error
-            : null;
-        throw new Error(
-          message ||
-            `Unable to ${cancel ? "cancel" : "resume"} subscription (HTTP ${response.status}).`
-        );
+          updateError instanceof Error
+            ? updateError.message
+            : "We could not update your subscription. Please try again.";
+        setActionError(message);
+        toast.error(message);
+      } finally {
+        setActionState("idle");
       }
-
-      if (cancel) {
-        toast.success("Cancellation scheduled successfully.");
-        setCancelInput("");
-        setCancelDialogOpen(false);
-      } else {
-        toast.success("Subscription resumed — you will remain active.");
-      }
-
-      await onRefresh();
-    } catch (updateError) {
-      console.error("[Settings] Failed to update subscription cancellation", updateError);
-      const message =
-        updateError instanceof Error
-          ? updateError.message
-          : "We could not update your subscription. Please try again.";
-      setActionError(message);
-      toast.error(message);
-    } finally {
-      setActionState("idle");
-    }
+    });
   }
 }
 

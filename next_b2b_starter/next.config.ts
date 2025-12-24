@@ -9,7 +9,8 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 
 const ContentSecurityPolicy = [
   "default-src 'self';",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://youtube-nocookie.com https://www.googletagmanager.com;",
+  // Note: Add 'unsafe-eval' back if Google Tag Manager is needed in production
+  "script-src 'self' 'unsafe-inline' https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://youtube-nocookie.com https://www.googletagmanager.com;",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;",
   "img-src 'self' data: https://www.youtube.com https://youtube.com https://img.youtube.com https://i.ytimg.com https://fonts.gstatic.com;",
   "font-src 'self' https://fonts.gstatic.com;",

@@ -6,8 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { consumeMagicLink } from "@/lib/actions/auth/consume-magic-link";
 
-const API_ROUTE = "/api/auth/consume-magic-link";
 const SESSION_DURATION_MINUTES = Number(
   process.env.NEXT_PUBLIC_STYTCH_SESSION_DURATION_MINUTES ?? "60"
 ) || 60;
@@ -72,25 +72,16 @@ export default function AuthenticateRedirectPage() {
     setStatus(INITIAL_STATUS);
 
     try {
-      const response = await fetch(API_ROUTE, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token: magicLinkToken,
-          tokenType: tokenType || "magic_links",
-          sessionDurationMinutes: SESSION_DURATION_MINUTES,
-        }),
-      });
+      const result = await consumeMagicLink(
+        magicLinkToken,
+        SESSION_DURATION_MINUTES
+      );
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data?.error || "Failed to verify magic link.");
+      if (!result.success) {
+        throw new Error(result.error || "Failed to verify magic link.");
       }
 
-      if (!data?.memberAuthenticated) {
+      if (!result.data.memberAuthenticated) {
         setStatus({
           state: "error",
           headline: "Additional verification required",
@@ -102,20 +93,18 @@ export default function AuthenticateRedirectPage() {
       setStatus({
         state: "success",
         headline: "Magic link verified",
-        message: "You’re all set. Redirecting you to your workspace…",
+        message: "You're all set. Redirecting you to your workspace…",
       });
 
       redirectToDestination();
     } catch (error) {
-      console.error("Magic link verification failed:", error);
-
       setStatus({
         state: "error",
-        headline: "We couldn’t verify your link",
+        headline: "We couldn't verify your link",
         message: extractErrorMessage(error),
       });
     }
-  }, [magicLinkToken, tokenType, redirectToDestination]);
+  }, [magicLinkToken, redirectToDestination]);
 
   useEffect(() => {
     if (hasAttemptedAuthRef.current) return;

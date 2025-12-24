@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { signupRepository } from "@/lib/api/api/repositories/signup-repository";
 import {
   SignupOrganization,
@@ -47,6 +47,9 @@ export function useSignupFlow(): UseSignupFlowState {
   const [error, setError] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState(false);
   const [result, setResult] = useState<SignupResult | null>(null);
+
+  // Ref to prevent duplicate submissions
+  const isSubmittingRef = useRef(false);
 
   const stepIndex = useMemo(() => {
     switch (step) {
@@ -107,16 +110,21 @@ export function useSignupFlow(): UseSignupFlowState {
   }, []);
 
   const sendMagicLink = useCallback(async () => {
+    // Prevent duplicate submissions
+    if (isSubmittingRef.current) return;
+
     if (!canContinueOrganization) {
       setError("Please fill in all required fields correctly");
       return;
     }
 
+    isSubmittingRef.current = true;
     setIsLoading(true);
     setError(null);
 
     try {
-      // Call the API to create organization and send magic link
+      // Backend signup endpoint already sends magic link via Stytch
+      // No need to call sendMagicLink() Server Action separately
       const signupResult = await signupRepository.createOrganizationWithMagicLink(
         owner,
         organization
@@ -124,29 +132,16 @@ export function useSignupFlow(): UseSignupFlowState {
 
       setResult(signupResult);
       setEmailSent(true);
-
-      // Immediately send magic link via login endpoint (bypass backend async)
-      try {
-        await fetch("/api/auth/magic-link", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email: owner.email }),
-        });
-      } catch (magicLinkError) {
-        console.error("Failed to send magic link:", magicLinkError);
-        // Don't block signup - user can retry login if needed
-      }
     } catch (signupError) {
       const message =
         signupError instanceof Error
           ? signupError.message
-          : "Failed to send magic link. Please try again.";
+          : "Failed to create account. Please try again.";
       setError(message);
       setEmailSent(false);
     } finally {
       setIsLoading(false);
+      isSubmittingRef.current = false;
     }
   }, [owner, organization, canContinueOrganization]);
 

@@ -1,5 +1,4 @@
 import "server-only";
-import { SESSION_COOKIE_NAME, SESSION_JWT_COOKIE_NAME } from "./constants";
 
 // Server-only: Read session duration from environment
 export function getSessionDurationMinutes(): number {
@@ -14,7 +13,7 @@ export function getCookieConfig() {
   const isProduction = process.env.NODE_ENV === "production";
 
   return {
-    httpOnly: false,
+    httpOnly: true, // Prevent XSS attacks from accessing cookies
     sameSite: "lax" as const,
     secure: isProduction,
     path: "/",

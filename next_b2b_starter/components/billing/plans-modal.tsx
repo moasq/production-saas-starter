@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 
 import type { SubscriptionGateState } from "@/lib/polar/current-subscription";
 import { type PolarPlan } from "@/lib/polar/plans";
 import { useProductsQuery } from "@/lib/hooks/queries/use-products-query";
+import { createCheckout } from "@/lib/actions/billing/create-checkout";
 
 interface PlansModalProps {
   open: boolean;
@@ -20,6 +21,8 @@ export function PlansModal({
   onPlanChangePending,
 }: PlansModalProps) {
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
   const { data: products, isLoading, error } = useProductsQuery();
 
   // Define current plan data BEFORE useEffects that depend on it
@@ -74,11 +77,31 @@ export function PlansModal({
 
     onPlanChangePending?.(true);
     setSelectedPlanId(plan.id);
+    setCheckoutError(null);
 
-    const url = `/api/billing/checkout?plan=${encodeURIComponent(plan.id)}`;
-    setTimeout(() => {
-      window.location.href = url;
-    }, 150);
+    startTransition(async () => {
+      try {
+        const result = await createCheckout({ planId: plan.id });
+
+        // If result is returned (error case), handle it
+        if (!result.success) {
+          setCheckoutError(result.error);
+          setSelectedPlanId(null);
+          onPlanChangePending?.(false);
+        }
+        // If successful, createCheckout will redirect to Polar - no need to handle here
+      } catch (error) {
+        // Redirect errors are expected - Next.js throws these for redirects
+        if (error instanceof Error && error.message === "NEXT_REDIRECT") {
+          return;
+        }
+        // Handle unexpected errors
+        console.error("[PlansModal] Checkout error:", error);
+        setCheckoutError("An unexpected error occurred. Please try again.");
+        setSelectedPlanId(null);
+        onPlanChangePending?.(false);
+      }
+    });
   };
 
   return (
@@ -126,6 +149,13 @@ export function PlansModal({
           </div>
         )}
 
+        {checkoutError && (
+          <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600">
+            <p className="font-semibold">Checkout Error</p>
+            <p className="mt-1">{checkoutError}</p>
+          </div>
+        )}
+
         {!isLoading && !error && plans.length === 0 && (
           <div className="flex min-h-[400px] items-center justify-center">
             <p className="text-sm text-gray-600">No plans available.</p>
@@ -138,7 +168,7 @@ export function PlansModal({
               <PlanCard
                 key={plan.id}
                 plan={plan}
-                disabled={Boolean(selectedPlanId)}
+                disabled={Boolean(selectedPlanId) || isPending}
                 isSelected={selectedPlanId === plan.id}
                 isCurrent={plan.isCurrent}
                 onSelect={() => handleSelectPlan(plan)}

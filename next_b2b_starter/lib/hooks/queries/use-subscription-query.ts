@@ -2,38 +2,22 @@
  * Subscription Query Hook
  *
  * Fetches and caches the current subscription status from Polar.
- * Uses the client-side API endpoint instead of server-side resolver.
+ * Uses Server Action instead of API route.
  */
 
 import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
 import { queryKeys } from "./query-keys";
+import { getSubscriptionStatus } from "@/lib/actions/billing/get-subscription-status";
 import type { SubscriptionGateState } from "@/lib/polar/current-subscription";
 
 async function fetchSubscriptionStatus(): Promise<SubscriptionGateState> {
-  const response = await fetch("/api/billing/status", {
-    method: "GET",
-    credentials: "include",
-    headers: {
-      Accept: "application/json",
-    },
-  });
+  const result = await getSubscriptionStatus();
 
-  if (!response.ok) {
-    let errorMessage = `Unable to load subscription status (HTTP ${response.status})`;
-
-    try {
-      const payload = await response.json();
-      if (payload?.error && typeof payload.error === "string") {
-        errorMessage = payload.error;
-      }
-    } catch {
-      // Ignore JSON parsing errors
-    }
-
-    throw new Error(errorMessage);
+  if (!result.success) {
+    throw new Error(result.error ?? "Unable to load subscription status");
   }
 
-  return response.json();
+  return result.data;
 }
 
 export function useSubscriptionQuery(

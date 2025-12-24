@@ -9,6 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { sendMagicLink } from "@/lib/actions/auth/send-magic-link";
 
 
 const highlights = [
@@ -54,9 +55,15 @@ export default function AuthPage() {
 
   const targetAfterLogin = useMemo(() => {
     const returnTo = searchParams.get("returnTo") || "/dashboard";
-    return returnTo.startsWith("/") && !returnTo.startsWith("//")
-      ? returnTo
-      : "/dashboard";
+    // Validate returnTo is a safe relative path:
+    // - Must start with single /
+    // - Cannot be protocol-relative (//), contain backslash (\), or have : before first /
+    const isSafeRelativePath =
+      returnTo.startsWith("/") &&
+      !returnTo.startsWith("//") &&
+      !returnTo.includes("\\") &&
+      !returnTo.slice(1).includes(":");
+    return isSafeRelativePath ? returnTo : "/dashboard";
   }, [searchParams]);
 
   const handleAuthSuccess = useCallback(() => {
@@ -157,18 +164,11 @@ export default function AuthPage() {
           message: "Sending your secure sign-in link…",
         });
 
-        const response = await fetch("/api/auth/magic-link", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email: trimmedEmail }),
-        });
+        // Call Server Action instead of API route
+        const result = await sendMagicLink(trimmedEmail);
 
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Failed to send sign-in link.");
+        if (!result.success) {
+          throw new Error(result.error || "Failed to send sign-in link.");
         }
 
         setLastSubmittedEmail(trimmedEmail);
@@ -182,7 +182,6 @@ export default function AuthPage() {
           setEmail("");
         }
       } catch (error: any) {
-        console.error("Sign-in link send error:", error);
         setStatus({
           type: "error",
           message:

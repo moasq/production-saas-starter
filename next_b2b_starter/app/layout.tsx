@@ -25,6 +25,9 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://yourdomain.com"),
+  icons: {
+    icon: "/icon.png",
+  },
   title: {
     default: "Your App | Next.js Starter with Auth & Billing",
     template: "%s | Your App",

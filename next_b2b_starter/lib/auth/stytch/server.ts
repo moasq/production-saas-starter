@@ -16,7 +16,6 @@ export function decodeJWT(token: string): Record<string, any> | null {
     // JWT format: header.payload.signature
     const parts = token.split(".");
     if (parts.length !== 3) {
-      console.error("Invalid JWT format");
       return null;
     }
 
@@ -24,8 +23,7 @@ export function decodeJWT(token: string): Record<string, any> | null {
     const payload = parts[1];
     const decodedPayload = Buffer.from(payload, "base64url").toString("utf-8");
     return JSON.parse(decodedPayload);
-  } catch (error) {
-    console.error("Failed to decode JWT:", error);
+  } catch {
     return null;
   }
 }
@@ -187,11 +185,8 @@ export const getMemberSession = cache(
       }
 
       return session;
-    } catch (error: any) {
-      // Only log unexpected errors (not session_not_found which is expected for expired/invalid sessions)
-      if (error?.error_type !== 'session_not_found') {
-        console.error("Stytch session verification failed", error);
-      }
+    } catch {
+      // Session verification failed (expected for expired/invalid sessions)
       return null;
     }
   }
