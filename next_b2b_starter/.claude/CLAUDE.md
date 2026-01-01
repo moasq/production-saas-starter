@@ -99,8 +99,17 @@ docs/                           # Comprehensive documentation
 ├── 08-using-hooks.md
 ├── 09-adding-a-feature.md
 ├── 10-server-actions.md
+├── 11-feature-guards.md
+├── 12-subscription-patterns.md
 └── API-LOGGING.md
 ```
+
+## Documentation
+
+Comprehensive guides in `docs/`:
+- **01-10**: Core guides (getting started, auth, permissions, billing, APIs, hooks, etc.)
+- **11-feature-guards.md**: Protecting features with auth, permission, and subscription guards
+- **12-subscription-patterns.md**: Managing subscriptions, checkout, and billing with Polar.sh
 
 ## Current State
 

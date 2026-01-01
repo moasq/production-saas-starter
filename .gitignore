@@ -22,6 +22,9 @@ Thumbs.db
 
 # --- Claude Code ---
 .claude/
+# But allow CLAUDE.md files (project documentation for Claude Code)
+!.claude/CLAUDE.md
+!**/.claude/CLAUDE.md
 
 # --- Logs ---
 *.log
