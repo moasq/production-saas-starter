@@ -3,28 +3,25 @@ package cmd
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/moasq/go-b2b-starter/internal/modules/auth"
-	"github.com/moasq/go-b2b-starter/internal/modules/auth/adapters/stytch"
+	"github.com/moasq/go-b2b-starter/internal/modules/auth/adapters/local"
+	"github.com/moasq/go-b2b-starter/internal/modules/users/domain"
 	"github.com/moasq/go-b2b-starter/internal/platform/logger"
-	"github.com/moasq/go-b2b-starter/internal/platform/redis"
 	"go.uber.org/dig"
 )
 
+// Init initializes the auth module with self-hosted JWT authentication.
 //
 // This sets up:
-//   - stytch.Config
-//   - auth.AuthProvider (Stytch adapter)
-//
-// Note: The auth middleware is NOT initialized here because it requires
-// organization/account resolvers from the organizations module.
-// Use InitMiddleware after the organizations module is initialized.
+//   - local.Config (JWT and password configuration)
+//   - auth.AuthProvider (local JWT adapter)
+//   - local.Adapter (for login, register, etc.)
 //
 // # Prerequisites
 //
 // The following modules must be initialized first:
-//   - redis (for caching)
+//   - users (for UserRepository and RefreshTokenRepository)
 //   - logger
 //
 // # Usage
@@ -34,56 +31,52 @@ import (
 //	    panic(err)
 //	}
 func Init(container *dig.Container) error {
-	// Stytch configuration
-	if err := container.Provide(func() (*stytch.Config, error) {
-		return stytch.LoadConfig()
+	// Local auth configuration
+	if err := container.Provide(func() (*local.Config, error) {
+		return local.LoadConfig()
 	}); err != nil {
-		return fmt.Errorf("failed to provide stytch config: %w", err)
+		return fmt.Errorf("failed to provide local auth config: %w", err)
 	}
 
-	// Stytch Auth Adapter (implements auth.AuthProvider)
+	// Local Auth Adapter (implements auth.AuthProvider)
 	if err := container.Provide(func(
-		cfg *stytch.Config,
-		redisClient redis.Client,
+		cfg *local.Config,
+		userRepo domain.UserRepository,
+		refreshRepo domain.RefreshTokenRepository,
 		log logger.Logger,
 	) (auth.AuthProvider, error) {
-		// Check for placeholder credentials
-		if isPlaceholderCredentials(cfg) {
-			log.Warn("Stytch credentials are placeholders - using development mode", map[string]any{
-				"project_id": cfg.ProjectID,
-				"message":    "Update STYTCH_PROJECT_ID and STYTCH_SECRET in app.env with real credentials",
-			})
-			return stytch.NewMockAuthAdapter(log), nil
-		}
-
-		adapter, err := stytch.NewStytchAuthAdapter(cfg, redisClient, log)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create stytch adapter: %w", err)
-		}
+		adapter := local.NewAdapter(cfg, userRepo, refreshRepo, log)
 		return adapter, nil
 	}); err != nil {
 		return fmt.Errorf("failed to provide auth provider: %w", err)
 	}
 
+	// Also provide the adapter directly for login/register operations
+	if err := container.Provide(func(
+		cfg *local.Config,
+		userRepo domain.UserRepository,
+		refreshRepo domain.RefreshTokenRepository,
+		log logger.Logger,
+	) *local.Adapter {
+		return local.NewAdapter(cfg, userRepo, refreshRepo, log)
+	}); err != nil {
+		return fmt.Errorf("failed to provide local adapter: %w", err)
+	}
+
 	return nil
 }
 
-// InitMiddleware initializes the auth middleware with resolvers.
+// InitMiddleware initializes the auth middleware.
 //
-// This must be called after the organizations module is initialized,
-// as it depends on organization and account repositories.
+// For B2C, this is simpler than B2B as we don't need organization resolvers.
 //
 // # Prerequisites
 //
 // The following must be available in the container:
 //   - auth.AuthProvider (from Init)
-//   - auth.OrganizationResolver
-//   - auth.AccountResolver
-//   - serverDomain.Server (for registering named middlewares)
 //
 // # Usage
 //
-//	// After organizations module init:
 //	if err := authCmd.InitMiddleware(container); err != nil {
 //	    panic(err)
 //	}
@@ -94,10 +87,9 @@ func InitMiddleware(container *dig.Container) error {
 	return nil
 }
 
-// isPlaceholderCredentials checks if the Stytch credentials are placeholder values.
-func isPlaceholderCredentials(cfg *stytch.Config) bool {
-	return strings.Contains(cfg.ProjectID, "REPLACE") ||
-		strings.Contains(cfg.Secret, "REPLACE") ||
-		cfg.ProjectID == "" ||
-		cfg.Secret == ""
+// RegisterNamedMiddlewares registers the auth middlewares with the server.
+//
+// This must be called after InitMiddleware and the server is available.
+func RegisterNamedMiddlewares(container *dig.Container) error {
+	return auth.RegisterNamedMiddlewares(container)
 }

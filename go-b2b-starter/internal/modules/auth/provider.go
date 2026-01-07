@@ -52,14 +52,14 @@ func (p *Provider) RegisterDependencies() error {
 
 // SetupMiddleware wires the auth middleware into the DI container.
 //
-// This must be called after the auth provider and resolvers are available.
+// This works for both B2B (with resolvers) and B2C (without resolvers) modes.
 //
 // # Prerequisites
 //
 // The following must be available in the container:
 //   - auth.AuthProvider
-//   - auth.OrganizationResolver
-//   - auth.AccountResolver
+//   - auth.OrganizationResolver (optional, for B2B)
+//   - auth.AccountResolver (optional, for B2B)
 //
 // # Usage
 //
@@ -67,12 +67,11 @@ func (p *Provider) RegisterDependencies() error {
 //	    return err
 //	}
 func SetupMiddleware(container *dig.Container) error {
+	// For B2C mode, only require AuthProvider (no org/account resolvers)
 	if err := container.Provide(func(
 		provider AuthProvider,
-		orgResolver OrganizationResolver,
-		accResolver AccountResolver,
 	) *Middleware {
-		return NewMiddleware(provider, orgResolver, accResolver, nil)
+		return NewMiddleware(provider, nil, nil, nil)
 	}); err != nil {
 		return fmt.Errorf("failed to provide auth middleware: %w", err)
 	}
@@ -85,7 +84,6 @@ func SetupMiddleware(container *dig.Container) error {
 // This should be called after SetupMiddleware and the server is available.
 // It registers the following named middlewares:
 //   - "auth": RequireAuth middleware (verifies JWT token)
-//   - "org_context": RequireOrganization middleware (resolves org/account IDs)
 //
 // # Usage
 //
@@ -100,11 +98,6 @@ func RegisterNamedMiddlewares(container *dig.Container) error {
 		// Register auth middleware (verifies JWT and sets Identity)
 		server.RegisterNamedMiddleware("auth", func() gin.HandlerFunc {
 			return middleware.RequireAuth()
-		})
-
-		// Register organization context middleware (resolves database IDs)
-		server.RegisterNamedMiddleware("org_context", func() gin.HandlerFunc {
-			return middleware.RequireOrganization()
 		})
 	})
 }

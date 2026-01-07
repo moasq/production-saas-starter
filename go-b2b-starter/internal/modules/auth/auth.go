@@ -88,7 +88,7 @@ type AuthProvider interface {
 // in the Raw field for debugging or advanced use cases.
 type Identity struct {
 	// UserID is the unique identifier for the user from the auth provider.
-	// For Stytch, this is the member_id. For Auth0, this is the sub claim.
+	// For local auth, this is the database user ID. For Stytch, this is the member_id.
 	UserID string `json:"user_id"`
 
 	// Email is the user's email address.
@@ -98,11 +98,11 @@ type Identity struct {
 	EmailVerified bool `json:"email_verified"`
 
 	// OrganizationID is the auth provider's organization/tenant identifier.
-	// This is a string UUID from the provider, NOT the database int32 ID.
+	// Optional for B2C applications. Required for B2B multi-tenant apps.
 	// Use RequestContext.OrganizationID for the database ID.
-	OrganizationID string `json:"organization_id"`
+	OrganizationID string `json:"organization_id,omitempty"`
 
-	// Roles contains the user's role assignments (e.g., "admin", "member").
+	// Roles contains the user's role assignments (e.g., "admin", "user").
 	Roles []Role `json:"roles"`
 
 	// Permissions contains the derived permissions in "resource:action" format.
