@@ -37,6 +37,9 @@ func (s *billingService) GetBillingStatus(ctx context.Context, orgID int32) (*do
 	if err != nil {
 		return nil, err
 	}
+	if state == nil {
+		return nil, platform.ErrInvalidResponse
+	}
 	if state.ExternalID != externalID {
 		return nil, fmt.Errorf("billing customer identity mismatch")
 	}
@@ -50,7 +53,7 @@ func (s *billingService) GetBillingStatus(ctx context.Context, orgID int32) (*do
 			continue
 		}
 		// Refuse expired snapshots, including a cancellation whose access end has passed.
-		if sub.CurrentPeriodEnd != nil && !sub.CurrentPeriodEnd.After(result.CheckedAt) {
+		if sub.CurrentPeriodEnd == nil || !sub.CurrentPeriodEnd.After(result.CheckedAt) {
 			continue
 		}
 		if sub.EndsAt != nil && !sub.EndsAt.After(result.CheckedAt) {
@@ -79,11 +82,10 @@ func (s *billingService) VerifyPaymentFromCheckout(ctx context.Context, orgID in
 	if err != nil {
 		return nil, err
 	}
-	customerID := checkout.CustomerExternalID
-	if customerID == "" {
-		customerID = checkout.Customer.ExternalID
+	if checkout == nil {
+		return nil, platform.ErrInvalidResponse
 	}
-	if customerID == "" || customerID != externalID || checkout.ProductID != s.provider.ProductID() {
+	if checkout.CustomerExternalID == "" || checkout.CustomerExternalID != externalID || checkout.ProductID != s.provider.ProductID() {
 		return nil, domain.ErrCheckoutOwnership
 	}
 	if checkout.Status != "succeeded" {

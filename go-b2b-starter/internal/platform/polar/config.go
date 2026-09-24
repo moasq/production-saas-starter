@@ -3,7 +3,6 @@ package polar
 import (
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -17,15 +16,14 @@ type Config struct {
 
 func LoadConfig() (Config, error) {
 	raw := strings.TrimSpace(os.Getenv("BILLING_ENABLED"))
-	enabled := false
-	if raw != "" {
-		var err error
-		enabled, err = strconv.ParseBool(raw)
-		if err != nil {
-			return Config{}, fmt.Errorf("BILLING_ENABLED must be true or false")
-		}
+	switch raw {
+	case "", "false":
+		return Config{}, nil
+	case "true":
+	default:
+		return Config{}, fmt.Errorf("BILLING_ENABLED must be true or false")
 	}
-	cfg := Config{Enabled: enabled, AccessToken: strings.TrimSpace(os.Getenv("POLAR_ACCESS_TOKEN")), ProductID: strings.TrimSpace(os.Getenv("POLAR_PRODUCT_ID"))}
+	cfg := Config{Enabled: true, AccessToken: strings.TrimSpace(os.Getenv("POLAR_ACCESS_TOKEN")), ProductID: strings.TrimSpace(os.Getenv("POLAR_PRODUCT_ID"))}
 	environment := strings.TrimSpace(os.Getenv("POLAR_ENVIRONMENT"))
 	switch environment {
 	case "", "sandbox":

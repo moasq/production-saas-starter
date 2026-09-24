@@ -35,7 +35,4 @@ type CheckoutSession struct {
 	ProductID          string `json:"product_id"`
 	Status             string `json:"status"`
 	CustomerExternalID string `json:"external_customer_id"`
-	Customer           struct {
-		ExternalID string `json:"external_id"`
-	} `json:"customer"`
 }

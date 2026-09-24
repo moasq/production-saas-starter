@@ -60,7 +60,7 @@ func TestStatusRequiresUnexpiredActiveSubscription(t *testing.T) {
 	}{
 		{"active", "active", &future, nil, true}, {"trial", "trialing", &future, nil, true},
 		{"expired", "active", &past, nil, false}, {"canceled", "canceled", &future, nil, false},
-		{"ended", "active", &future, &past, false}, {"no period end", "active", nil, nil, true},
+		{"ended", "active", &future, &past, false}, {"no period end", "active", nil, nil, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			p := &providerStub{enabled: true, state: domain.CustomerState{ExternalID: "org-owned", ActiveSubscriptions: []domain.Subscription{{ProductID: "product-app", Status: tc.status, CurrentPeriodEnd: tc.end, EndsAt: tc.ends}}}}

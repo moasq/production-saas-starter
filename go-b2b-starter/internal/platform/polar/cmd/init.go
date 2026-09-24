@@ -8,7 +8,7 @@ import (
 )
 
 func Init(container *dig.Container) error {
-	// Provide Polar configuration using viper
+	// Billing configuration is server-only runtime state.
 	if err := container.Provide(func() (*polar.Config, error) {
 		config, err := polar.LoadConfig()
 		if err != nil {
@@ -21,7 +21,7 @@ func Init(container *dig.Container) error {
 	}
 
 	// Register Polar client
-	if err := polar.Module(container); err != nil {
+	if err := container.Provide(polar.NewClient); err != nil {
 		return fmt.Errorf("failed to register Polar module: %w", err)
 	}
 

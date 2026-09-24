@@ -1,6 +1,7 @@
 package polar
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -12,6 +13,11 @@ import (
 
 var ErrDisabled = errors.New("billing is disabled")
 var ErrNotFound = errors.New("billing resource not found")
+var ErrInvalidResponse = errors.New("invalid billing provider response")
+
+// Match Polar's current stable contract, independently of SDK/package releases.
+const APIVersion = "2026-04"
+const maxResponseBytes = 2 << 20
 
 type Client struct {
 	config     Config
@@ -40,16 +46,35 @@ func (c *Client) GetJSON(ctx context.Context, path string, out any) error {
 	}
 	req.Header.Set("Authorization", "Bearer "+c.config.AccessToken)
 	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Polar-Version", APIVersion)
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("billing provider request failed: %w", err)
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusNotFound {
-		return ErrNotFound
-	}
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNotFound {
 		return fmt.Errorf("billing provider returned HTTP %d", resp.StatusCode)
 	}
-	return json.NewDecoder(io.LimitReader(resp.Body, 2<<20)).Decode(out)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBytes+1))
+	if err != nil || len(body) > maxResponseBytes {
+		return ErrInvalidResponse
+	}
+	if resp.StatusCode == http.StatusNotFound {
+		// An invalid/retired API version also returns 404. Only a documented
+		// missing resource may be treated as a customer with no subscription.
+		var problem struct {
+			Error string `json:"error"`
+		}
+		if json.Unmarshal(body, &problem) == nil && problem.Error == "ResourceNotFound" {
+			return ErrNotFound
+		}
+		return ErrInvalidResponse
+	}
+	body = bytes.TrimSpace(body)
+	// JSON null decodes successfully into a struct without setting its fields.
+	// Require a single object so malformed data cannot masquerade as free status.
+	if len(body) == 0 || body[0] != '{' || json.Unmarshal(body, out) != nil {
+		return ErrInvalidResponse
+	}
+	return nil
 }
