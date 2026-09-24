@@ -1,10 +1,17 @@
 name: Verify starter
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
   backend:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     services:
       postgres:
         image: postgres:17.11-alpine
@@ -23,7 +30,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: '1.27.1'
+          go-version-file: go-b2b-starter/go.mod
           cache-dependency-path: go-b2b-starter/go.sum
       - run: go test -race ./...
         env:
@@ -32,6 +39,7 @@ jobs:
       - run: go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./...
   frontend:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: next_b2b_starter
@@ -50,11 +58,21 @@ jobs:
       - run: pnpm audit --prod --audit-level=high
   deployment:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: ./setup.sh
+        env:
+          COMPOSE_PROJECT_NAME: starter-ci
       - run: ./scripts/smoke.sh
+      - name: Check setup does not replace existing configuration
+        run: |
+          cp .env /tmp/starter-env-before
+          ./setup.sh
+          cmp .env /tmp/starter-env-before
+        env:
+          COMPOSE_PROJECT_NAME: starter-ci
       - if: failure()
-        run: docker compose logs --tail=150
+        run: docker compose -p starter-ci logs --tail=150
       - if: always()
-        run: docker compose down
+        run: docker compose -p starter-ci down

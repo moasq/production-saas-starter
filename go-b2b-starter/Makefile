@@ -1,4 +1,5 @@
-GO_IMAGE := golang:1.27.1-alpine
+GO_VERSION := $(shell sed -n 's/^go //p' go.mod)
+GO_IMAGE := golang:$(GO_VERSION)-alpine
 SQLC_IMAGE := sqlc/sqlc:1.31.1
 
 .PHONY: test vet build run sqlc
