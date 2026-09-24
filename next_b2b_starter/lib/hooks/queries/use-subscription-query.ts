@@ -45,19 +45,3 @@ export function useSubscriptionQuery(
     ...options,
   });
 }
-
-/**
- * Hook to get subscription state with safe defaults
- */
-export function useSubscription() {
-  const { data } = useSubscriptionQuery();
-  return data ?? null;
-}
-
-/**
- * Hook to check if subscription is active
- */
-export function useIsSubscriptionActive() {
-  const subscription = useSubscription();
-  return subscription?.isActive ?? false;
-}

@@ -19,10 +19,3 @@ export function getCookieConfig() {
     path: "/",
   };
 }
-
-export function getSecureCookieConfig() {
-  return {
-    ...getCookieConfig(),
-    httpOnly: true,
-  };
-}

@@ -9,7 +9,6 @@ import {
 import {
   getSessionDurationMinutes,
   getCookieConfig,
-  getSecureCookieConfig,
 } from "@/lib/auth/server-constants";
 import {
   createActionError,
@@ -89,7 +88,7 @@ export async function consumeMagicLink(
 
     if (result.session_token) {
       cookieStore.set(SESSION_COOKIE_NAME, result.session_token, {
-        ...getSecureCookieConfig(),
+        ...getCookieConfig(),
         maxAge: maxAgeSeconds,
       });
     }

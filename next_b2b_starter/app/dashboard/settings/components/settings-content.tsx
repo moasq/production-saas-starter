@@ -11,7 +11,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { format } from "date-fns";
 import { toast } from "sonner";
 
 import { ProfileSection } from "./profile-section";
@@ -121,7 +120,7 @@ function getSubscriptionQuickStatus(
 
   if (state.subscription?.cancelAtPeriodEnd) {
     const cancellationDate = state.subscription.currentPeriodEnd
-      ? format(new Date(state.subscription.currentPeriodEnd), "MMM d, yyyy")
+      ? new Date(state.subscription.currentPeriodEnd).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
       : null;
 
     return {
@@ -134,7 +133,7 @@ function getSubscriptionQuickStatus(
 
   const planLabel = state.subscription?.productName || "Active plan";
   const renewalDate = state.subscription?.currentPeriodEnd
-    ? format(new Date(state.subscription.currentPeriodEnd), "MMM d, yyyy")
+    ? new Date(state.subscription.currentPeriodEnd).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
     : null;
 
   return {

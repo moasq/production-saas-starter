@@ -35,21 +35,3 @@ export function useProfileQuery(
     ...options,
   });
 }
-
-/**
- * Hook to get profile data with safe defaults
- *
- * Returns null if profile is not loaded yet
- */
-export function useProfile() {
-  const { data } = useProfileQuery();
-  return data ?? null;
-}
-
-/**
- * Hook to get organization ID from profile
- */
-export function useOrganizationId() {
-  const profile = useProfile();
-  return profile?.organizationId ?? null;
-}

@@ -23,15 +23,13 @@
     "@tanstack/react-query": "5.103.2",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
-    "date-fns": "4.4.0",
     "lucide-react": "1.48.0",
     "next": "16.3.6",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "sonner": "2.0.8",
     "stytch": "14.2.0",
-    "tailwind-merge": "2.6.1",
-    "zustand": "5.0.15"
+    "tailwind-merge": "2.6.1"
   },
   "devDependencies": {
     "@types/node": "24.13.6",
@@ -43,9 +41,8 @@
     "postcss": "8.5.28",
     "sharp": "0.35.4",
     "tailwindcss": "3.4.19",
-    "typescript": "5.9.3",
     "tailwindcss-animate": "1.0.7",
-    "@tanstack/react-query-devtools": "5.103.2"
+    "typescript": "5.9.3"
   },
   "engines": {
     "node": ">=22.18.0",

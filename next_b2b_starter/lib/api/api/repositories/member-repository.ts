@@ -136,7 +136,6 @@ export class MemberRepository {
     return {
       members: (dto.members ?? []).map((item) => this.toOrganizationMember(item)),
       totalCount: dto.total ?? dto.members?.length ?? 0,
-      hasMore: false, // Backend doesn't provide this, calculate if needed
     };
   }
 
@@ -202,7 +201,6 @@ export class MemberRepository {
       id: dto.member_id,
       email: dto.email,
       name: dto.name,
-      avatarUrl: undefined, // Not in backend response
       role: normalizedRole,
       organizationId: dto.organization?.organization_id || "",
       organizationName: dto.organization?.name || "",
@@ -230,10 +228,7 @@ export class MemberRepository {
       name: dto.name,
       role: normalizedRole,
       status: dto.status as "active" | "pending" | "inactive",
-      avatarUrl: undefined, // Not in backend response
       joinedAt: new Date(dto.created_at),
-      invitedAt: undefined, // Not in backend response
-      invitedBy: undefined, // Not in backend response
     };
   }
 }

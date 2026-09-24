@@ -37,7 +37,6 @@ export function useUpdateProfile() {
               ? {
                   ...old,
                   name: newProfile.name ?? old.name,
-                  avatarUrl: newProfile.avatarUrl ?? old.avatarUrl,
                 }
               : old
         );

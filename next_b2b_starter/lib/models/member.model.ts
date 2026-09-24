@@ -16,10 +16,7 @@ export interface OrganizationMember {
   name?: string;
   role: MemberRole;
   status: MemberStatus;
-  avatarUrl?: string;
   joinedAt: Date;
-  invitedAt?: Date;
-  invitedBy?: string;
 }
 
 /**
@@ -29,7 +26,6 @@ export interface UserProfile {
   id: string;
   email: string;
   name?: string;
-  avatarUrl?: string;
   role: MemberRole;
   organizationId: string;
   organizationName: string;
@@ -42,7 +38,6 @@ export interface InviteMemberRequest {
   email: string;
   name: string;
   role: MemberRole;
-  sendEmail?: boolean;
 }
 
 /**
@@ -53,7 +48,6 @@ export interface InviteMemberResponse {
   success: boolean;
   memberId?: string;
   message?: string;
-  inviteLink?: string;
 }
 
 /**
@@ -61,7 +55,6 @@ export interface InviteMemberResponse {
  */
 export interface UpdateProfileRequest {
   name?: string;
-  avatarUrl?: string;
 }
 
 /**
@@ -70,7 +63,6 @@ export interface UpdateProfileRequest {
 export interface MemberListResponse {
   members: OrganizationMember[];
   totalCount: number;
-  hasMore: boolean;
 }
 
 /**
@@ -123,60 +115,6 @@ export const MemberHelpers = {
       },
     };
     return configs[status] || configs.inactive;
-  },
-
-  /**
-   * Get initials from name or email
-   */
-  getInitials: (name?: string, email?: string): string => {
-    const source = name || email || "?";
-    const parts = source.trim().split(/\s+/);
-
-    if (parts.length > 1) {
-      // Multiple words - use first letter of first and last
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    } else if (email && !name) {
-      // Email only - use first two letters
-      return email.substring(0, 2).toUpperCase();
-    } else {
-      // Single word - use first two letters
-      return source.substring(0, 2).toUpperCase();
-    }
-  },
-
-  /**
-   * Generate avatar background color from string
-   */
-  getAvatarColor: (str: string): string => {
-    const colors = [
-      "bg-blue-500",
-      "bg-purple-500",
-      "bg-pink-500",
-      "bg-emerald-500",
-      "bg-amber-500",
-      "bg-cyan-500",
-      "bg-rose-500",
-      "bg-indigo-500",
-    ];
-
-    // Handle undefined or empty string
-    if (!str || str.length === 0) {
-      return colors[0];
-    }
-
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-
-    return colors[Math.abs(hash) % colors.length];
-  },
-
-  /**
-   * Check if user can manage members based on role
-   */
-  canManageMembers: (role: MemberRole): boolean => {
-    return role === "admin";
   },
 
   /**
