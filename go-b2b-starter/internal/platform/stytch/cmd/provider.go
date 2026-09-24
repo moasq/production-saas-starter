@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/moasq/go-b2b-starter/internal/platform/cache"
 	"github.com/moasq/go-b2b-starter/internal/platform/logger"
 	"github.com/moasq/go-b2b-starter/internal/platform/stytch"
 	"go.uber.org/dig"
@@ -15,7 +14,6 @@ func ProvideStytchDependencies(container *dig.Container) error {
 	providers := []any{
 		stytch.LoadConfig,
 		provideStytchClient,
-		provideRBACPolicyService,
 	}
 
 	for _, provider := range providers {
@@ -47,16 +45,4 @@ func isPlaceholderCredentials(cfg *stytch.Config) bool {
 		strings.Contains(cfg.Secret, "REPLACE") ||
 		cfg.ProjectID == "" ||
 		cfg.Secret == ""
-}
-
-func provideRBACPolicyService(
-	client *stytch.Client,
-	metadataCache *cache.Cache,
-	log logger.Logger,
-) *stytch.RBACPolicyService {
-	// If client is nil (development mode), return nil for RBAC service too
-	if client == nil {
-		return nil
-	}
-	return stytch.NewRBACPolicyService(client, metadataCache, log)
 }

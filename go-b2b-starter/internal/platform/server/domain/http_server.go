@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -10,43 +11,30 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/moasq/go-b2b-starter/internal/platform/logger"
 	config "github.com/moasq/go-b2b-starter/internal/platform/server/config"
-	"github.com/moasq/go-b2b-starter/internal/platform/server/logging"
-	"github.com/moasq/go-b2b-starter/internal/platform/server/middleware"
 )
 
 type HTTPServer struct {
 	database         *pgxpool.Pool
 	config           *config.Config
 	router           *gin.Engine
-	logger           *logging.Logger
-	securityLogger   *logging.SecurityLogger
-	registrars       map[string][]RouteRegistrar
+	logger           logger.Logger
 	namedMiddlewares map[string]MiddlewareFunc
-	ipProtection     *middleware.IPProtection
 }
 
 func NewHTTPServer(
 	config *config.Config,
 	router *gin.Engine,
-	logger *logging.Logger,
+	log logger.Logger,
 	database *pgxpool.Pool,
 ) Server {
-	if config.IsProd() {
-		gin.SetMode(gin.ReleaseMode)
-	}
-
-	ipProtection := middleware.NewIPProtection()
-
 	server := &HTTPServer{
 		database:         database,
 		config:           config,
 		router:           router,
-		logger:           logger,
-		securityLogger:   logging.NewSecurityLogger(logger.SugaredLogger),
-		registrars:       make(map[string][]RouteRegistrar),
+		logger:           log,
 		namedMiddlewares: make(map[string]MiddlewareFunc),
-		ipProtection:     ipProtection,
 	}
 
 	server.setupMiddleware()
@@ -61,10 +49,6 @@ func (s *HTTPServer) Start() error {
 
 	go s.startServer(srv)
 	return s.handleGracefulShutdown(srv)
-}
-
-func (s *HTTPServer) MiddlewareResolver() MiddlewareResolver {
-	return s
 }
 
 // RegisterRoutes registers route handlers with version support
@@ -115,26 +99,22 @@ func (s *HTTPServer) startServer(srv *http.Server) {
 	}
 
 	if err != nil && err != http.ErrServerClosed {
-		s.logger.Fatal("Failed to start server", err)
+		s.logger.Fatal("Failed to start server", logger.Fields{"error": err})
 	}
 }
 
 func (s *HTTPServer) handleGracefulShutdown(srv *http.Server) error {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	defer signal.Stop(quit)
 	<-quit
 	s.logger.Info("Shutting down server...")
-
-	// Stop IP Protection cleanup goroutine
-	if s.ipProtection != nil {
-		s.ipProtection.Stop()
-	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		s.logger.Fatal("Server forced to shutdown", err)
+		return fmt.Errorf("shut down server: %w", err)
 	}
 
 	s.logger.Info("Server exited gracefully")
@@ -146,14 +126,7 @@ func (s *HTTPServer) Get(name string) gin.HandlerFunc {
 	if middleware, exists := s.namedMiddlewares[name]; exists {
 		return middleware()
 	}
-	// Return a no-op middleware if not found
-	return func(c *gin.Context) {
-		s.logger.Warnw("Middleware not found", "name", name)
-		c.Next()
-	}
-}
-
-// GetMiddleware returns a middleware by name (compatibility method)
-func (s *HTTPServer) GetMiddleware(name string) gin.HandlerFunc {
-	return s.Get(name)
+	// Route registration must fail closed when its protection is misspelled or
+	// omitted from bootstrap. A no-op here would expose a protected endpoint.
+	panic("middleware not registered: " + name)
 }

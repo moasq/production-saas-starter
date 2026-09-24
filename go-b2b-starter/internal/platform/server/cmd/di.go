@@ -5,9 +5,6 @@ import (
 	"github.com/moasq/go-b2b-starter/internal/modules/auth"
 	"github.com/moasq/go-b2b-starter/internal/platform/server/config"
 	"github.com/moasq/go-b2b-starter/internal/platform/server/domain"
-	ginP "github.com/moasq/go-b2b-starter/internal/platform/server/gin"
-	"github.com/moasq/go-b2b-starter/internal/platform/server/logging"
-	"github.com/moasq/go-b2b-starter/internal/platform/server/middleware"
 	"go.uber.org/dig"
 )
 
@@ -23,10 +20,11 @@ func (a *serverMiddlewareAdapter) RegisterNamedMiddleware(name string, middlewar
 
 func SetupDependencies(container *dig.Container) {
 	container.Provide(config.LoadConfig)
-	container.Provide(logging.InitLogger)
-	container.Provide(middleware.InitValidator)
 	container.Provide(func(cfg *config.Config) *gin.Engine {
-		return ginP.NewGinRouter(cfg).GetHandler()
+		if cfg.IsProd() {
+			gin.SetMode(gin.ReleaseMode)
+		}
+		return gin.New()
 	})
 	container.Provide(domain.NewHTTPServer)
 

@@ -1,23 +1,5 @@
 package domain
 
-type Level int
-
-const (
-	DebugLevel Level = iota
-	InfoLevel
-	WarnLevel
-	ErrorLevel
-	FatalLevel
-)
-
-type OutputType int
-
-const (
-	ConsoleOutput OutputType = iota
-	FileOutput
-	BothOutput
-)
-
 type Fields = map[string]interface{}
 
 type Logger interface {

@@ -55,7 +55,7 @@ func InitMods(container *dig.Container) {
 	}
 
 	// Stytch client package must be initialized before app/auth (for organization/member management)
-	// This provides: stytch.Config, stytch.Client, stytch.RBACPolicyService
+	// This provides: stytch.Config, stytch.Client
 	if err := stytchCmd.ProvideStytchDependencies(container); err != nil {
 		panic(err)
 	}
@@ -93,7 +93,7 @@ func InitMods(container *dig.Container) {
 		panic(err)
 	}
 
-	// Billing module (subscription lifecycle, quotas, webhooks)
+	// Optional billing module (current subscription state)
 	if err := billing.Init(container); err != nil {
 		panic(err)
 	}

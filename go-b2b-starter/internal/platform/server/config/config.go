@@ -34,43 +34,9 @@ type Config struct {
 	// CORS settings (more restrictive in production)
 	AllowedOrigins []string `mapstructure:"ALLOWED_ORIGINS"`
 
-	// Logging (always enabled in production)
-	LogLevel string `mapstructure:"LOG_LEVEL"`
-
 	// Optional security features
 	TrustedProxies []string `mapstructure:"TRUSTED_PROXIES"`
 	MaxRequestSize int      `mapstructure:"MAX_REQUEST_SIZE"`
-
-	// IP Protection Settings
-	IPWhitelist       []string `mapstructure:"IP_WHITELIST"`
-	IPBlacklist       []string `mapstructure:"IP_BLACKLIST"`
-	MaxFailedAttempts int      `mapstructure:"MAX_FAILED_ATTEMPTS"`
-	BlockDuration     string   `mapstructure:"BLOCK_DURATION"`
-
-	// Request Sanitization
-	DisableXSS           bool `mapstructure:"DISABLE_XSS"`
-	DisableSQLInjection  bool `mapstructure:"DISABLE_SQL_INJECTION"`
-	DisablePathTraversal bool `mapstructure:"DISABLE_PATH_TRAVERSAL"`
-
-	// Security Logging
-	SecurityLogPath  string `mapstructure:"SECURITY_LOG_PATH"`
-	LogRetentionDays int    `mapstructure:"LOG_RETENTION_DAYS"`
-}
-
-// SanitizationConfig represents security sanitization settings
-type SanitizationConfig struct {
-	DisableXSS           bool
-	DisableSQLInjection  bool
-	DisablePathTraversal bool
-}
-
-// GetSanitizationConfig returns sanitization configuration
-func (c *Config) GetSanitizationConfig() SanitizationConfig {
-	return SanitizationConfig{
-		DisableXSS:           c.DisableXSS,
-		DisableSQLInjection:  c.DisableSQLInjection,
-		DisablePathTraversal: c.DisablePathTraversal,
-	}
 }
 
 func (c *Config) IsProd() bool {
@@ -98,14 +64,6 @@ func LoadConfig() (*Config, error) {
 	v.SetDefault("SERVER_ADDRESS", ":8080")
 	v.SetDefault("RATE_LIMIT_PER_SECOND", 100)
 	v.SetDefault("MAX_REQUEST_SIZE", 1024*1024*10) // 10MB
-	v.SetDefault("LOG_LEVEL", "info")
-	v.SetDefault("MAX_FAILED_ATTEMPTS", 5)
-	v.SetDefault("BLOCK_DURATION", "15m")
-	v.SetDefault("DISABLE_XSS", false)
-	v.SetDefault("DISABLE_SQL_INJECTION", false)
-	v.SetDefault("DISABLE_PATH_TRAVERSAL", false)
-	v.SetDefault("SECURITY_LOG_PATH", "logs/security.log")
-	v.SetDefault("LOG_RETENTION_DAYS", 30)
 
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
@@ -158,18 +116,6 @@ func validateProductionConfig(cfg *Config) error {
 	if len(errors) > 0 {
 		return fmt.Errorf("invalid production configuration: %s", strings.Join(errors, "; "))
 	}
-
-	// if cfg.DisableXSS || cfg.DisableSQLInjection || cfg.DisablePathTraversal {
-	// 	errors = append(errors, "Security sanitization cannot be disabled in production")
-	// }
-
-	// if cfg.MaxFailedAttempts < 3 {
-	// 	errors = append(errors, "MaxFailedAttempts must be at least 3 in production")
-	// }
-
-	// if cfg.SecurityLogPath == "" {
-	// 	errors = append(errors, "SecurityLogPath must be set in production")
-	// }
 
 	return nil
 }

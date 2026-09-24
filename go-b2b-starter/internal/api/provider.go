@@ -3,7 +3,6 @@ package api
 import (
 	"go.uber.org/dig"
 
-	"github.com/moasq/go-b2b-starter/internal/modules/auth"
 	"github.com/moasq/go-b2b-starter/internal/modules/billing"
 	"github.com/moasq/go-b2b-starter/internal/modules/organizations"
 	server "github.com/moasq/go-b2b-starter/internal/platform/server/domain"
@@ -11,11 +10,9 @@ import (
 
 // moduleRoutes holds handlers for all API modules
 // 1. OrganizationRoutes - Handles organization, account, and member management routes (includes /auth routes)
-// 2. RbacRoutes - Handles RBAC role and permission routes
-// 3. BillingHandler - Handles billing status and subscription routes (uses billing module)
+// 2. BillingHandler - Handles billing status and subscription routes (uses billing module)
 type moduleRoutes struct {
 	OrganizationRoutes  *organizations.Routes
-	RbacRoutes          *auth.Routes
 	SubscriptionHandler *billing.Handler
 }
 
@@ -35,12 +32,10 @@ func Init(container *dig.Container) error {
 func registerAPI(container *dig.Container) error {
 	if err := container.Provide(func(
 		organizationRoutes *organizations.Routes,
-		rbacRoutes *auth.Routes,
 		subscriptionHandler *billing.Handler,
 	) *moduleRoutes {
 		return &moduleRoutes{
 			OrganizationRoutes:  organizationRoutes,
-			RbacRoutes:          rbacRoutes,
 			SubscriptionHandler: subscriptionHandler,
 		}
 	}); err != nil {
@@ -53,7 +48,6 @@ func registerAPI(container *dig.Container) error {
 	) {
 		// Register each module's routes
 		srv.RegisterRoutes(modules.OrganizationRoutes.Routes, server.ApiPrefix)
-		srv.RegisterRoutes(modules.RbacRoutes.Routes, server.ApiPrefix)
 		srv.RegisterRoutes(modules.SubscriptionHandler.Routes, server.ApiPrefix)
 	})
 }
@@ -61,11 +55,6 @@ func registerAPI(container *dig.Container) error {
 // setupDependencies initializes all module dependencies
 func setupDependencies(container *dig.Container) error {
 	if err := organizations.NewProvider(container).RegisterDependencies(); err != nil {
-		return err
-	}
-
-	// Initialize RBAC API (role and permission discovery)
-	if err := auth.NewProvider(container).RegisterDependencies(); err != nil {
 		return err
 	}
 
