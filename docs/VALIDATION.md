@@ -62,8 +62,8 @@ supported 17.11 to avoid an implicit database-major upgrade.
 ## Not verified
 
 Live Stytch email/sign-in/invitation delivery, live Polar payment/portal lifecycle,
-public DNS and certificate issuance, remote CI execution, and a restoration of an
-actual user's production database. Existing pgvector databases require the
+public DNS and certificate issuance, and a restoration of an actual user's
+production database. Existing pgvector databases require the
 explicit upgrade guidance; legacy data is never automatically dropped.
 
 CI now defines backend/race/migration/security, frontend, and fresh deployment
