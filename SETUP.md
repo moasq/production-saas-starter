@@ -2,7 +2,7 @@
 
 ## Run locally
 
-Install Docker with Compose and OpenSSL, then run `./setup.sh` from the repository
+Install Docker with Compose on Linux, macOS, or WSL, then run `./setup.sh` from the repository
 root. It creates `.env` only if absent, generates a database password, builds the
 app, waits for startup, and serves it at http://localhost:3000. A subsequent run
 preserves your configuration and data. `docker compose down` stops services and
@@ -10,6 +10,10 @@ keeps volumes; do not add `--volumes` unless you intend to erase local data.
 
 To configure manually, copy `.env.example` to `.env`, set a strong
 `POSTGRES_PASSWORD`, and run `docker compose up --build -d --wait`.
+Compose uses the checkout directory name as its project name. To run a second
+checkout, set a distinct `COMPOSE_PROJECT_NAME`, `HTTP_PORT`, and `HTTPS_PORT`.
+Use the same project name for subsequent start, logs, backup, and stop commands.
+
 Only the reverse proxy publishes ports. PostgreSQL and Go remain on the private
 Compose network. The initial build downloads Go/Node dependencies and can take
 several minutes.

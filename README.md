@@ -10,7 +10,7 @@ cd production-saas-starter
 ./setup.sh
 ```
 
-Requires Docker with Compose and OpenSSL. Open **http://localhost:3000**.
+Requires Docker with Compose on Linux, macOS, or WSL. Open **http://localhost:3000**.
 The script creates a private `.env` and starts the containers. Without Stytch
 credentials the app shows setup instructions; it never invents an authenticated
 user. Add your Stytch B2B test project credentials to `.env` and run
@@ -29,7 +29,8 @@ storage, Redis, or usage-metering service. Add your product's first business
 feature inside the existing API instead of adopting another framework.
 
 [Setup and deployment](SETUP.md) · [Development](DEVELOPMENT.md) ·
-[Architecture](docs/ARCHITECTURE.md) · [Upgrade an existing installation](docs/UPGRADING.md)
+[Architecture](docs/ARCHITECTURE.md) · [Upgrade an existing installation](docs/UPGRADING.md) ·
+[Verification and limits](docs/VALIDATION.md)
 
 Go remains the backend. Next.js supplies the React interface and session boundary.
 Keeping these responsibilities explicit avoids a rewrite and preserves the

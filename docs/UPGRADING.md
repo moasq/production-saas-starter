@@ -32,8 +32,9 @@ downgrade is not provided. Restore a tested backup for rollback.
 
 Use the root `.env.example` as the new configuration contract and transfer values
 manually. Do not overwrite your old secrets or data. There is one `compose.yaml`;
-the old production/dependency compose files are retired. The new default Compose
-project/volume names may differ from yours. Explicitly migrate or configure your
+the old production/dependency compose files are retired. Compose now derives its default project name from the checkout directory.
+Project/volume names may differ from yours; retain the existing project with
+`COMPOSE_PROJECT_NAME` or explicitly configure the existing database volume. Explicitly migrate or configure your
 existing volumes rather than accidentally starting against an empty database.
 
 `STYTCH_ENV` is `test` or `live`, independent of build mode. `POLAR_ENVIRONMENT`

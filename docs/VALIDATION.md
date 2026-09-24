@@ -1,8 +1,8 @@
 # Verification — 25 September 2026
 
-Implementation is on `codex/minimal-b2b-starter`. No external deployment or live
-provider account changes were made. The local Docker application is available at
-http://localhost:3000. Authentication intentionally shows configuration instructions
+The revival targets the latest stable Next.js and Go releases, verified on this
+date as Next.js 16.3.6 and Go 1.27.1. No external deployment or live provider
+account changes were made. Authentication intentionally shows configuration instructions
 until Stytch credentials and its RBAC policy are configured.
 
 ## Passed
@@ -61,7 +61,8 @@ actual user's production database. Existing pgvector databases require the
 explicit upgrade guidance; legacy data is never automatically dropped.
 
 CI now defines backend/race/migration/security, frontend, and fresh deployment
-checks. These files have not been pushed or run by GitHub Actions in this turn.
+checks. The pull request checks are the authority for remote CI results. Local results
+do not imply those remote checks passed.
 
 ## Primary references
 
@@ -70,3 +71,5 @@ checks. These files have not been pushed or run by GitHub Actions in this turn.
 - [Stytch RBAC policy](https://stytch.com/docs/multi-tenant-auth/enterprise-ready/rbac/create-rbac-policy)
 - [Go vulnerability](https://pkg.go.dev/vuln/GO-2026-5932)
 - [Dependabot ecosystems](https://docs.github.com/en/code-security/reference/supply-chain-security/supported-ecosystems-and-repositories)
+
+The five workstreams are tracked in issues [#54](https://github.com/moasq/production-saas-starter/issues/54), [#55](https://github.com/moasq/production-saas-starter/issues/55), [#56](https://github.com/moasq/production-saas-starter/issues/56), [#57](https://github.com/moasq/production-saas-starter/issues/57), and [#58](https://github.com/moasq/production-saas-starter/issues/58).
