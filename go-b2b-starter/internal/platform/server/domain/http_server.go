@@ -8,13 +8,15 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
 	config "github.com/moasq/go-b2b-starter/internal/platform/server/config"
 	"github.com/moasq/go-b2b-starter/internal/platform/server/logging"
 	"github.com/moasq/go-b2b-starter/internal/platform/server/middleware"
-	"github.com/gin-gonic/gin"
 )
 
 type HTTPServer struct {
+	database         *pgxpool.Pool
 	config           *config.Config
 	router           *gin.Engine
 	logger           *logging.Logger
@@ -28,6 +30,7 @@ func NewHTTPServer(
 	config *config.Config,
 	router *gin.Engine,
 	logger *logging.Logger,
+	database *pgxpool.Pool,
 ) Server {
 	if config.IsProd() {
 		gin.SetMode(gin.ReleaseMode)
@@ -36,6 +39,7 @@ func NewHTTPServer(
 	ipProtection := middleware.NewIPProtection()
 
 	server := &HTTPServer{
+		database:         database,
 		config:           config,
 		router:           router,
 		logger:           logger,
@@ -79,7 +83,6 @@ func (s *HTTPServer) RegisterRoutes(registrar RouteRegistrar, prefix string, ver
 	registrar(group, s)
 }
 
-
 // RegisterNamedMiddleware registers a named middleware for later use
 func (s *HTTPServer) RegisterNamedMiddleware(name string, middleware MiddlewareFunc) {
 	s.namedMiddlewares[name] = middleware
@@ -91,7 +94,7 @@ func (s *HTTPServer) createHTTPServer() *http.Server {
 		Addr:              s.config.ServerAddress,
 		Handler:           s.router,
 		ReadTimeout:       15 * time.Second,
-		WriteTimeout:      30 * time.Second, // Increased to accommodate auto-extraction processing
+		WriteTimeout:      30 * time.Second,
 		IdleTimeout:       60 * time.Second,
 		ReadHeaderTimeout: 5 * time.Second,
 		MaxHeaderBytes:    s.config.MaxRequestSize,
@@ -102,7 +105,7 @@ func (s *HTTPServer) startServer(srv *http.Server) {
 	s.logger.Info("Starting server on " + s.config.ServerAddress)
 	var err error
 
-	if s.config.IsProd() {
+	if s.config.EnableTLS {
 		err = srv.ListenAndServeTLS(
 			s.config.TLSCertPath,
 			s.config.TLSKeyPath,

@@ -9,6 +9,8 @@ import (
 // MemberService defines the core authentication and member management operations
 // This interface focuses on organization bootstrap and member operations
 type MemberService interface {
+	UpdateCurrentUserProfile(ctx context.Context, orgID, memberID, email, name string) (*ProfileResponse, error)
+	ResendInvitation(ctx context.Context, orgID, memberID string) error
 	// BootstrapOrganizationWithOwner creates a new organization with an initial owner user
 	// This is the primary signup flow for new organizations
 	BootstrapOrganizationWithOwner(ctx context.Context, req *BootstrapOrganizationRequest) (*BootstrapOrganizationResponse, error)
@@ -92,7 +94,9 @@ func (r *AddMemberRequest) Validate() error {
 	if strings.TrimSpace(r.Name) == "" {
 		return fmt.Errorf("name cannot be empty")
 	}
-	// Note: OrgID is validated by handler (extracted from JWT middleware)
+	if r.RoleSlug != "" && r.RoleSlug != "admin" && r.RoleSlug != "manager" && r.RoleSlug != "member" {
+		return fmt.Errorf("role_slug must be admin, manager or member")
+	}
 	return nil
 }
 

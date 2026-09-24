@@ -5,11 +5,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/moasq/go-b2b-starter/internal/modules/auth"
 	"github.com/moasq/go-b2b-starter/internal/modules/organizations/app/services"
 	"github.com/moasq/go-b2b-starter/internal/modules/organizations/domain"
-	"github.com/moasq/go-b2b-starter/pkg/response"
-	"github.com/moasq/go-b2b-starter/internal/modules/auth"
 	"github.com/moasq/go-b2b-starter/internal/platform/logger"
+	"github.com/moasq/go-b2b-starter/pkg/response"
 )
 
 type OrganizationHandler struct {

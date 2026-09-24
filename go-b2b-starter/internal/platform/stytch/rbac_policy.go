@@ -7,13 +7,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/moasq/go-b2b-starter/internal/platform/cache"
 	"github.com/moasq/go-b2b-starter/internal/platform/logger"
-	"github.com/moasq/go-b2b-starter/internal/platform/redis"
-	"github.com/stytchauth/stytch-go/v16/stytch/b2b/rbac"
+	"github.com/stytchauth/stytch-go/v18/stytch/b2b/rbac"
 )
 
 const (
-	// Redis cache key for RBAC policy
+	// process-local cache key for RBAC policy
 	rbacPolicyCacheKey = "stytch:rbac:policy"
 	// Cache TTL matches Stytch SDK default (5 minutes)
 	rbacPolicyCacheTTL = 5 * time.Minute
@@ -22,18 +22,18 @@ const (
 // RBACPolicyService fetches and caches Stytch RBAC policy
 type RBACPolicyService struct {
 	client *Client
-	redis  redis.Client
+	cache  *cache.Cache
 	logger logger.Logger
 }
 
 func NewRBACPolicyService(
 	client *Client,
-	redisClient redis.Client,
+	metadataCache *cache.Cache,
 	logger logger.Logger,
 ) *RBACPolicyService {
 	return &RBACPolicyService{
 		client: client,
-		redis:  redisClient,
+		cache:  metadataCache,
 		logger: logger,
 	}
 }
@@ -61,10 +61,10 @@ func (s *RBACPolicyService) GetRolePermissions(ctx context.Context, roleID strin
 	return nil, nil
 }
 
-// getPolicy fetches policy from Redis cache or Stytch API
+// getPolicy fetches policy from process-local cache or Stytch API
 func (s *RBACPolicyService) getPolicy(ctx context.Context) (*rbac.Policy, error) {
 	// Try cache first
-	cached, err := s.redis.Get(ctx, rbacPolicyCacheKey)
+	cached, err := s.cache.Get(ctx, rbacPolicyCacheKey)
 	if err == nil && cached != "" {
 		var policy rbac.Policy
 		if err := json.Unmarshal([]byte(cached), &policy); err == nil {
@@ -110,7 +110,7 @@ func (s *RBACPolicyService) fetchPolicyFromStytch(ctx context.Context) (*rbac.Po
 	return resp.Policy, nil
 }
 
-// cachePolicy stores policy in Redis
+// cachePolicy stores policy in process-local
 func (s *RBACPolicyService) cachePolicy(ctx context.Context, policy *rbac.Policy) {
 	data, err := json.Marshal(policy)
 	if err != nil {
@@ -120,13 +120,13 @@ func (s *RBACPolicyService) cachePolicy(ctx context.Context, policy *rbac.Policy
 		return
 	}
 
-	if err := s.redis.Set(ctx, rbacPolicyCacheKey, string(data), rbacPolicyCacheTTL); err != nil {
-		s.logger.Warn("Failed to cache RBAC policy in Redis", logger.Fields{
+	if err := s.cache.Set(ctx, rbacPolicyCacheKey, string(data), rbacPolicyCacheTTL); err != nil {
+		s.logger.Warn("Failed to cache RBAC policy in process-local", logger.Fields{
 			"error": err.Error(),
 		})
 		// Non-fatal error, continue without cache
 	} else {
-		s.logger.Debug("RBAC policy cached in Redis", logger.Fields{
+		s.logger.Debug("RBAC policy cached in process-local", logger.Fields{
 			"ttl": rbacPolicyCacheTTL.String(),
 		})
 	}

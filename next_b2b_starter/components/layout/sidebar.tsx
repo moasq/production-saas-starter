@@ -13,7 +13,6 @@ import {
   Settings,
   Menu,
   X,
-  BookOpen,
 } from "lucide-react";
 import { useSidebarStore } from "@/lib/stores/sidebar-store";
 import type { ServerPermissions } from "@/lib/auth/server-permissions";
@@ -34,18 +33,13 @@ const mainNavigation: NavigationItem[] = [
     icon: LayoutDashboard,
     // No permission required - everyone can see dashboard
   },
-  {
-    name: "Knowledge Base",
-    href: "/dashboard/knowledge",
-    icon: BookOpen,
-    // No permission required - everyone can access knowledge base
-  },
+
 ];
 
 const accountNavigation = [{ name: "Settings", href: "/dashboard/settings", icon: Settings }];
 
 interface SidebarProps {
-  permissions: ServerPermissions;
+  permissions: Pick<ServerPermissions, "permissions">;
 }
 
 export function Sidebar({

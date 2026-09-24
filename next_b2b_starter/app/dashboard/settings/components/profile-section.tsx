@@ -1,94 +1,25 @@
 "use client";
-
+import { useState, type FormEvent } from "react";
 import { UserProfile, MemberHelpers } from "@/lib/models/member.model";
-
-interface ProfileSectionProps {
-  profile: UserProfile;
-}
-
-export function ProfileSection({ profile }: ProfileSectionProps) {
-  const roleConfig = MemberHelpers.getRoleConfig(profile.role);
-  const displayName =
-    profile.name?.trim() ||
-    (profile.email ? profile.email.split("@")[0] : "AP Cash member");
-
-  return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <header className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
-            Account owner
-          </p>
-          <h3 className="text-2xl font-semibold text-gray-900">{displayName}</h3>
-          <p className="text-sm text-gray-600">
-            These details identify you across automations and approvals.
-          </p>
-        </header>
-
-        <dl className="mt-8 space-y-5 text-sm">
-          <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
-            <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Email
-            </dt>
-            <dd className="text-base font-medium text-gray-900">{profile.email}</dd>
-          </div>
-
-          <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
-            <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Display name
-            </dt>
-            <dd className="text-base font-medium text-gray-900">
-              {displayName}
-            </dd>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Access level
-            </dt>
-            <dd>
-              <span
-                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${roleConfig.color}`}
-              >
-                {roleConfig.label}
-              </span>
-              <p className="mt-2 text-xs text-gray-500">{roleConfig.description}</p>
-            </dd>
-          </div>
-        </dl>
-      </section>
-
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <header className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
-            Workspace
-          </p>
-          <h3 className="text-xl font-semibold text-gray-900">
-            {profile.organizationName || "No workspace connected"}
-          </h3>
-          <p className="text-sm text-gray-600">
-            Configure branding, invite collaborators, and manage approvals within this workspace.
-          </p>
-        </header>
-
-        <div className="mt-8 space-y-4 text-sm">
-          <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Workspace ID
-            </p>
-            <p className="mt-1 font-medium text-gray-900">
-              {profile.organizationId || "Not assigned"}
-            </p>
-            <p className="mt-2 text-xs text-gray-500">
-              You&apos;ll need this ID when connecting AP Cash to external approval tools.
-            </p>
-          </div>
-          <p className="text-xs text-gray-500">
-            Need to switch workspaces or update billing ownership? Reach out to support so we can
-            take care of it for you.
-          </p>
-        </div>
-      </section>
-    </div>
-  );
+import { useUpdateProfile } from "@/lib/hooks/mutations/use-update-profile";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+export function ProfileSection({ profile }: { profile: UserProfile }) {
+ const [name, setName] = useState(profile.name ?? "");
+ const mutation = useUpdateProfile();
+ async function submit(event: FormEvent) { event.preventDefault(); await mutation.mutateAsync({ name: name.trim() }).catch(() => undefined); }
+ return <div className="grid gap-6 lg:grid-cols-2">
+  <section className="rounded-xl border p-6"><h3 className="text-lg font-semibold">Your profile</h3><p className="mt-2 text-sm text-gray-600">{profile.email}</p>
+   <form onSubmit={submit} className="mt-6 space-y-4"><label className="block text-sm" htmlFor="display-name">Display name</label>
+    <Input id="display-name" value={name} maxLength={100} required onChange={(e) => setName(e.target.value)} />
+    <Button disabled={mutation.isPending || !name.trim()} type="submit">{mutation.isPending ? "Saving…" : "Save name"}</Button>
+    {mutation.error && <p role="alert" className="text-sm text-red-700">{mutation.error.message}</p>}
+    {mutation.isSuccess && <p role="status" className="text-sm text-green-700">Profile saved.</p>}
+   </form>
+  </section>
+  <section className="rounded-xl border p-6"><h3 className="text-lg font-semibold">{profile.organizationName}</h3>
+   <p className="mt-2 text-sm text-gray-600">{MemberHelpers.getRoleConfig(profile.role).label}</p>
+   <p className="mt-6 break-all text-sm text-gray-500">Workspace ID: {profile.organizationId}</p>
+  </section>
+ </div>;
 }

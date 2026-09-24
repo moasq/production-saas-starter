@@ -11,10 +11,10 @@ export default function HomePage() {
           <div className="space-y-8">
             <div className="space-y-6">
               <h1 className="text-balance text-5xl font-bold tracking-tight text-slate-900 sm:text-6xl lg:text-7xl">
-                Welcome to Your App
+                Start with your team.
               </h1>
               <p className="mx-auto max-w-2xl text-xl text-slate-600 sm:text-2xl">
-                A modern Next.js starter with authentication, billing, and team management built in.
+                A simple B2B workspace with organization accounts, team management, and optional billing.
               </p>
             </div>
 
@@ -25,7 +25,7 @@ export default function HomePage() {
                   size="lg"
                   className="h-14 rounded-full bg-slate-900 px-8 text-base font-semibold text-white shadow-lg hover:bg-slate-800"
                 >
-                  Get Started
+                  Create workspace
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
@@ -75,10 +75,10 @@ export default function HomePage() {
                 </svg>
               </div>
               <h3 className="mb-2 text-lg font-semibold text-slate-900">
-                Billing Integration
+                Optional Billing
               </h3>
               <p className="text-sm text-slate-600">
-                Subscription management and payments via Polar.
+                Add subscription payments with Polar when you need them.
               </p>
             </div>
 
@@ -113,7 +113,7 @@ export default function HomePage() {
       <footer className="border-t border-slate-200 py-8">
         <div className="container mx-auto px-6 text-center">
           <p className="text-sm text-slate-600">
-            Built with Next.js, TypeScript, and Tailwind CSS
+            Built with Go, Next.js, and PostgreSQL
           </p>
         </div>
       </footer>

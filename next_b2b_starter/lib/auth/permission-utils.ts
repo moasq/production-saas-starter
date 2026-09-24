@@ -1,18 +1,18 @@
 /**
  * Permission Utility Functions
- * Supports wildcard permissions (e.g., "invoice:*" grants all invoice actions)
+ * Supports wildcard permissions (e.g., "org:*" grants all org actions)
  */
 
-import type { Permission } from './permissions';
+
 
 /**
  * Match a granted permission against a required permission
  * Supports wildcard matching: "resource:*" matches all actions for that resource
  *
  * @example
- * matchesPermission('invoice:*', 'invoice:create') // true
- * matchesPermission('invoice:view', 'invoice:create') // false
- * matchesPermission('invoice:create', 'invoice:create') // true
+ * matchesPermission('org:*', 'org:create') // true
+ * matchesPermission('org:view', 'org:create') // false
+ * matchesPermission('org:create', 'org:create') // true
  */
 export function matchesPermission(
   grantedPermission: string,
@@ -53,7 +53,7 @@ export function matchesPermission(
  * Check if user has a specific permission
  *
  * @param userPermissions - Array of permissions from backend
- * @param requiredPermission - Permission to check (e.g., "invoice:create")
+ * @param requiredPermission - Permission to check (e.g., "org:create")
  * @returns true if user has the permission (directly or via wildcard)
  */
 export function hasPermission(
@@ -73,7 +73,7 @@ export function hasPermission(
  * @returns true if user has at least one of the permissions
  *
  * @example
- * hasAnyPermission(permissions, ['invoice:create', 'invoice:view'])
+ * hasAnyPermission(permissions, ['org:create', 'org:view'])
  * // true if user has either permission
  */
 export function hasAnyPermission(
@@ -97,7 +97,7 @@ export function hasAnyPermission(
  * @returns true if user has all permissions
  *
  * @example
- * hasAllPermissions(permissions, ['invoice:view', 'invoice:create'])
+ * hasAllPermissions(permissions, ['org:view', 'org:create'])
  * // true only if user has both permissions
  */
 export function hasAllPermissions(

@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/moasq/go-b2b-starter/internal/platform/server/config"
 	"github.com/gin-gonic/gin"
+	"github.com/moasq/go-b2b-starter/internal/platform/server/config"
 )
 
 func RequestSanitization(config config.SanitizationConfig) gin.HandlerFunc {

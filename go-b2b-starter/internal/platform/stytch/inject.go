@@ -3,8 +3,8 @@ package stytch
 import (
 	"fmt"
 
+	"github.com/moasq/go-b2b-starter/internal/platform/cache"
 	"github.com/moasq/go-b2b-starter/internal/platform/logger"
-	"github.com/moasq/go-b2b-starter/internal/platform/redis"
 	"go.uber.org/dig"
 )
 
@@ -20,10 +20,10 @@ func ProvideDependencies(container *dig.Container) error {
 	// Provide RBAC policy service
 	if err := container.Provide(func(
 		client *Client,
-		redisClient redis.Client,
+		metadataCache *cache.Cache,
 		logger logger.Logger,
 	) *RBACPolicyService {
-		return NewRBACPolicyService(client, redisClient, logger)
+		return NewRBACPolicyService(client, metadataCache, logger)
 	}); err != nil {
 		return fmt.Errorf("failed to provide RBAC policy service: %w", err)
 	}

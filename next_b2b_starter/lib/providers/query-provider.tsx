@@ -2,12 +2,12 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 
 /**
  * Query Client Provider
  *
- * Configures TanStack Query with sensible defaults for AP Cash:
+ * Configures TanStack Query with sensible defaults for the starter:
  * - 5 minute stale time (data stays fresh for 5 minutes)
  * - 10 minute garbage collection (cache persists for 10 minutes)
  * - Single retry on failure
@@ -37,8 +37,8 @@ function makeQueryClient() {
         refetchOnReconnect: false,
       },
       mutations: {
-        // Retry mutations once on network errors
-        retry: 1,
+        // Mutations may already have succeeded when a response is lost.
+        retry: false,
       },
     },
   });

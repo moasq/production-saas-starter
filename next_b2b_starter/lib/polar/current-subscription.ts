@@ -1,205 +1,30 @@
+import "server-only";
 import { getMemberSession } from "@/lib/auth/stytch/server";
 import { getServerPermissions } from "@/lib/auth/server-permissions";
-import { getActiveSubscription } from "@/lib/polar/subscription";
-import { getInvoiceUsage } from "@/lib/polar/usage";
-
-export interface SubscriptionSnapshot {
-  id: string;
-  status: string;
-  currentPeriodStart: string;
-  currentPeriodEnd: string | null;
-  cancelAtPeriodEnd: boolean;
-  customerId: string;
-  productId: string;
-  productName: string | null;
-  productMetadata: Record<string, unknown> | null;
-  trialEnd: string | null;
-  // Additional Polar properties
-  trialStart: string | null;
-  recurringInterval: string;
-  metadata: Record<string, unknown> | null;
-  customFieldData: Record<string, unknown> | null;
-  customerCancellationReason: string | null;
-  customerCancellationComment: string | null;
+import { apiClient } from "@/lib/api/api/client/api-client";
+import { isPolarEnabled } from "./config";
+export interface BillingStatus {
+  BillingEnabled: boolean; HasActiveSubscription: boolean; Reason: string;
+  SubscriptionID?: string; SubscriptionStatus?: string; ProductID?: string;
+  CurrentPeriodEnd?: string | null; CancelAtPeriodEnd?: boolean;
 }
-
-export interface UsageSnapshot {
-  meterId: string;
-  customerId: string;
-  included: number;
-  used: number;
-  remaining: number;
-  periodStart: string;
-  periodEnd: string;
-}
-
 export interface SubscriptionGateState {
-  isAuthenticated: boolean;
-  isActive: boolean;
-  reason?: string;
-  status?: string | null;
-  productId: string | null;
-  meterId: string | null;
-  planId: string | null;
-  subscription: SubscriptionSnapshot | null;
-  usage: UsageSnapshot | null;
-  backendAvailable: boolean;
-  backendError?: string | null;
+  isAuthenticated: boolean; isActive: boolean; reason?: string; status?: string | null;
+  productId: string | null; planId: string | null;
+  subscription: { id: string; status: string; productId: string; productName: string | null; currentPeriodEnd: string | null; cancelAtPeriodEnd: boolean } | null;
+  backendAvailable: boolean; backendError?: string | null;
 }
-
 export async function resolveCurrentSubscription(): Promise<SubscriptionGateState> {
-  const session = await getMemberSession();
-  if (!session?.session_jwt) {
-    console.info("[Polar] Subscription state: unauthenticated");
-    return {
-      isAuthenticated: false,
-      isActive: false,
-      reason: "UNAUTHENTICATED",
-      status: null,
-      productId: null,
-      meterId: null,
-      planId: null,
-      subscription: null,
-      usage: null,
-      backendAvailable: true,
-      backendError: null,
-    };
-  }
-
-  const permissions = await getServerPermissions(session);
-  if (!permissions.backendAvailable) {
-    console.warn("[Polar] Subscription state: backend unavailable", {
-      error: permissions.backendError,
-    });
-
-    return {
-      isAuthenticated: true,
-      isActive: false,
-      reason: "BACKEND_UNAVAILABLE",
-      status: null,
-      productId: null,
-      meterId: null,
-      planId: null,
-      subscription: null,
-      usage: null,
-      backendAvailable: false,
-      backendError: permissions.backendError ?? "Service temporarily unavailable",
-    };
-  }
-
-  const profile = permissions.profile;
-  if (!profile) {
-    console.warn("[Polar] Subscription state: profile unavailable");
-    return {
-      isAuthenticated: true,
-      isActive: false,
-      reason: "PROFILE_UNAVAILABLE",
-      status: null,
-      productId: null,
-      meterId: null,
-      planId: null,
-      subscription: null,
-      usage: null,
-      backendAvailable: true,
-      backendError: null,
-    };
-  }
-
-  if (!permissions.canManageSubscriptions) {
-    console.info("[Polar] Subscription state: insufficient permissions", {
-      permissions: permissions.permissions,
-    });
-    return {
-      isAuthenticated: true,
-      isActive: false,
-      reason: "INSUFFICIENT_PERMISSIONS",
-      status: null,
-      productId: null,
-      meterId: null,
-      planId: null,
-      subscription: null,
-      usage: null,
-      backendAvailable: true,
-      backendError: null,
-    };
-  }
-
-  const result = await getActiveSubscription({
-    externalCustomerId: profile.organization?.organization_id,
-    customerEmail: profile.email,
-    organizationId: profile.organization?.organization_id,
-  });
-
-  const { subscription, isActive, status, meterId, productId, planId, reason } = result;
-
-  const usage = subscription && isActive ? await getInvoiceUsage(subscription) : null;
-  const productName = subscription?.product?.name ?? null;
-  const productMetadata =
-    subscription && subscription.product?.metadata
-      ? (subscription.product.metadata as Record<string, unknown>)
-      : null;
-
-  const state: SubscriptionGateState = {
-    isAuthenticated: true,
-    isActive,
-    reason,
-    status,
-    productId,
-    meterId,
-    planId: planId ?? null,
-      subscription: subscription
-        ? {
-            id: subscription.id,
-            status: subscription.status,
-            currentPeriodStart: subscription.currentPeriodStart.toISOString(),
-            currentPeriodEnd: subscription.currentPeriodEnd?.toISOString() ?? null,
-            cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-            customerId: subscription.customerId,
-            productId: subscription.productId,
-            productName,
-            productMetadata,
-            trialEnd: subscription.trialEnd?.toISOString() ?? null,
-            // Additional Polar properties
-            trialStart: subscription.trialStart?.toISOString() ?? null,
-            recurringInterval: subscription.recurringInterval,
-            metadata: subscription.metadata ?? null,
-          customFieldData: subscription.customFieldData ?? null,
-          customerCancellationReason: subscription.customerCancellationReason ?? null,
-          customerCancellationComment: subscription.customerCancellationComment ?? null,
-        }
-      : null,
-    usage: usage
-      ? {
-          meterId: usage.meterId,
-          customerId: usage.customerId,
-          included: usage.included,
-          used: usage.used,
-          remaining: usage.remaining,
-          periodStart: usage.periodStart.toISOString(),
-          periodEnd: usage.periodEnd.toISOString(),
-        }
-      : null,
-    backendAvailable: true,
-    backendError: null,
-  };
-
-  console.info("[Polar] Subscription state resolved", {
-    isActive: state.isActive,
-    reason: state.reason,
-    status: state.status,
-    productId: state.productId,
-    meterId: state.meterId,
-    planId: state.planId,
-    usage: state.usage
-      ? {
-          used: state.usage.used,
-          remaining: state.usage.remaining,
-          included: state.usage.included,
-        }
-      : undefined,
-    backendAvailable: state.backendAvailable,
-    backendError: state.backendError,
-  });
-
-  return state;
+ const session = await getMemberSession();
+ const empty: SubscriptionGateState = { isAuthenticated: Boolean(session), isActive: false, productId: null, planId: null, subscription: null, backendAvailable: true };
+ if (!session?.session_jwt) return { ...empty, reason: "UNAUTHENTICATED" };
+ if (!isPolarEnabled()) return { ...empty, reason: "BILLING_DISABLED" };
+ const permissions = await getServerPermissions(session);
+ if (!permissions.canManageSubscriptions) return { ...empty, reason: "INSUFFICIENT_PERMISSIONS" };
+ try {
+   const status = await apiClient.get<BillingStatus>("/subscriptions/status", { headers: { Authorization: `Bearer ${session.session_jwt}` } });
+   return { ...empty, isActive: status.HasActiveSubscription, reason: status.Reason, status: status.SubscriptionStatus,
+     productId: status.ProductID ?? null,
+     subscription: status.SubscriptionID ? { id: status.SubscriptionID, status: status.SubscriptionStatus ?? "unknown", productId: status.ProductID ?? "", productName: null, currentPeriodEnd: status.CurrentPeriodEnd ?? null, cancelAtPeriodEnd: status.CancelAtPeriodEnd ?? false } : null };
+ } catch { return { ...empty, backendAvailable: false, backendError: "Billing status is temporarily unavailable. Please retry.", reason: "BACKEND_UNAVAILABLE" }; }
 }

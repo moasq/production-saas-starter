@@ -3,29 +3,17 @@
  * Fetch permissions from backend API with proper cache control
  */
 
-import type { B2BSessionsAuthenticateResponse } from "stytch";
+import type { VerifiedSession } from "./stytch/server";
 
 import { profileRepository } from "@/lib/api/api/repositories/profile-repository";
 import type { ProfileResponseDto } from "@/lib/api/api/dto/profile.dto";
 import { PERMISSIONS } from "./permissions";
-import type { Permission } from "./permissions";
+
 
 export interface ServerPermissions {
   profile: ProfileResponseDto | null;
   roles: string[];
   permissions: string[];
-  canViewInvoices: boolean;
-  canCreateInvoices: boolean;
-  canUploadInvoices: boolean;
-  canDeleteInvoices: boolean;
-  canViewApprovals: boolean;
-  canApproveInvoices: boolean;
-  canViewDuplicates: boolean;
-  canResolveDuplicates: boolean;
-  canSchedulePayments: boolean;
-  canExportPayments: boolean;
-  canExecutePayments: boolean;
-  canViewAudit: boolean;
   canViewOrganization: boolean;
   canManageOrganization: boolean;
   canManageSubscriptions: boolean; // Derived from org:manage
@@ -33,7 +21,7 @@ export interface ServerPermissions {
   backendError?: string | null;
 }
 
-const KNOWN_PERMISSIONS = new Set<string>(Object.values(PERMISSIONS));
+
 
 /**
  * Compute all permissions for the user based on their session
@@ -46,24 +34,12 @@ const KNOWN_PERMISSIONS = new Set<string>(Object.values(PERMISSIONS));
  * 4. Backend validates permissions on every API call (security maintained)
  */
 export async function getServerPermissions(
-  session: B2BSessionsAuthenticateResponse | null
+  session: VerifiedSession | null
 ): Promise<ServerPermissions> {
   const emptyPermissions: ServerPermissions = {
     profile: null,
     roles: [],
     permissions: [],
-    canViewInvoices: false,
-    canCreateInvoices: false,
-    canUploadInvoices: false,
-    canDeleteInvoices: false,
-    canViewApprovals: false,
-    canApproveInvoices: false,
-    canViewDuplicates: false,
-    canResolveDuplicates: false,
-    canSchedulePayments: false,
-    canExportPayments: false,
-    canExecutePayments: false,
-    canViewAudit: false,
     canViewOrganization: false,
     canManageOrganization: false,
     canManageSubscriptions: false,
@@ -104,26 +80,6 @@ export async function getServerPermissions(
       profile,
       roles,
       permissions: permissions as string[],
-      canViewInvoices: permissions.includes(PERMISSIONS.INVOICE_VIEW),
-      canCreateInvoices: permissions.includes(PERMISSIONS.INVOICE_CREATE),
-      canUploadInvoices: permissions.includes(PERMISSIONS.INVOICE_UPLOAD),
-      canDeleteInvoices: permissions.includes(PERMISSIONS.INVOICE_DELETE),
-      canViewApprovals: permissions.includes(PERMISSIONS.APPROVALS_VIEW),
-      canApproveInvoices: permissions.includes(PERMISSIONS.APPROVALS_APPROVE),
-      canViewDuplicates: permissions.includes(PERMISSIONS.DUPLICATES_VIEW),
-      canResolveDuplicates: permissions.includes(
-        PERMISSIONS.DUPLICATES_RESOLVE
-      ),
-      canSchedulePayments: permissions.includes(
-        PERMISSIONS.PAYMENT_OPTIMIZATION_SCHEDULE
-      ),
-      canExportPayments: permissions.includes(
-        PERMISSIONS.PAYMENT_OPTIMIZATION_EXPORT
-      ),
-      canExecutePayments: permissions.includes(
-        PERMISSIONS.PAYMENT_OPTIMIZATION_EXECUTE
-      ),
-      canViewAudit: permissions.includes(PERMISSIONS.AUDIT_VIEW),
       canViewOrganization: permissions.includes(PERMISSIONS.ORG_VIEW),
       canManageOrganization: permissions.includes(PERMISSIONS.ORG_MANAGE),
       canManageSubscriptions: permissions.includes(PERMISSIONS.ORG_MANAGE),

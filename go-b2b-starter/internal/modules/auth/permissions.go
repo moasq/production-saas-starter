@@ -189,4 +189,3 @@ func StringsToPermissions(permissions []string) []Permission {
 	}
 	return result
 }
-

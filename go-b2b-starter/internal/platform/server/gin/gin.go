@@ -1,8 +1,8 @@
 package gin
 
 import (
-	"github.com/moasq/go-b2b-starter/internal/platform/server/config"
 	"github.com/gin-gonic/gin"
+	"github.com/moasq/go-b2b-starter/internal/platform/server/config"
 )
 
 type GinRouter struct {

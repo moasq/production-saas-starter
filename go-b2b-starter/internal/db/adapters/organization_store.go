@@ -3,8 +3,8 @@ package adapters
 import (
 	"context"
 
-	db "github.com/moasq/go-b2b-starter/internal/db/postgres/sqlc/gen"
 	"github.com/jackc/pgx/v5/pgtype"
+	db "github.com/moasq/go-b2b-starter/internal/db/postgres/sqlc/gen"
 )
 
 // OrganizationStore provides database operations for organizations

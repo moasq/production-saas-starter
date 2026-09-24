@@ -6,10 +6,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/moasq/go-b2b-starter/internal/modules/organizations/app/services"
-	"github.com/moasq/go-b2b-starter/pkg/response"
 	"github.com/moasq/go-b2b-starter/internal/modules/auth"
+	"github.com/moasq/go-b2b-starter/internal/modules/organizations/app/services"
 	"github.com/moasq/go-b2b-starter/internal/platform/logger"
+	"github.com/moasq/go-b2b-starter/pkg/response"
 )
 
 type MemberHandler struct {
@@ -100,10 +100,15 @@ func (h *MemberHandler) AddMember(c *gin.Context) {
 	}
 
 	req.OrgID = reqCtx.ProviderOrgID
+	req.RoleSlug = strings.ToLower(strings.TrimSpace(req.RoleSlug))
 	if strings.TrimSpace(req.RoleSlug) == "" {
 		req.RoleSlug = "member"
 	}
 
+	if err := req.Validate(); err != nil {
+		response.Error(c, 400, "invalid member", err)
+		return
+	}
 	result, err := h.memberService.AddMemberDirect(c.Request.Context(), &req)
 	if err != nil {
 		h.logger.Error("failed to add member", map[string]any{
@@ -335,4 +340,39 @@ func (h *MemberHandler) CheckEmail(c *gin.Context) {
 		"email": email,
 	})
 	response.Success(c, http.StatusOK, gin.H{})
+}
+
+func (h *MemberHandler) UpdateProfile(c *gin.Context) {
+	reqCtx := auth.GetRequestContext(c)
+	if reqCtx == nil || reqCtx.Identity == nil {
+		response.Error(c, 401, "authentication required", nil)
+		return
+	}
+	var req struct {
+		Name string `json:"name" binding:"required,min=1,max=255"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, 400, "invalid profile", err)
+		return
+	}
+	profile, err := h.memberService.UpdateCurrentUserProfile(c.Request.Context(), reqCtx.ProviderOrgID, reqCtx.Identity.UserID, reqCtx.Identity.Email, req.Name)
+	if err != nil {
+		h.logger.Error("update profile failed", logger.Fields{"error": err.Error()})
+		response.Error(c, 500, "could not update profile", nil)
+		return
+	}
+	response.Success(c, 200, profile)
+}
+func (h *MemberHandler) ResendInvitation(c *gin.Context) {
+	reqCtx := auth.GetRequestContext(c)
+	if reqCtx == nil {
+		response.Error(c, 401, "authentication required", nil)
+		return
+	}
+	if err := h.memberService.ResendInvitation(c.Request.Context(), reqCtx.ProviderOrgID, c.Param("member_id")); err != nil {
+		h.logger.Error("resend invitation failed", logger.Fields{"error": err.Error()})
+		response.Error(c, 502, "could not send invitation", nil)
+		return
+	}
+	response.Success(c, 200, gin.H{"invite_sent": true})
 }

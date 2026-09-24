@@ -2,6 +2,7 @@ package organizations
 
 import (
 	"github.com/gin-gonic/gin"
+	platformstytch "github.com/moasq/go-b2b-starter/internal/platform/stytch"
 
 	"github.com/moasq/go-b2b-starter/internal/modules/auth"
 	serverDomain "github.com/moasq/go-b2b-starter/internal/platform/server/domain"
@@ -31,15 +32,13 @@ func (r *Routes) RegisterRoutes(router *gin.RouterGroup, resolver serverDomain.M
 	authGroup := router.Group("/auth")
 	{
 		// Public endpoint - Organization signup (no authentication required)
-		authGroup.POST("/signup", r.memberHandler.BootstrapOrganization)
-
-		// Public endpoint - Check if email exists (no authentication required)
-		authGroup.GET("/check-email", r.memberHandler.CheckEmail)
+		authGroup.POST("/signup", requireConfiguredAuth(), r.memberHandler.BootstrapOrganization)
 
 		// Protected endpoint - Add member (requires JWT authentication)
 		authGroup.POST("/members",
 			resolver.Get("auth"),
 			resolver.Get("org_context"),
+			auth.RequirePermissionFunc("org", "manage"),
 			r.memberHandler.AddMember)
 
 		// Protected endpoint - List members (requires JWT authentication and org:manage permission)
@@ -54,6 +53,9 @@ func (r *Routes) RegisterRoutes(router *gin.RouterGroup, resolver serverDomain.M
 			resolver.Get("auth"),
 			resolver.Get("org_context"),
 			r.memberHandler.GetProfile)
+
+		authGroup.PUT("/profile/me", resolver.Get("auth"), resolver.Get("org_context"), r.memberHandler.UpdateProfile)
+		authGroup.POST("/members/:member_id/resend-invitation", resolver.Get("auth"), resolver.Get("org_context"), auth.RequirePermissionFunc("org", "manage"), r.memberHandler.ResendInvitation)
 
 		// Protected endpoint - Delete organization member (requires JWT authentication and org:manage permission)
 		authGroup.DELETE("/members/:member_id",
@@ -76,27 +78,20 @@ func (r *Routes) RegisterRoutes(router *gin.RouterGroup, resolver serverDomain.M
 		orgGroup.GET("/stats", auth.RequirePermissionFunc("org", "view"), r.organizationHandler.GetOrganizationStats)
 	}
 
-	// Account routes - require JWT authentication
-	accountGroup := router.Group("/accounts")
-	accountGroup.Use(
-		resolver.Get("auth"),
-		resolver.Get("org_context"),
-	)
-	{
-		// Account management
-		accountGroup.POST("", auth.RequirePermissionFunc("org", "manage"), r.accountHandler.CreateAccount)
-		accountGroup.GET("", auth.RequirePermissionFunc("org", "view"), r.accountHandler.ListAccounts)
-		accountGroup.GET("/by-email", auth.RequirePermissionFunc("org", "view"), r.accountHandler.GetAccountByEmail)
-		accountGroup.GET("/:id", auth.RequirePermissionFunc("org", "view"), r.accountHandler.GetAccount)
-		accountGroup.PUT("/:id", auth.RequirePermissionFunc("org", "manage"), r.accountHandler.UpdateAccount)
-		accountGroup.DELETE("/:id", auth.RequirePermissionFunc("org", "manage"), r.accountHandler.DeleteAccount)
-		accountGroup.POST("/:id/last-login", auth.RequirePermissionFunc("org", "view"), r.accountHandler.UpdateAccountLastLogin)
-		accountGroup.GET("/:id/permissions", auth.RequirePermissionFunc("org", "view"), r.accountHandler.CheckAccountPermission)
-		accountGroup.GET("/:id/stats", auth.RequirePermissionFunc("org", "view"), r.accountHandler.GetAccountStats)
-	}
 }
 
 // Routes returns a RouteRegistrar function compatible with the server interface
 func (r *Routes) Routes(router *gin.RouterGroup, resolver serverDomain.MiddlewareResolver) {
 	r.RegisterRoutes(router, resolver)
+}
+
+func requireConfiguredAuth() gin.HandlerFunc {
+	cfg, err := platformstytch.LoadConfig()
+	return func(c *gin.Context) {
+		if err != nil || !cfg.Configured() {
+			c.AbortWithStatusJSON(503, gin.H{"error": "Authentication is not configured"})
+			return
+		}
+		c.Next()
+	}
 }

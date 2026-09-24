@@ -3,16 +3,15 @@ package domain
 import (
 	"time"
 
-	"github.com/moasq/go-b2b-starter/internal/platform/server/middleware"
 	"github.com/gin-gonic/gin"
+	"github.com/moasq/go-b2b-starter/internal/platform/server/middleware"
 )
 
 func (s *HTTPServer) setupMiddleware() {
 	ipProtection := middleware.NewIPProtection()
 
-	// Calculate timeout based on extraction timeout + buffer
-	requestTimeout := time.Duration(s.config.ExtractionTimeoutSeconds+10) * time.Second // Add 10s buffer
-	
+	requestTimeout := 25 * time.Second
+
 	s.router.Use(
 		middleware.RequestID(),
 		ipProtection.Protect(),
@@ -32,8 +31,8 @@ func (s *HTTPServer) setupMiddleware() {
 		)
 	}
 
-	if len(s.config.TrustedProxies) > 0 {
-		s.router.SetTrustedProxies(s.config.TrustedProxies)
+	if err := s.router.SetTrustedProxies(s.config.TrustedProxies); err != nil {
+		panic(err)
 	}
 }
 

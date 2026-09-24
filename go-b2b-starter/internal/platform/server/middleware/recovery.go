@@ -9,8 +9,8 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/moasq/go-b2b-starter/internal/platform/server/logging"
 	"github.com/gin-gonic/gin"
+	"github.com/moasq/go-b2b-starter/internal/platform/server/logging"
 )
 
 const (

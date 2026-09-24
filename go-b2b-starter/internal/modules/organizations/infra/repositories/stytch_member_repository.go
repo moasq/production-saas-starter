@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -9,9 +10,9 @@ import (
 	"github.com/moasq/go-b2b-starter/internal/modules/organizations/domain"
 	loggerDomain "github.com/moasq/go-b2b-starter/internal/platform/logger"
 	stytchcfg "github.com/moasq/go-b2b-starter/internal/platform/stytch"
-	"github.com/stytchauth/stytch-go/v16/stytch/b2b/magiclinks/email"
-	"github.com/stytchauth/stytch-go/v16/stytch/b2b/organizations"
-	"github.com/stytchauth/stytch-go/v16/stytch/b2b/organizations/members"
+	"github.com/stytchauth/stytch-go/v18/stytch/b2b/magiclinks/email"
+	"github.com/stytchauth/stytch-go/v18/stytch/b2b/organizations"
+	"github.com/stytchauth/stytch-go/v18/stytch/b2b/organizations/members"
 )
 
 type stytchMemberRepository struct {
@@ -30,6 +31,9 @@ func NewStytchMemberRepository(client *stytchcfg.Client, cfg stytchcfg.Config, l
 }
 
 func (r *stytchMemberRepository) CreateMember(ctx context.Context, req *domain.CreateAuthMemberRequest) (*domain.AuthMember, error) {
+	if r.client == nil {
+		return nil, fmt.Errorf("Stytch is not configured")
+	}
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid create member request: %w", err)
 	}
@@ -56,6 +60,9 @@ func (r *stytchMemberRepository) CreateMember(ctx context.Context, req *domain.C
 }
 
 func (r *stytchMemberRepository) UpdateMember(ctx context.Context, req *domain.UpdateAuthMemberRequest) (*domain.AuthMember, error) {
+	if r.client == nil {
+		return nil, fmt.Errorf("Stytch is not configured")
+	}
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid update member request: %w", err)
 	}
@@ -88,6 +95,9 @@ func (r *stytchMemberRepository) UpdateMember(ctx context.Context, req *domain.U
 }
 
 func (r *stytchMemberRepository) GetMember(ctx context.Context, organizationID, memberID string) (*domain.AuthMember, error) {
+	if r.client == nil {
+		return nil, fmt.Errorf("Stytch is not configured")
+	}
 	if organizationID == "" {
 		return nil, domain.ErrAuthOrganizationIDRequired
 	}
@@ -107,6 +117,9 @@ func (r *stytchMemberRepository) GetMember(ctx context.Context, organizationID, 
 }
 
 func (r *stytchMemberRepository) GetMemberByEmail(ctx context.Context, organizationID, emailAddr string) (*domain.AuthMember, error) {
+	if r.client == nil {
+		return nil, fmt.Errorf("Stytch is not configured")
+	}
 	if organizationID == "" {
 		return nil, domain.ErrAuthOrganizationIDRequired
 	}
@@ -126,6 +139,9 @@ func (r *stytchMemberRepository) GetMemberByEmail(ctx context.Context, organizat
 }
 
 func (r *stytchMemberRepository) ListMembers(ctx context.Context, organizationID string, limit, offset int) ([]*domain.AuthMember, error) {
+	if r.client == nil {
+		return nil, fmt.Errorf("Stytch is not configured")
+	}
 	if organizationID == "" {
 		return nil, domain.ErrAuthOrganizationIDRequired
 	}
@@ -171,6 +187,9 @@ func (r *stytchMemberRepository) ListMembers(ctx context.Context, organizationID
 }
 
 func (r *stytchMemberRepository) RemoveMembers(ctx context.Context, req *domain.RemoveAuthMembersRequest) error {
+	if r.client == nil {
+		return fmt.Errorf("Stytch is not configured")
+	}
 	if err := req.Validate(); err != nil {
 		return fmt.Errorf("invalid remove members request: %w", err)
 	}
@@ -181,7 +200,11 @@ func (r *stytchMemberRepository) RemoveMembers(ctx context.Context, req *domain.
 			MemberID:       memberID,
 		})
 		if err != nil {
-			return fmt.Errorf("stytch delete member %s: %w", memberID, stytchcfg.MapError(err))
+			mapped := stytchcfg.MapError(err)
+			if errors.Is(mapped, stytchcfg.ErrNotFound) {
+				continue
+			}
+			return fmt.Errorf("stytch delete member %s: %w", memberID, mapped)
 		}
 	}
 
@@ -189,6 +212,9 @@ func (r *stytchMemberRepository) RemoveMembers(ctx context.Context, req *domain.
 }
 
 func (r *stytchMemberRepository) AssignRoles(ctx context.Context, req *domain.AssignAuthRolesRequest) error {
+	if r.client == nil {
+		return fmt.Errorf("Stytch is not configured")
+	}
 	if err := req.Validate(); err != nil {
 		return fmt.Errorf("invalid assign roles request: %w", err)
 	}
@@ -210,6 +236,9 @@ func (r *stytchMemberRepository) AssignRoles(ctx context.Context, req *domain.As
 }
 
 func (r *stytchMemberRepository) SendMagicLink(ctx context.Context, req *domain.SendMagicLinkRequest) error {
+	if r.client == nil {
+		return fmt.Errorf("Stytch is not configured")
+	}
 	if err := req.Validate(); err != nil {
 		return fmt.Errorf("invalid magic link request: %w", err)
 	}

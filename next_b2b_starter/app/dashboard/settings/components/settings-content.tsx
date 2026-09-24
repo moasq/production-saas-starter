@@ -7,7 +7,6 @@ import {
   User,
   Users,
   CreditCard,
-  RefreshCcw,
   ArrowLeft,
   ChevronRight,
 } from "lucide-react";
@@ -21,13 +20,6 @@ import { InviteMember } from "./invite-member";
 import { MemberHelpers } from "@/lib/models/member.model";
 import { usePermissions } from "@/lib/hooks/use-permissions";
 import { PERMISSIONS } from "@/lib/auth/permissions";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Dialog,
@@ -48,6 +40,7 @@ import type { InviteMemberRequest } from "@/lib/models/member.model";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 interface SettingsContentProps {
+  billingEnabled: boolean;
   // No props required - component fetches its own data
 }
 
@@ -87,66 +80,6 @@ function parseViewParam(raw: string | null): SettingsView | null {
   return null;
 }
 
-function getPlanNameFromRecord(record: Record<string, unknown> | null | undefined) {
-  if (!record || typeof record !== "object") {
-    return null;
-  }
-
-  const planKeys = [
-    "plan_name",
-    "plan_label",
-    "plan_display_name",
-    "subscription_name",
-    "product_name",
-    "name",
-  ];
-
-  for (const key of planKeys) {
-    const value = record[key];
-    if (typeof value === "string") {
-      const trimmed = value.trim();
-      if (trimmed.length > 0) {
-        return trimmed;
-      }
-    }
-  }
-
-  return null;
-}
-
-function resolvePlanLabel(state: SubscriptionGateState | null): string {
-  if (!state) {
-    return "Active plan";
-  }
-
-  const planNameFromSubscription = getPlanNameFromRecord(
-    state.subscription?.metadata ?? undefined
-  );
-  if (planNameFromSubscription) {
-    return planNameFromSubscription;
-  }
-
-  const planNameFromCustomFields = getPlanNameFromRecord(
-    state.subscription?.customFieldData ?? undefined
-  );
-  if (planNameFromCustomFields) {
-    return planNameFromCustomFields;
-  }
-
-  const planNameFromProduct = getPlanNameFromRecord(
-    state.subscription?.productMetadata ?? undefined
-  );
-  if (planNameFromProduct) {
-    return planNameFromProduct;
-  }
-
-  if (state.subscription?.productName) {
-    return state.subscription.productName;
-  }
-
-  return "Active plan";
-}
-
 function getSubscriptionQuickStatus(
   state: SubscriptionGateState | null,
   isLoading: boolean
@@ -182,7 +115,7 @@ function getSubscriptionQuickStatus(
   if (!state.isActive || state.reason === "NO_ACTIVE_SUBSCRIPTION") {
     return {
       title: "No active plan",
-      helper: "Select a plan below to keep automations running.",
+      helper: "Select a subscription plan below.",
     };
   }
 
@@ -199,7 +132,7 @@ function getSubscriptionQuickStatus(
       };
   }
 
-  const planLabel = resolvePlanLabel(state);
+  const planLabel = state.subscription?.productName || "Active plan";
   const renewalDate = state.subscription?.currentPeriodEnd
     ? format(new Date(state.subscription.currentPeriodEnd), "MMM d, yyyy")
     : null;
@@ -210,13 +143,13 @@ function getSubscriptionQuickStatus(
   };
 }
 
-export function SettingsContent({}: SettingsContentProps = {}) {
+export function SettingsContent({ billingEnabled }: SettingsContentProps) {
   const {
     hasPermission,
     isInitialized: permissionsReady,
   } = usePermissions();
   const canManageMembers = hasPermission(PERMISSIONS.ORG_MANAGE);
-  const hasSubscriptionPermission = hasPermission(PERMISSIONS.ORG_MANAGE);
+  const hasSubscriptionPermission = billingEnabled && hasPermission(PERMISSIONS.ORG_MANAGE);
   const shouldLoadSubscription = permissionsReady && hasSubscriptionPermission;
 
   const router = useRouter();
@@ -438,7 +371,7 @@ export function SettingsContent({}: SettingsContentProps = {}) {
 
     if (hasSubscriptionPermission) {
       let value = "Open details";
-      let helper = "Review plans, renewals, usage, and invoices.";
+      let helper = "Review your subscription and payment history.";
 
       if (subscriptionErrorMessage) {
         value = "Needs attention";
@@ -454,7 +387,7 @@ export function SettingsContent({}: SettingsContentProps = {}) {
       sections.push({
         key: "subscription",
         title: "Subscription & billing",
-        description: "Manage plan changes, billing history, and usage.",
+        description: "Manage your plan and billing history.",
         value,
         helper,
         icon: CreditCard,
@@ -482,11 +415,12 @@ export function SettingsContent({}: SettingsContentProps = {}) {
       return;
     }
 
-    await inviteMemberMutation.mutateAsync({
+    const result = await inviteMemberMutation.mutateAsync({
       request,
       organizationId: profile.organizationId,
     });
     setInviteModalOpen(false);
+    return result;
     // Members list automatically refetches due to invalidation in mutation
   };
 

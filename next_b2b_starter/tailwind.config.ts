@@ -1,3 +1,4 @@
+import animate from "tailwindcss-animate";
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
@@ -20,10 +21,12 @@ const config: Config = {
   	extend: {
   		fontFamily: {
   			sans: [
-  				'var(--font-sans)',
-  				'ui-sans-serif',
-  				'system-ui',
-  				'sans-serif'
+				'ui-sans-serif',
+				'system-ui',
+				'-apple-system',
+				'BlinkMacSystemFont',
+				'"Segoe UI"',
+				'sans-serif'
   			]
   		},
   		colors: {
@@ -90,7 +93,7 @@ const config: Config = {
   		}
   	}
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [animate],
 };
 
 export default config;

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useCallback, useTransition } from "react";
+import { useCallback, useTransition } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,11 +10,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { buildLoginUrl } from "@/lib/auth/stytch-client";
-import { useStytchConfig } from "@/lib/contexts/stytch-config-context";
+
+
 import { usePermissions } from "@/lib/hooks/use-permissions";
 import { useAuthContext } from "@/lib/contexts/auth-context";
-import { resetCachedToken } from "@/lib/api/api/client/api-client";
 import { logout } from "@/lib/actions/auth/logout";
 
 function getInitials(name?: string) {
@@ -29,19 +28,16 @@ export function UserMenu() {
   const { profile, isInitialized } = usePermissions();
   const authContext = useAuthContext();
   const queryClient = useQueryClient();
-  const stytchConfig = useStytchConfig();
+
   const [isPending, startTransition] = useTransition();
 
-  const loginHref = useMemo(() => {
-    return buildLoginUrl(stytchConfig);
-  }, [stytchConfig]);
+  const loginHref = "/auth";
 
   const handleLogout = useCallback(() => {
     startTransition(async () => {
       // Clear all client-side state
       authContext?.clearAuthState();
       queryClient.clear();
-      resetCachedToken();
 
       // Call Server Action (will redirect to home page)
       await logout("/");

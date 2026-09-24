@@ -1,20 +1,18 @@
+import { parseInvitationResponse } from "../dto/invitation-response.ts";
 // lib/api/api/repositories/member-repository.ts
 
-import { apiClient } from "../client/api-client";
-import {
+import { apiClient, type ApiClient } from "../client/api-client.ts";
+import type {
   MemberListResponseDto,
   InviteMemberRequestDto,
   InviteMemberResponseDto,
-  RemoveMemberRequestDto,
-  RemoveMemberResponseDto,
   MemberDto,
   UpdateProfileRequestDto,
   UpdateProfileResponseDto,
-  ResendInvitationRequestDto,
   ResendInvitationResponseDto,
 } from "../dto/member.dto";
-import { ProfileResponseDto } from "../dto/profile.dto";
-import {
+import type { ProfileResponseDto } from "../dto/profile.dto";
+import type {
   OrganizationMember,
   UserProfile,
   InviteMemberRequest,
@@ -24,7 +22,9 @@ import {
   MemberRole,
 } from "@/lib/models/member.model";
 
-class MemberRepository {
+export class MemberRepository {
+  private client: ApiClient;
+  constructor(client: ApiClient = apiClient) { this.client = client; }
   /**
    * Get current user profile
    */
@@ -38,7 +38,7 @@ class MemberRepository {
           message?: string;
         };
 
-    const response = await apiClient.get<ProfileApiResponse>("/auth/profile/me");
+    const response = await this.client.get<ProfileApiResponse>("/auth/profile/me");
 
     const profileDto =
       (response as { data?: ProfileResponseDto }).data ??
@@ -61,7 +61,6 @@ class MemberRepository {
   async updateProfile(request: UpdateProfileRequest): Promise<UserProfile> {
     const payload: UpdateProfileRequestDto = {
       name: request.name,
-      avatar_url: request.avatarUrl,
     };
 
     type UpdateProfileApiResponse = UpdateProfileResponseDto & {
@@ -69,7 +68,7 @@ class MemberRepository {
       data?: ProfileResponseDto;
     };
 
-    const response = await apiClient.put<UpdateProfileApiResponse>(
+    const response = await this.client.put<UpdateProfileApiResponse>(
       "/auth/profile/me",
       payload
     );
@@ -121,7 +120,7 @@ class MemberRepository {
           success?: boolean;
         };
 
-    const response = await apiClient.get<MemberListApiResponse>(endpoint);
+    const response = await this.client.get<MemberListApiResponse>(endpoint);
 
     const dto: MemberListResponseDto = "data" in response && response.data
       ? response.data
@@ -146,48 +145,42 @@ class MemberRepository {
    */
   async inviteMember(
     request: InviteMemberRequest,
-    organizationId: string
+    _organizationId: string
   ): Promise<InviteMemberResponse> {
+    void _organizationId; // Scope comes from the verified session, never this UI argument.
     const payload: InviteMemberRequestDto = {
       email: request.email,
       name: request.name,
       role_slug: request.role,
     };
 
-    const response = await apiClient.post<InviteMemberResponseDto>(
+    const response = await this.client.post<InviteMemberResponseDto>(
       "/auth/members",
       payload
     );
 
-    return {
-      success: response.success,
-      memberId: response.member_id,
-      message: response.message,
-      inviteLink: response.invite_link,
-    };
+    return parseInvitationResponse(response);
   }
 
   /**
    * Remove member from organization
    */
   async removeMember(memberId: string): Promise<boolean> {
-    const response = await apiClient.delete<RemoveMemberResponseDto>(
-      `/auth/members/${memberId}`
-    );
-
-    return response.success;
+    await this.client.delete<void>(`/auth/members/${encodeURIComponent(memberId)}`);
+    return true;
   }
 
   /**
    * Resend invitation to pending member
    */
   async resendInvitation(memberId: string): Promise<boolean> {
-    const response = await apiClient.post<ResendInvitationResponseDto>(
-      `/members/${memberId}/resend-invitation`,
+    const response = await this.client.post<ResendInvitationResponseDto>(
+      `/auth/members/${encodeURIComponent(memberId)}/resend-invitation`,
       { member_id: memberId }
     );
 
-    return response.success;
+    if (!response.success || !response.data?.invite_sent) throw new Error(response.message || "Invitation could not be sent.");
+    return true;
   }
 
   /**
@@ -195,15 +188,6 @@ class MemberRepository {
    * Extracts first non-Stytch role from roles array as the primary role
    */
   private toUserProfile(dto: ProfileResponseDto): UserProfile {
-    // Log received DTO for debugging
-    console.log("[MemberRepository] Profile DTO received:", {
-      member_id: dto.member_id,
-      email: dto.email,
-      name: dto.name,
-      roles: dto.roles,
-      organization: dto.organization,
-    });
-
     // Extract first non-stytch role as the primary role with null safety
     const roles = dto.roles || [];
     const primaryRole =

@@ -1,5 +1,5 @@
 // Package helpers provides utility functions for converting between Go types
-// and PostgreSQL types (pgtype, pgvector). These helpers are used by repository
+// and PostgreSQL types (pgtype). These helpers are used by repository
 // implementations across all modules.
 package helpers
 
@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/pgvector/pgvector-go"
 )
 
 // ToPgText converts a string to pgtype.Text
@@ -88,26 +87,6 @@ func FromJSONB(b []byte) map[string]any {
 	var result map[string]any
 	if err := json.Unmarshal(b, &result); err != nil {
 		return nil
-	}
-	return result
-}
-
-// ToVector converts a float64 slice to pgvector.Vector
-func ToVector(embedding []float64) pgvector.Vector {
-	// Convert []float64 to []float32 for pgvector
-	f32 := make([]float32, len(embedding))
-	for i, v := range embedding {
-		f32[i] = float32(v)
-	}
-	return pgvector.NewVector(f32)
-}
-
-// FromVector converts pgvector.Vector to float64 slice
-func FromVector(v pgvector.Vector) []float64 {
-	f32 := v.Slice()
-	result := make([]float64, len(f32))
-	for i, val := range f32 {
-		result[i] = float64(val)
 	}
 	return result
 }

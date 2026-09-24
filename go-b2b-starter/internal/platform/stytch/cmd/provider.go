@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/moasq/go-b2b-starter/internal/platform/cache"
 	"github.com/moasq/go-b2b-starter/internal/platform/logger"
-	"github.com/moasq/go-b2b-starter/internal/platform/redis"
 	"github.com/moasq/go-b2b-starter/internal/platform/stytch"
 	"go.uber.org/dig"
 )
@@ -51,12 +51,12 @@ func isPlaceholderCredentials(cfg *stytch.Config) bool {
 
 func provideRBACPolicyService(
 	client *stytch.Client,
-	redisClient redis.Client,
+	metadataCache *cache.Cache,
 	log logger.Logger,
 ) *stytch.RBACPolicyService {
 	// If client is nil (development mode), return nil for RBAC service too
 	if client == nil {
 		return nil
 	}
-	return stytch.NewRBACPolicyService(client, redisClient, log)
+	return stytch.NewRBACPolicyService(client, metadataCache, log)
 }

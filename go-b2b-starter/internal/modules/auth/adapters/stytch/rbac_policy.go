@@ -8,14 +8,14 @@ import (
 	"time"
 
 	"github.com/moasq/go-b2b-starter/internal/modules/auth"
+	"github.com/moasq/go-b2b-starter/internal/platform/cache"
 	"github.com/moasq/go-b2b-starter/internal/platform/logger"
-	"github.com/moasq/go-b2b-starter/internal/platform/redis"
-	"github.com/stytchauth/stytch-go/v16/stytch/b2b/b2bstytchapi"
-	"github.com/stytchauth/stytch-go/v16/stytch/b2b/rbac"
+	"github.com/stytchauth/stytch-go/v18/stytch/b2b/b2bstytchapi"
+	"github.com/stytchauth/stytch-go/v18/stytch/b2b/rbac"
 )
 
 const (
-	// Redis cache key for RBAC policy
+	// process-local cache key for RBAC policy
 	rbacPolicyCacheKey = "auth:stytch:rbac:policy"
 	// Cache TTL matches Stytch SDK default (5 minutes)
 	rbacPolicyCacheTTL = 5 * time.Minute
@@ -24,17 +24,17 @@ const (
 // RBACPolicyService fetches and caches the Stytch RBAC policy.
 //
 // It retrieves the role-permission mappings from Stytch and caches them
-// in Redis to avoid API calls on every request.
+// in process-local to avoid API calls on every request.
 type RBACPolicyService struct {
 	client *b2bstytchapi.API
-	redis  redis.Client
+	cache  *cache.Cache
 	logger logger.Logger
 }
 
-func NewRBACPolicyService(client *b2bstytchapi.API, redisClient redis.Client, logger logger.Logger) *RBACPolicyService {
+func NewRBACPolicyService(client *b2bstytchapi.API, metadataCache *cache.Cache, logger logger.Logger) *RBACPolicyService {
 	return &RBACPolicyService{
 		client: client,
-		redis:  redisClient,
+		cache:  metadataCache,
 		logger: logger,
 	}
 }
@@ -67,10 +67,10 @@ func (s *RBACPolicyService) GetRolePermissions(ctx context.Context, roleID strin
 	return nil, nil
 }
 
-// getPolicy fetches policy from Redis cache or Stytch API.
+// getPolicy fetches policy from process-local cache or Stytch API.
 func (s *RBACPolicyService) getPolicy(ctx context.Context) (*rbac.Policy, error) {
 	// Try cache first
-	cached, err := s.redis.Get(ctx, rbacPolicyCacheKey)
+	cached, err := s.cache.Get(ctx, rbacPolicyCacheKey)
 	if err == nil && cached != "" {
 		var policy rbac.Policy
 		if unmarshalErr := json.Unmarshal([]byte(cached), &policy); unmarshalErr == nil {
@@ -116,7 +116,7 @@ func (s *RBACPolicyService) fetchPolicyFromStytch(ctx context.Context) (*rbac.Po
 	return resp.Policy, nil
 }
 
-// cachePolicy stores policy in Redis.
+// cachePolicy stores policy in process-local.
 func (s *RBACPolicyService) cachePolicy(ctx context.Context, policy *rbac.Policy) {
 	data, err := json.Marshal(policy)
 	if err != nil {
@@ -126,8 +126,8 @@ func (s *RBACPolicyService) cachePolicy(ctx context.Context, policy *rbac.Policy
 		return
 	}
 
-	if err := s.redis.Set(ctx, rbacPolicyCacheKey, string(data), rbacPolicyCacheTTL); err != nil {
-		s.logger.Warn("failed to cache RBAC policy in Redis", logger.Fields{
+	if err := s.cache.Set(ctx, rbacPolicyCacheKey, string(data), rbacPolicyCacheTTL); err != nil {
+		s.logger.Warn("failed to cache RBAC policy in process-local", logger.Fields{
 			"error": err.Error(),
 		})
 	}
@@ -202,6 +202,6 @@ func (s *RBACPolicyService) expandWildcardActions(resourceID string, actions []s
 // normalizeRoleID removes common prefixes from role IDs.
 func normalizeRoleID(roleID string) string {
 	roleID = strings.TrimSpace(roleID)
-	roleID = strings.TrimPrefix(roleID, "stytch_")
+	// Preserve provider role IDs exactly; built-in roles include their prefix.
 	return roleID
 }

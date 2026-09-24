@@ -3,16 +3,14 @@ package cmd
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/moasq/go-b2b-starter/internal/modules/auth"
 	"github.com/moasq/go-b2b-starter/internal/modules/auth/adapters/stytch"
+	"github.com/moasq/go-b2b-starter/internal/platform/cache"
 	"github.com/moasq/go-b2b-starter/internal/platform/logger"
-	"github.com/moasq/go-b2b-starter/internal/platform/redis"
 	"go.uber.org/dig"
 )
 
-//
 // This sets up:
 //   - stytch.Config
 //   - auth.AuthProvider (Stytch adapter)
@@ -24,7 +22,7 @@ import (
 // # Prerequisites
 //
 // The following modules must be initialized first:
-//   - redis (for caching)
+//   - cache (for caching)
 //   - logger
 //
 // # Usage
@@ -44,19 +42,19 @@ func Init(container *dig.Container) error {
 	// Stytch Auth Adapter (implements auth.AuthProvider)
 	if err := container.Provide(func(
 		cfg *stytch.Config,
-		redisClient redis.Client,
+		metadataCache *cache.Cache,
 		log logger.Logger,
 	) (auth.AuthProvider, error) {
 		// Check for placeholder credentials
 		if isPlaceholderCredentials(cfg) {
-			log.Warn("Stytch credentials are placeholders - using development mode", map[string]any{
+			log.Warn("Stytch is not configured; authentication is disabled", map[string]any{
 				"project_id": cfg.ProjectID,
 				"message":    "Update STYTCH_PROJECT_ID and STYTCH_SECRET in app.env with real credentials",
 			})
-			return stytch.NewMockAuthAdapter(log), nil
+			return stytch.DisabledAuthProvider{}, nil
 		}
 
-		adapter, err := stytch.NewStytchAuthAdapter(cfg, redisClient, log)
+		adapter, err := stytch.NewStytchAuthAdapter(cfg, metadataCache, log)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create stytch adapter: %w", err)
 		}
@@ -95,9 +93,4 @@ func InitMiddleware(container *dig.Container) error {
 }
 
 // isPlaceholderCredentials checks if the Stytch credentials are placeholder values.
-func isPlaceholderCredentials(cfg *stytch.Config) bool {
-	return strings.Contains(cfg.ProjectID, "REPLACE") ||
-		strings.Contains(cfg.Secret, "REPLACE") ||
-		cfg.ProjectID == "" ||
-		cfg.Secret == ""
-}
+func isPlaceholderCredentials(cfg *stytch.Config) bool { return !cfg.Configured() }

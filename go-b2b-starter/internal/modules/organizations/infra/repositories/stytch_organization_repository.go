@@ -10,7 +10,7 @@ import (
 	"github.com/moasq/go-b2b-starter/internal/modules/organizations/domain"
 	loggerDomain "github.com/moasq/go-b2b-starter/internal/platform/logger/domain"
 	stytchcfg "github.com/moasq/go-b2b-starter/internal/platform/stytch"
-	"github.com/stytchauth/stytch-go/v16/stytch/b2b/organizations"
+	"github.com/stytchauth/stytch-go/v18/stytch/b2b/organizations"
 )
 
 type stytchOrganizationRepository struct {
@@ -33,6 +33,9 @@ func NewStytchOrganizationRepository(
 }
 
 func (r *stytchOrganizationRepository) CreateOrganization(ctx context.Context, req *domain.CreateAuthOrganizationRequest) (*domain.AuthOrganization, error) {
+	if r.client == nil {
+		return nil, fmt.Errorf("Stytch is not configured")
+	}
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid create organization request: %w", err)
 	}
@@ -107,6 +110,9 @@ func (r *stytchOrganizationRepository) CreateOrganization(ctx context.Context, r
 }
 
 func (r *stytchOrganizationRepository) GetOrganization(ctx context.Context, organizationID string) (*domain.AuthOrganization, error) {
+	if r.client == nil {
+		return nil, fmt.Errorf("Stytch is not configured")
+	}
 	if organizationID == "" {
 		return nil, domain.ErrAuthOrganizationIDRequired
 	}
@@ -120,6 +126,9 @@ func (r *stytchOrganizationRepository) GetOrganization(ctx context.Context, orga
 }
 
 func (r *stytchOrganizationRepository) DeleteOrganization(ctx context.Context, organizationID string) error {
+	if r.client == nil {
+		return fmt.Errorf("Stytch is not configured")
+	}
 	if organizationID == "" {
 		return domain.ErrAuthOrganizationIDRequired
 	}
@@ -133,6 +142,9 @@ func (r *stytchOrganizationRepository) DeleteOrganization(ctx context.Context, o
 }
 
 func (r *stytchOrganizationRepository) CheckEmailExists(ctx context.Context, email string) (bool, error) {
+	if r.client == nil {
+		return false, fmt.Errorf("Stytch is not configured")
+	}
 	if email == "" {
 		return false, fmt.Errorf("email cannot be empty")
 	}

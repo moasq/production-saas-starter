@@ -37,7 +37,6 @@ export function MemberList({
   members,
   canManage,
   currentUserId,
-  organizationId,
   isFetching = false,
   onMemberUpdate,
 }: MemberListProps) {
@@ -86,7 +85,7 @@ export function MemberList({
       } else {
         throw new Error("Failed to resend invitation");
       }
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to resend invitation",

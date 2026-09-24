@@ -27,117 +27,27 @@ package auth
 // =============================================================================
 
 var (
-	// Resource permissions - rename "resource" to your domain entity
-	PermResourceView    = NewPermission("resource", "view")
-	PermResourceCreate  = NewPermission("resource", "create")
-	PermResourceEdit    = NewPermission("resource", "edit")
-	PermResourceDelete  = NewPermission("resource", "delete")
-	PermResourceApprove = NewPermission("resource", "approve")
-
-	// Organization permissions
 	PermOrgView   = NewPermission("org", "view")
 	PermOrgManage = NewPermission("org", "manage")
 )
 
-// AllPermissions is the complete list of all permissions in the system.
-// Update this when you add or remove permissions.
-var AllPermissions = []Permission{
-	PermResourceView,
-	PermResourceCreate,
-	PermResourceEdit,
-	PermResourceDelete,
-	PermResourceApprove,
-	PermOrgView,
-	PermOrgManage,
-}
+// The catalog describes the starter's recommended Stytch policy. Actual request
+// permissions always come from the provider; this metadata does not grant access.
+var AllPermissions = []Permission{PermOrgView, PermOrgManage}
 
-// =============================================================================
-// ROLES - Customize role names and permissions as needed
-// =============================================================================
-//
-// Default roles follow a simple hierarchy:
-//   - Member: Basic access (view, create)
-//   - Manager: Elevated access (edit, delete, approve)
-//   - Admin: Full control (everything + org management)
-//
-// To customize:
-//   1. Change role IDs if needed (must match Stytch configuration)
-//   2. Adjust permissions for each role
-//   3. Add new roles if needed
-//
-// =============================================================================
-
-// RoleInfo contains complete information about a role including its permissions.
-// Used for API responses and role lookups.
 type RoleInfo struct {
-	// ID is the unique identifier for the role (e.g., "member", "manager", "admin")
-	ID string
-	// Name is the display name for the role
-	Name string
-	// Description explains the purpose and scope of the role
+	ID          string
+	Name        string
 	Description string
-	// Permissions is the list of permissions granted to this role
 	Permissions []Permission
 }
 
 var (
-	// RoleMemberInfo - Basic user access
-	// Typical users: Employees, staff, basic users
-	RoleMemberInfo = RoleInfo{
-		ID:          "member",
-		Name:        "Member",
-		Description: "Basic access. Can view and create resources.",
-		Permissions: []Permission{
-			PermResourceView,
-			PermResourceCreate,
-		},
-	}
-
-	// RoleManagerInfo - Elevated access with approval rights
-	// Typical users: Team leads, supervisors, managers
-	RoleManagerInfo = RoleInfo{
-		ID:          "manager",
-		Name:        "Manager",
-		Description: "Elevated access. Can edit, delete, and approve resources.",
-		Permissions: []Permission{
-			PermResourceView,
-			PermResourceCreate,
-			PermResourceEdit,
-			PermResourceDelete,
-			PermResourceApprove,
-			PermOrgView,
-		},
-	}
-
-	// RoleAdminInfo - Full system control
-	// Typical users: Business owners, administrators
-	RoleAdminInfo = RoleInfo{
-		ID:          "admin",
-		Name:        "Admin",
-		Description: "Full control. Can manage organization settings and users.",
-		Permissions: []Permission{
-			PermResourceView,
-			PermResourceCreate,
-			PermResourceEdit,
-			PermResourceDelete,
-			PermResourceApprove,
-			PermOrgView,
-			PermOrgManage,
-		},
-	}
+	RoleMemberInfo  = RoleInfo{"member", "Member", "View the workspace.", []Permission{PermOrgView}}
+	RoleManagerInfo = RoleInfo{"manager", "Manager", "View the workspace. Extend this role for your domain.", []Permission{PermOrgView}}
+	RoleAdminInfo   = RoleInfo{"admin", "Admin", "Manage the workspace, members and billing.", []Permission{PermOrgView, PermOrgManage}}
 )
-
-// AllRoles is the complete list of all roles in the RBAC system.
-// Update this when you add or remove roles.
-var AllRoles = []RoleInfo{
-	RoleMemberInfo,
-	RoleManagerInfo,
-	RoleAdminInfo,
-}
-
-// =============================================================================
-// HELPER FUNCTIONS
-// =============================================================================
+var AllRoles = []RoleInfo{RoleMemberInfo, RoleManagerInfo, RoleAdminInfo}
 
 // GetRoleInfo retrieves role information by role ID.
 // Returns nil if the role is not found.
@@ -297,7 +207,7 @@ func NewRolePermissionsResponse(roleID string) *RolePermissionsResponse {
 
 	stats := RoleStatistics{
 		TotalPermissions: len(role.Permissions),
-		CanApprove:       HasPermission(roleID, PermResourceApprove),
+		CanApprove:       false,
 		CanManageOrg:     HasPermission(roleID, PermOrgManage),
 		Description:      role.Description,
 	}
@@ -370,7 +280,7 @@ func NewRBACMetadata() RBACMetadata {
 		TotalRoles:        len(AllRoles),
 		TotalPermissions:  len(AllPermissions),
 		PermissionsByRole: permsByRole,
-		Description:       "Simple RBAC system with 3 roles (Member, Manager, Admin) and 7 generic permissions",
+		Description:       "Recommended Stytch policy: organization view and manage permissions",
 	}
 }
 

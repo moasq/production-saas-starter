@@ -5,7 +5,6 @@ export interface SignupOwner {
 
 export interface SignupOrganization {
   displayName: string;
-  industry: string;
 }
 
 export interface SignupDraft {
@@ -30,7 +29,6 @@ export interface AuthTokens {
 export interface CreatedOrganization {
   id: number;
   name: string;
-  industry: string;
   createdAt: Date;
   updatedAt: Date;
 }

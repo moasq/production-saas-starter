@@ -49,6 +49,7 @@ export interface InviteMemberRequest {
  * Member Invitation Response
  */
 export interface InviteMemberResponse {
+  inviteSent: boolean;
   success: boolean;
   memberId?: string;
   message?: string;
@@ -89,12 +90,12 @@ export const MemberHelpers = {
       manager: {
         label: "Manager",
         color: "bg-emerald-100 text-emerald-700 border-emerald-200",
-        description: "Elevated access - edit, delete, and approve resources",
+        description: "Workspace access; organization administration requires admin",
       },
       member: {
         label: "Member",
         color: "bg-gray-100 text-gray-700 border-gray-200",
-        description: "Basic access - view and create resources",
+        description: "Workspace access",
       },
     };
     return configs[role] || configs.member;

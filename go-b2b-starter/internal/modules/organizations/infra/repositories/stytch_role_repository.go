@@ -7,7 +7,7 @@ import (
 	"github.com/moasq/go-b2b-starter/internal/modules/organizations/domain"
 	loggerDomain "github.com/moasq/go-b2b-starter/internal/platform/logger/domain"
 	stytchcfg "github.com/moasq/go-b2b-starter/internal/platform/stytch"
-	"github.com/stytchauth/stytch-go/v16/stytch/b2b/rbac"
+	"github.com/stytchauth/stytch-go/v18/stytch/b2b/rbac"
 )
 
 type stytchRoleRepository struct {
@@ -24,6 +24,9 @@ func NewStytchRoleRepository(client *stytchcfg.Client, logger loggerDomain.Logge
 }
 
 func (r *stytchRoleRepository) GetRoleByID(ctx context.Context, roleID string) (*domain.AuthRole, error) {
+	if r.client == nil {
+		return nil, fmt.Errorf("Stytch is not configured")
+	}
 	if roleID == "" {
 		return nil, domain.ErrAuthRoleNotFound
 	}
@@ -41,6 +44,9 @@ func (r *stytchRoleRepository) GetRoleByID(ctx context.Context, roleID string) (
 }
 
 func (r *stytchRoleRepository) GetRoleBySlug(ctx context.Context, slug string) (*domain.AuthRole, error) {
+	if r.client == nil {
+		return nil, fmt.Errorf("Stytch is not configured")
+	}
 	if slug == "" {
 		return nil, domain.ErrAuthRoleNotFound
 	}
@@ -58,6 +64,9 @@ func (r *stytchRoleRepository) GetRoleBySlug(ctx context.Context, slug string) (
 }
 
 func (r *stytchRoleRepository) ListRoles(ctx context.Context, limit, offset int) ([]*domain.AuthRole, error) {
+	if r.client == nil {
+		return nil, fmt.Errorf("Stytch is not configured")
+	}
 	policy, err := r.fetchPolicy(ctx)
 	if err != nil {
 		return nil, err
@@ -89,6 +98,9 @@ func (r *stytchRoleRepository) ListRoles(ctx context.Context, limit, offset int)
 }
 
 func (r *stytchRoleRepository) findRole(ctx context.Context, predicate func(*rbac.PolicyRole) bool) (*domain.AuthRole, error) {
+	if r.client == nil {
+		return nil, fmt.Errorf("Stytch is not configured")
+	}
 	policy, err := r.fetchPolicy(ctx)
 	if err != nil {
 		return nil, err
@@ -107,6 +119,9 @@ func (r *stytchRoleRepository) findRole(ctx context.Context, predicate func(*rba
 }
 
 func (r *stytchRoleRepository) fetchPolicy(ctx context.Context) (*rbac.Policy, error) {
+	if r.client == nil {
+		return nil, fmt.Errorf("Stytch is not configured")
+	}
 	resp, err := r.client.API().RBAC.Policy(ctx, &rbac.PolicyParams{})
 	if err != nil {
 		return nil, fmt.Errorf("stytch fetch rbac policy: %w", stytchcfg.MapError(err))

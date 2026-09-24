@@ -16,11 +16,11 @@ const (
 )
 
 type OrganizationCreatedEvent struct {
-	EventID       string                `json:"event_id"`
-	EventType     string                `json:"event_type"`
-	Timestamp     time.Time             `json:"timestamp"`
-	Organization  *domain.Organization  `json:"organization"`
-	OwnerAccount  *domain.Account       `json:"owner_account"`
+	EventID      string               `json:"event_id"`
+	EventType    string               `json:"event_type"`
+	Timestamp    time.Time            `json:"timestamp"`
+	Organization *domain.Organization `json:"organization"`
+	OwnerAccount *domain.Account      `json:"owner_account"`
 }
 
 type OrganizationUpdatedEvent struct {
@@ -32,37 +32,37 @@ type OrganizationUpdatedEvent struct {
 }
 
 type AccountCreatedEvent struct {
-	EventID        string              `json:"event_id"`
-	EventType      string              `json:"event_type"`
-	Timestamp      time.Time           `json:"timestamp"`
-	Account        *domain.Account     `json:"account"`
-	OrganizationID int32               `json:"organization_id"`
+	EventID        string          `json:"event_id"`
+	EventType      string          `json:"event_type"`
+	Timestamp      time.Time       `json:"timestamp"`
+	Account        *domain.Account `json:"account"`
+	OrganizationID int32           `json:"organization_id"`
 }
 
 type AccountUpdatedEvent struct {
-	EventID        string              `json:"event_id"`
-	EventType      string              `json:"event_type"`
-	Timestamp      time.Time           `json:"timestamp"`
-	Account        *domain.Account     `json:"account"`
-	OrganizationID int32               `json:"organization_id"`
-	PreviousRole   string              `json:"previous_role"`
-	PreviousStatus string              `json:"previous_status"`
+	EventID        string          `json:"event_id"`
+	EventType      string          `json:"event_type"`
+	Timestamp      time.Time       `json:"timestamp"`
+	Account        *domain.Account `json:"account"`
+	OrganizationID int32           `json:"organization_id"`
+	PreviousRole   string          `json:"previous_role"`
+	PreviousStatus string          `json:"previous_status"`
 }
 
 type AccountDeletedEvent struct {
-	EventID        string              `json:"event_id"`
-	EventType      string              `json:"event_type"`
-	Timestamp      time.Time           `json:"timestamp"`
-	AccountID      int32               `json:"account_id"`
-	OrganizationID int32               `json:"organization_id"`
-	Email          string              `json:"email"`
+	EventID        string    `json:"event_id"`
+	EventType      string    `json:"event_type"`
+	Timestamp      time.Time `json:"timestamp"`
+	AccountID      int32     `json:"account_id"`
+	OrganizationID int32     `json:"organization_id"`
+	Email          string    `json:"email"`
 }
 
 type AccountLoginEvent struct {
-	EventID        string              `json:"event_id"`
-	EventType      string              `json:"event_type"`
-	Timestamp      time.Time           `json:"timestamp"`
-	AccountID      int32               `json:"account_id"`
-	OrganizationID int32               `json:"organization_id"`
-	Email          string              `json:"email"`
+	EventID        string    `json:"event_id"`
+	EventType      string    `json:"event_type"`
+	Timestamp      time.Time `json:"timestamp"`
+	AccountID      int32     `json:"account_id"`
+	OrganizationID int32     `json:"organization_id"`
+	Email          string    `json:"email"`
 }

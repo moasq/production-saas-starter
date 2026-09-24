@@ -34,7 +34,6 @@ const defaultOwner: SignupOwner = {
 
 const defaultOrganization: SignupOrganization = {
   displayName: "",
-  industry: "Technology",
 };
 
 export function useSignupFlow(): UseSignupFlowState {
@@ -71,8 +70,7 @@ export function useSignupFlow(): UseSignupFlowState {
 
   const canContinueOrganization = useMemo(() => {
     return (
-      organization.displayName.trim().length >= 2 &&
-      organization.industry.trim().length > 0
+      organization.displayName.trim().length >= 2
     );
   }, [organization]);
 

@@ -38,9 +38,8 @@ export interface InviteMemberRequestDto {
 
 export interface InviteMemberResponseDto {
   success: boolean;
-  member_id?: string;
+  data?: { member_id: string; invite_sent: boolean };
   message?: string;
-  invite_link?: string;
 }
 
 // Remove Member DTOs
@@ -71,6 +70,7 @@ export interface ResendInvitationRequestDto {
 }
 
 export interface ResendInvitationResponseDto {
+  data?: { invite_sent: boolean };
   success: boolean;
   message?: string;
 }

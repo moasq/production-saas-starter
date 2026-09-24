@@ -5,10 +5,10 @@ import "context"
 // Transaction represents a database transaction
 type Transaction interface {
 	Connection
-	
+
 	// Commit commits the transaction
 	Commit(ctx context.Context) error
-	
+
 	// Rollback rolls back the transaction
 	Rollback(ctx context.Context) error
 }
@@ -23,14 +23,14 @@ func WithTransaction(ctx context.Context, pool Pool, fn TxFunc) error {
 	if err != nil {
 		return err
 	}
-	
+
 	defer func() {
 		if p := recover(); p != nil {
 			_ = tx.Rollback(ctx)
 			panic(p)
 		}
 	}()
-	
+
 	if err := fn(ctx, tx); err != nil {
 		if rbErr := tx.Rollback(ctx); rbErr != nil {
 			return ErrTxRollbackFailed{
@@ -40,10 +40,10 @@ func WithTransaction(ctx context.Context, pool Pool, fn TxFunc) error {
 		}
 		return err
 	}
-	
+
 	if err := tx.Commit(ctx); err != nil {
 		return ErrTxCommitFailed{Err: err}
 	}
-	
+
 	return nil
 }

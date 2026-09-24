@@ -3,7 +3,6 @@ package cmd
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/moasq/go-b2b-starter/internal/modules/auth"
-	"github.com/moasq/go-b2b-starter/internal/modules/paywall"
 	"github.com/moasq/go-b2b-starter/internal/platform/server/config"
 	"github.com/moasq/go-b2b-starter/internal/platform/server/domain"
 	ginP "github.com/moasq/go-b2b-starter/internal/platform/server/gin"
@@ -36,8 +35,4 @@ func SetupDependencies(container *dig.Container) {
 		return &serverMiddlewareAdapter{server: srv}
 	})
 
-	// Provide server as paywall.ServerMiddlewareRegistrar for paywall package
-	container.Provide(func(srv domain.Server) paywall.ServerMiddlewareRegistrar {
-		return &serverMiddlewareAdapter{server: srv}
-	})
 }

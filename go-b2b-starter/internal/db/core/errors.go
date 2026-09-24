@@ -9,16 +9,16 @@ import (
 var (
 	// ErrNoRows is returned when a query returns no rows
 	ErrNoRows = errors.New("no rows in result set")
-	
+
 	// ErrTxClosed is returned when an operation is attempted on a closed transaction
 	ErrTxClosed = errors.New("transaction has already been committed or rolled back")
-	
+
 	// ErrPoolClosed is returned when an operation is attempted on a closed pool
 	ErrPoolClosed = errors.New("connection pool is closed")
-	
+
 	// ErrInvalidConnection is returned when the connection is invalid
 	ErrInvalidConnection = errors.New("invalid database connection")
-	
+
 	// ErrTimeout is returned when a database operation times out
 	ErrTimeout = errors.New("database operation timed out")
 )
