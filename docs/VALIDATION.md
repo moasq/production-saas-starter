@@ -17,10 +17,13 @@ until Stytch credentials and its RBAC policy are configured.
 - Billing behavior: disabled mode, cross-tenant and wrong-product rejection,
   expired/canceled state, provider errors, repeat checkout verification, and
   HTTP JSON fixtures using Polar's documented `external_customer_id` field.
-- Frontend: ESLint, TypeScript, eight behavioral regressions, production build.
+  Go and Next.js pin API version `2026-04` and reject malformed provider state.
+- Frontend: ESLint, TypeScript, nine behavioral regressions, production build.
   The regressions cover request token isolation, mutation retry behavior,
-  invitation responses, redirects, and no-content API responses.
-- Fresh Compose build/start without provider credentials or host Go/Node;
+  invitation responses, redirects, no-content API responses, and the Polar SDK
+  API-version contract.
+- Fresh Compose build/start without provider credentials or host Go/Node,
+  plus repeat setup preserving the existing private configuration;
   frontend/API health, public pages, and unauthenticated API rejection.
 - Database outage returns API readiness 503; restoring PostgreSQL restores 200.
 - API production mode starts correctly with TLS terminated by the private proxy.
@@ -36,6 +39,9 @@ until Stytch credentials and its RBAC policy are configured.
 ## Dependency evidence
 
 Retained production packages and compatible transitive dependencies were refreshed.
+The lean core has 11 direct Go dependencies and 14 frontend production packages.
+Unused RBAC discovery endpoints, duplicate logging and policy services, inactive
+UI controls, and obsolete feature wrappers were removed.
 Go is 1.27.1; Docker Node is 24.21.0; Next.js is 16.3.6; React is 19.3.0;
 Stytch Go is 18.1.0 and Node 14.2.0; Polar Node is 0.49.0. Base images use
 version tags plus verified multi-architecture digests.
