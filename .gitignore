@@ -29,6 +29,12 @@ Thumbs.db
 !.claude/CLAUDE.md
 **/.claude/*
 !**/.claude/CLAUDE.md
+# Generated project adapters; local settings and caches stay ignored.
+!/.claude/agents/
+!/.claude/agents/*.md
+!/.claude/skills/
+!/.claude/skills/**
+/.agents/cache/
 
 # --- Logs ---
 *.log
