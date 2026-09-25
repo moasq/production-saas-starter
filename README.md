@@ -94,6 +94,8 @@ From the cloned repository, run this command to create a private `.env` and star
 
 For the code structure, see [Architecture](docs/ARCHITECTURE.md). Existing installations should follow the [upgrade guide](docs/UPGRADING.md); completed checks and provider limitations are recorded in [Verification](docs/VALIDATION.md).
 
+For repository-local coding skills, agent roles, and optional Better Auth documentation tools, see [AI development](docs/AI_DEVELOPMENT.md).
+
 ## 🛡️ License
 
 [MIT License](./LICENSE)
