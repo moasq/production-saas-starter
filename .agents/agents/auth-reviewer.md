@@ -25,4 +25,3 @@ Ask the caller to run any reproduction requiring writes in a disposable environm
 Report concrete findings with severity, exact file/line, trigger, impact, evidence,
 and a focused fix. Separate confirmed defects from verification gaps. Say when no
 actionable findings remain; a review is not proof of live authentication success.
-

@@ -83,26 +83,27 @@ To update, inspect the upstream commit and license, review both file diffs, upda
 their revision/URL/hash records, then rerun fetch, sync, check, and tests. Do not
 silently follow `main` or execute `npx ...@latest` from a fetched example.
 
-## Auth migration boundary
+## Application auth boundary
 
-At introduction, the main application uses Stytch B2B. [Issue #64](https://github.com/moasq/production-saas-starter/issues/64)
-tracks the separate Better Auth runtime migration. Inspect the current checkout's
-manifest, lockfile, routes, and architecture before choosing provider-specific advice.
-This harness changes neither provider, database schema, nor deployment routing.
+The application uses self-hosted Better Auth; [issue #64](https://github.com/moasq/production-saas-starter/issues/64)
+records its replacement of Stytch. Inspect the current checkout's manifest,
+lockfile, routes, and architecture before choosing provider-specific advice.
+The developer harness is optional and does not run application authentication.
 
-The agreed proposal for #64 uses Next.js Better Auth at `/api/identity`, with a
+Next.js serves Better Auth at `/api/identity`, with a
 private `POST /internal/auth/session` bridge protected by `X-Internal-Auth-Secret`
 and the original cookie. Go receives current session/membership permissions rather
 than authorizing from cached JWT claims. Review that this endpoint is never exposed
 by Caddy, rejects missing/wrong internal secrets, and rechecks revoked sessions and
-membership. The proposed database split gives `starter_auth` access to auth tables,
+membership. The database split gives `starter_auth` access to auth tables,
 `starter_app` a non-owner/non-bypass role for business tables with forced RLS and
 transaction-local `app.tenant_id`, and a separate one-shot migration owner. Verify
-cross-tenant access and pooled-connection tenant reset against the actual database;
-these are migration acceptance criteria, not claims about this harness's baseline.
+cross-tenant access and pooled-connection tenant reset against the actual database.
+See [architecture](ARCHITECTURE.md), [upgrade steps](UPGRADING.md), and
+[verification evidence and limits](VALIDATION.md). Local integration checks do
+not establish external SMTP delivery, live billing, or a production restore.
 
-After the runtime migration merges, update this paragraph and the current provider
-documentation in the same release. Keep developer documentation MCP separate from
+Keep developer documentation MCP separate from
 Better Auth's application MCP authentication plugin; this starter does not need that
 plugin, agent authentication, or any AI product feature.
 

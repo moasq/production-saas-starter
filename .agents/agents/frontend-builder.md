@@ -23,4 +23,3 @@ API behavior to the backend owner rather than inventing a response shape.
 
 Return the visible change, touched paths, API assumptions, test/build results,
 keyboard and viewport evidence, and any unavailable browser/provider verification.
-

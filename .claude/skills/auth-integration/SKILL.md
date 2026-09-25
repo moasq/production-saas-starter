@@ -9,9 +9,10 @@ description: "This skill applies when migrating Stytch to Better Auth, integrati
 
 Read `AGENTS.md` and `docs/ARCHITECTURE.md`. Determine the provider from the current
 checkout's package manifest, lockfile, routes, and Go adapter before editing.
-This harness was introduced against Stytch; the Better Auth runtime migration is
-tracked separately in [issue #64](https://github.com/moasq/production-saas-starter/issues/64).
-Neither this skill nor the documentation MCP installs an application auth provider.
+The starter uses self-hosted Better Auth in Next.js with a private Go session
+bridge and PostgreSQL tenant isolation. [Issue #64](https://github.com/moasq/production-saas-starter/issues/64)
+records the Stytch cutover. Neither this skill nor the documentation MCP installs
+an application auth provider; verify the checked-out implementation before applying advice.
 
 ## Resolve Better Auth guidance
 

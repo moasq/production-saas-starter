@@ -5,7 +5,8 @@ The product is a minimal deployable B2B starter: organization auth, members,
 profile and optional billing. Keep Go + Next.js + PostgreSQL. Do not add AI,
 RAG, document processing, Redis, product agents or a new backend framework by default.
 
-Better Auth owns identity, sessions and organization membership. Go owns tenant authorization and application rules. Never authorize from an
+Better Auth owns identity, sessions and organization membership. Go owns tenant
+authorization and application rules. Never authorize from an
 unverified organization ID, checkout ID or client role. Next.js owns presentation
 and the HTTP-only session boundary. Secrets are server-only runtime variables.
 Billing must remain optional. Unconfigured auth must fail closed.
