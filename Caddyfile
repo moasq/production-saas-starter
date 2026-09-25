@@ -1,52 +1,16 @@
-# Caddyfile - Production reverse proxy configuration
-#
-# Routes traffic between Next.js frontend and Go backend:
-# - Next.js internal API routes stay in frontend container
-# - Go backend API routes go to backend container
-# - Everything else (pages, assets) goes to frontend
-#
-# Usage:
-#   Set DOMAIN environment variable or it defaults to localhost
-#   For production: DOMAIN=yourdomain.com docker compose up
-
-{$DOMAIN:localhost} {
-	# =========================================================================
-	# Next.js internal API routes (must go to frontend)
-	# These are handled by Next.js API routes, not the Go backend
-	# =========================================================================
-
-	# Auth session management (handled by Next.js)
-	handle /api/auth/session/* {
-		reverse_proxy frontend:3000
-	}
-
-	# Billing webhook (handled by Next.js for Polar.sh)
-	handle /api/billing/webhook {
-		reverse_proxy frontend:3000
-	}
-
-	# Next.js health check
-	handle /api/health {
-		reverse_proxy frontend:3000
-	}
-
-	# =========================================================================
-	# Go Backend API routes
-	# All other /api/* routes go to the Go backend
-	# =========================================================================
-	handle /api/* {
-		reverse_proxy backend:8080
-	}
-
-	# Backend health check (optional, for container orchestration)
-	handle /health {
-		reverse_proxy backend:8080
-	}
-
-	# =========================================================================
-	# Frontend - Everything else (pages, assets, etc.)
-	# =========================================================================
-	handle {
-		reverse_proxy frontend:3000
-	}
+{$SITE_ADDRESS::80} {
+  encode zstd gzip
+  @frontend_api path /api/auth/session /api/auth/session/* /api/health
+  handle @frontend_api {
+    reverse_proxy frontend:3000
+  }
+  handle /api/* {
+    reverse_proxy backend:8080
+  }
+  handle /health {
+    reverse_proxy backend:8080
+  }
+  handle {
+    reverse_proxy frontend:3000
+  }
 }

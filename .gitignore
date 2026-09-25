@@ -2,6 +2,9 @@
 .DS_Store
 Thumbs.db
 
+# Local audit evidence can contain private repository traffic.
+/reports/
+
 # --- Global Editor Files ---
 .idea/
 .vscode/

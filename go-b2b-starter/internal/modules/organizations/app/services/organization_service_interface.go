@@ -45,11 +45,8 @@ type CreateOrganizationRequest struct {
 
 // UpdateOrganizationRequest represents data needed to update an organization
 type UpdateOrganizationRequest struct {
-	Name                 string `json:"name" binding:"required"`
-	Status               string `json:"status" binding:"required,oneof=active suspended"`
-	StytchOrgID          string `json:"stytch_org_id"`
-	StytchConnectionID   string `json:"stytch_connection_id"`
-	StytchConnectionName string `json:"stytch_connection_name"`
+	Name   string `json:"name" binding:"required"`
+	Status string `json:"status" binding:"required,oneof=active suspended"`
 }
 
 // CreateAccountRequest represents data needed to create an account

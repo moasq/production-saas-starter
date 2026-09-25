@@ -26,6 +26,7 @@ func Execute() {
 		panic(err)
 	}
 
-	srv.Start()
-
+	if err := srv.Start(); err != nil {
+		log.Fatalf("server stopped: %v", err)
+	}
 }

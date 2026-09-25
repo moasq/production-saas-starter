@@ -1,4 +1,5 @@
 "use server";
+import { sanitizeReturnTo } from "@/lib/auth/stytch";
 
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
@@ -48,29 +49,8 @@ export async function logout(returnTo?: string): Promise<never> {
   console.info("[Logout] Session cookies cleared");
 
   // Validate returnTo path for security
-  const redirectPath = resolveReturnTo(returnTo);
+  const redirectPath = sanitizeReturnTo(returnTo) ?? "/";
 
   // Redirect to the specified path or home
   redirect(redirectPath);
-}
-
-/**
- * Resolve and validate the returnTo parameter
- * Prevents open redirect vulnerabilities
- */
-function resolveReturnTo(returnTo?: string): string {
-  if (!returnTo) return "/";
-
-  const trimmed = returnTo.trim();
-
-  // Must start with / and must NOT start with // (which could be a protocol-relative URL)
-  if (!trimmed.startsWith("/") || trimmed.startsWith("//")) {
-    console.warn(
-      "[Logout] Invalid returnTo path (using default):",
-      trimmed
-    );
-    return "/";
-  }
-
-  return trimmed;
 }

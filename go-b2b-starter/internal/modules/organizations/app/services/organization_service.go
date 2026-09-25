@@ -88,15 +88,6 @@ func (s *organizationService) UpdateOrganization(ctx context.Context, orgID int3
 	// Update fields
 	org.Name = req.Name
 	org.Status = req.Status
-	if req.StytchOrgID != "" {
-		org.StytchOrgID = req.StytchOrgID
-	}
-	if req.StytchConnectionID != "" {
-		org.StytchConnectionID = req.StytchConnectionID
-	}
-	if req.StytchConnectionName != "" {
-		org.StytchConnectionName = req.StytchConnectionName
-	}
 
 	return s.orgRepo.Update(ctx, org)
 }

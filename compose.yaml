@@ -1,0 +1,81 @@
+services:
+  postgres:
+    image: postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-starter}
+      POSTGRES_DB: ${POSTGRES_DB:-starter}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run ./setup.sh or set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build: ./go-b2b-starter
+    environment:
+      ENV: ${APP_ENV:-DEV}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
+      SERVER_ADDRESS: :8080
+      TLS_TERMINATED_BY_PROXY: "true"
+      ALLOWED_ORIGINS: ${APP_BASE_URL:-http://localhost:3000}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER:-starter}
+      POSTGRES_DB: ${POSTGRES_DB:-starter}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run ./setup.sh first}
+      DB_SSL_MODE: disable
+      STYTCH_PROJECT_ID: ${STYTCH_PROJECT_ID:-}
+      STYTCH_SECRET: ${STYTCH_SECRET:-}
+      STYTCH_ENV: ${STYTCH_ENV:-test}
+      STYTCH_INVITE_REDIRECT_URL: ${APP_BASE_URL:-http://localhost:3000}/authenticate
+      STYTCH_LOGIN_REDIRECT_URL: ${APP_BASE_URL:-http://localhost:3000}/authenticate
+      BILLING_ENABLED: ${BILLING_ENABLED:-false}
+      POLAR_ACCESS_TOKEN: ${POLAR_ACCESS_TOKEN:-}
+      POLAR_ENVIRONMENT: ${POLAR_ENVIRONMENT:-sandbox}
+      POLAR_PRODUCT_ID: ${POLAR_PRODUCT_ID:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build: ./next_b2b_starter
+    environment:
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
+      API_BASE_URL_INTERNAL: http://backend:8080/api
+      STYTCH_PROJECT_ID: ${STYTCH_PROJECT_ID:-}
+      STYTCH_SECRET: ${STYTCH_SECRET:-}
+      STYTCH_ENV: ${STYTCH_ENV:-test}
+      BILLING_ENABLED: ${BILLING_ENABLED:-false}
+      POLAR_ACCESS_TOKEN: ${POLAR_ACCESS_TOKEN:-}
+      POLAR_ENVIRONMENT: ${POLAR_ENVIRONMENT:-sandbox}
+      POLAR_PRODUCT_ID: ${POLAR_PRODUCT_ID:-}
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2.11.2-alpine@sha256:834468128c7696cec0ceea6172f7d692daf645ae51983ca76e39da54a97c570d
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${HTTP_PORT:-3000}:80"
+      - "${BIND_ADDRESS:-127.0.0.1}:${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      frontend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

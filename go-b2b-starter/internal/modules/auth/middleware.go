@@ -3,6 +3,8 @@ package auth
 import (
 	"context"
 	"net/http"
+	"net/url"
+	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -105,6 +107,13 @@ func (m *Middleware) RequireAuth() gin.HandlerFunc {
 			return
 		}
 
+		// Cookie-authenticated mutations require a same-origin browser request.
+		if c.GetHeader("Authorization") == "" && c.Request.Method != "GET" && c.Request.Method != "HEAD" {
+			if _, err := c.Cookie("stytch_session_jwt"); err == nil && !sameOrigin(c.Request) {
+				c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "same-origin request required"})
+				return
+			}
+		}
 		// Extract Bearer token
 		token, err := extractBearerToken(c)
 		if err != nil {
@@ -360,7 +369,11 @@ func (m *Middleware) RequireAnyRole(roles ...Role) gin.HandlerFunc {
 func extractBearerToken(c *gin.Context) (string, error) {
 	header := c.GetHeader("Authorization")
 	if header == "" {
-		return "", ErrUnauthorized
+		token, err := c.Cookie("stytch_session_jwt")
+		if err != nil || token == "" {
+			return "", ErrUnauthorized
+		}
+		return token, nil
 	}
 
 	fields := strings.Fields(header)
@@ -378,13 +391,6 @@ func hasPermission(identity *Identity, resource, action string) bool {
 	// Check explicit permissions in identity
 	for _, p := range identity.Permissions {
 		if p == perm || p.MatchesWithWildcard(perm) {
-			return true
-		}
-	}
-
-	// Fallback: Check role-based permissions
-	for _, role := range identity.Roles {
-		if HasRolePermission(role, resource, action) {
 			return true
 		}
 	}
@@ -477,4 +483,16 @@ func RequireAnyPermissionFunc(permissions ...Permission) gin.HandlerFunc {
 		defaultErrorHandler(c, http.StatusForbidden, "insufficient permissions", nil)
 		c.Abort()
 	}
+}
+
+func sameOrigin(r *http.Request) bool {
+	raw := r.Header.Get("Origin")
+	origin, err := url.Parse(raw)
+	if err != nil || (origin.Scheme != "https" && origin.Scheme != "http") || origin.User != nil || origin.Path != "" || origin.RawQuery != "" || origin.Fragment != "" {
+		return false
+	}
+	if expected := strings.TrimRight(os.Getenv("APP_BASE_URL"), "/"); expected != "" {
+		return raw == expected
+	}
+	return origin.Host == r.Host
 }

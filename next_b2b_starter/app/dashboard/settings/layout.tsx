@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Settings | AP Cash",
+  title: "Settings",
   description: "Manage your profile and organization settings",
 };
 

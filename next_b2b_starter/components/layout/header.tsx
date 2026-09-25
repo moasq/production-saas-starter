@@ -5,22 +5,19 @@ import Link from "next/link";
 import { useMemo } from "react";
 import {
   ChevronRight,
-  LifeBuoy,
   PanelLeftClose,
   PanelLeftOpen,
-  Settings,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useSidebarStore } from "@/lib/stores/sidebar-store";
 import { UserMenu } from "./user-menu";
 
-export function Header() {
-  const isSidebarCollapsed = useSidebarStore((state) => state.isCollapsed);
-  const toggleSidebar = useSidebarStore((state) => state.toggle);
-  const isAutoCollapsed = useSidebarStore((state) => state.isAutoCollapsed);
+export function Header({ isSidebarCollapsed, onToggleSidebar }: {
+  isSidebarCollapsed: boolean;
+  onToggleSidebar: () => void;
+}) {
   const pathname = usePathname();
 
   const breadcrumbItems = useMemo(() => {
@@ -45,7 +42,7 @@ export function Header() {
         .replace(/\b\w/g, (char) => char.toUpperCase());
 
       items.push({
-        label: /^\d+$/.test(segment) ? `Invoice ${segment}` : label,
+        label,
         href,
         isLast: index === segments.length - 1,
       });
@@ -73,10 +70,9 @@ export function Header() {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={toggleSidebar}
+                  onClick={onToggleSidebar}
                   className="hidden h-9 w-9 lg:inline-flex"
                   aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                  disabled={isAutoCollapsed}
                 >
                   {isSidebarCollapsed ? (
                     <PanelLeftOpen className="h-4 w-4" />
@@ -112,14 +108,6 @@ export function Header() {
               </div>
 
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="h-9 w-9">
-                  <LifeBuoy className="h-4 w-4" />
-                  <span className="sr-only">Support</span>
-                </Button>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
-                  <Settings className="h-4 w-4" />
-                  <span className="sr-only">Preferences</span>
-                </Button>
                 <UserMenu />
               </div>
             </div>

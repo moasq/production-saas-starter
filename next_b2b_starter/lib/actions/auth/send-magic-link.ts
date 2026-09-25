@@ -70,8 +70,8 @@ export async function sendMagicLink(
     }
 
     // Member exists - prepare login redirect URL
-    const redirectUrl = process.env.NEXT_PUBLIC_APP_BASE_URL
-      ? `${process.env.NEXT_PUBLIC_APP_BASE_URL}/authenticate`
+    const redirectUrl = process.env.APP_BASE_URL
+      ? `${process.env.APP_BASE_URL}/authenticate`
       : "http://localhost:3000/authenticate";
 
     const memberOrganizationIds = Array.from(

@@ -2,6 +2,7 @@ package stytch
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"time"
 
@@ -37,6 +38,12 @@ func LoadConfig() (*Config, error) {
 	v.SetConfigType("env")
 	v.AddConfigPath(".")
 	v.AutomaticEnv()
+	typ := reflect.TypeOf(Config{})
+	for i := 0; i < typ.NumField(); i++ {
+		if err := v.BindEnv(typ.Field(i).Tag.Get("mapstructure")); err != nil {
+			return nil, err
+		}
+	}
 
 	// Defaults mirror the Auth0 integration to minimize surprises.
 	v.SetDefault("STYTCH_ENV", EnvTest)
@@ -61,11 +68,17 @@ func LoadConfig() (*Config, error) {
 		cfg.Env = EnvTest
 	}
 
-	if cfg.ProjectID == "" {
-		return cfg, fmt.Errorf("stytch configuration invalid: STYTCH_PROJECT_ID is required")
+	if cfg.Env != EnvTest && cfg.Env != EnvLive {
+		return nil, fmt.Errorf("STYTCH_ENV must be test or live")
 	}
-	if cfg.Secret == "" {
-		return cfg, fmt.Errorf("stytch configuration invalid: STYTCH_SECRET is required")
+	if cfg.DisableSessionVerification {
+		return nil, fmt.Errorf("STYTCH_DISABLE_SESSION_VERIFICATION is no longer supported")
+	}
+	if (cfg.ProjectID == "") != (cfg.Secret == "") {
+		return nil, fmt.Errorf("set both STYTCH_PROJECT_ID and STYTCH_SECRET")
+	}
+	if cfg.Configured() && ((cfg.Env == EnvTest && !strings.HasPrefix(cfg.ProjectID, "project-test-")) || (cfg.Env == EnvLive && !strings.HasPrefix(cfg.ProjectID, "project-live-"))) {
+		return nil, fmt.Errorf("STYTCH_PROJECT_ID does not match STYTCH_ENV")
 	}
 
 	// Normalize timeout (viper unmarshals duration strings automatically).
@@ -98,4 +111,18 @@ func LoadConfig() (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+// Configured distinguishes setup mode from an enabled provider.
+func (c *Config) Configured() bool {
+	return c.ProjectID != "" && c.Secret != "" && !strings.Contains(strings.ToUpper(c.ProjectID+c.Secret), "REPLACE")
+}
+func (c *Config) Validate() error {
+	if !c.Configured() {
+		return fmt.Errorf("Stytch is not configured")
+	}
+	if c.DisableSessionVerification {
+		return fmt.Errorf("session verification cannot be disabled")
+	}
+	return nil
 }

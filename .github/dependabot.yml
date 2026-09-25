@@ -1,0 +1,20 @@
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: /go-b2b-starter
+    schedule: {interval: weekly}
+  - package-ecosystem: npm
+    directory: /next_b2b_starter
+    schedule: {interval: weekly}
+  - package-ecosystem: docker
+    directory: /go-b2b-starter
+    schedule: {interval: weekly}
+  - package-ecosystem: docker
+    directory: /next_b2b_starter
+    schedule: {interval: weekly}
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule: {interval: weekly}
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: {interval: weekly}

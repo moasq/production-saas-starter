@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/stytchauth/stytch-go/v16/stytch/stytcherror"
+	"github.com/stytchauth/stytch-go/v18/stytch/stytcherror"
 )
 
 var (
@@ -34,7 +34,7 @@ func IsDuplicateSlugError(err error) bool {
 		return false
 	}
 
-	var stErr *stytcherror.Error
+	var stErr stytcherror.Error
 	if errors.As(err, &stErr) {
 		return string(stErr.ErrorType) == "organization_slug_already_used"
 	}
@@ -48,7 +48,7 @@ func MapError(err error) error {
 		return nil
 	}
 
-	var stErr *stytcherror.Error
+	var stErr stytcherror.Error
 	if errors.As(err, &stErr) {
 		// Check specific error types first
 		if string(stErr.ErrorType) == "organization_slug_already_used" {
@@ -73,7 +73,7 @@ func MapError(err error) error {
 			if stErr.StatusCode >= 500 {
 				return fmt.Errorf("%w: %s", ErrInternal, stErr.Error())
 			}
-			return fmt.Errorf("stytch: unexpected status %d: %w", stErr.StatusCode, stErr)
+			return fmt.Errorf("stytch: unexpected status %d: %w", stErr.StatusCode, err)
 		}
 	}
 

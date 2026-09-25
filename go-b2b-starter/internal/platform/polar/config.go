@@ -2,87 +2,46 @@ package polar
 
 import (
 	"fmt"
-
-	"github.com/spf13/viper"
+	"os"
+	"strings"
 )
 
-// Config holds configuration for the Polar client
+// Config deliberately separates provider environment from the application's build mode.
 type Config struct {
-	// AccessToken is the Polar Organization Access Token (OAT)
-	// Required for all API requests
-	AccessToken string `mapstructure:"POLAR_ACCESS_TOKEN"`
-
-	// BaseURL is the Polar API endpoint
-	// Use "https://api.polar.sh" for production
-	// Use "https://sandbox-api.polar.sh" for testing
-	BaseURL string `mapstructure:"POLAR_BASE_URL"`
-
-	// WebhookSecret is the secret used to verify webhook signatures
-	// Get this from Polar Dashboard → Settings → Webhooks
-	WebhookSecret string `mapstructure:"WEBHOOK_SECRET"`
-
-	// Debug enables debug logging
-	Debug bool `mapstructure:"POLAR_DEBUG"`
+	Enabled     bool
+	ProductID   string
+	AccessToken string
+	BaseURL     string
 }
 
-// LoadConfig reads configuration from file or environment variables
 func LoadConfig() (Config, error) {
-	var cfg Config
-
-	viper.SetConfigName("app")
-	viper.SetConfigType("env")
-	viper.AddConfigPath(".")
-	viper.AutomaticEnv()
-
-	// Set default values
-	viper.SetDefault("POLAR_BASE_URL", "https://api.polar.sh")
-	viper.SetDefault("POLAR_DEBUG", false)
-
-	// Best-effort: ignore missing file, allow env-only usage
-	if err := viper.ReadInConfig(); err == nil {
-		_ = err
+	raw := strings.TrimSpace(os.Getenv("BILLING_ENABLED"))
+	switch raw {
+	case "", "false":
+		return Config{}, nil
+	case "true":
+	default:
+		return Config{}, fmt.Errorf("BILLING_ENABLED must be true or false")
 	}
-
-	if err := viper.Unmarshal(&cfg); err != nil {
-		return cfg, fmt.Errorf("unable to decode polar config: %w", err)
+	cfg := Config{Enabled: true, AccessToken: strings.TrimSpace(os.Getenv("POLAR_ACCESS_TOKEN")), ProductID: strings.TrimSpace(os.Getenv("POLAR_PRODUCT_ID"))}
+	environment := strings.TrimSpace(os.Getenv("POLAR_ENVIRONMENT"))
+	switch environment {
+	case "", "sandbox":
+		cfg.BaseURL = "https://sandbox-api.polar.sh"
+	case "production":
+		cfg.BaseURL = "https://api.polar.sh"
+	default:
+		return cfg, fmt.Errorf("POLAR_ENVIRONMENT must be sandbox or production")
 	}
-
-	// Validate required fields
-	if err := cfg.Validate(); err != nil {
-		return cfg, err
-	}
-
-	return cfg, nil
+	return cfg, cfg.Validate()
 }
 
-// Validate checks if the configuration is valid
 func (c *Config) Validate() error {
-	if c.AccessToken == "" {
-		return fmt.Errorf("polar access token is required (POLAR_ACCESS_TOKEN)")
+	if c.Enabled && c.ProductID == "" {
+		return fmt.Errorf("POLAR_PRODUCT_ID is required when BILLING_ENABLED=true")
 	}
-
-	if c.BaseURL == "" {
-		return fmt.Errorf("polar base URL is required (POLAR_BASE_URL)")
+	if c.Enabled && c.AccessToken == "" {
+		return fmt.Errorf("POLAR_ACCESS_TOKEN is required when BILLING_ENABLED=true")
 	}
-
-	// WebhookSecret is optional - only needed for webhook verification
-	// If not provided, webhook signature verification will be skipped (with warning)
-
 	return nil
-}
-
-// DefaultConfig returns a configuration with sane defaults for production
-func DefaultConfig() *Config {
-	return &Config{
-		BaseURL: "https://api.polar.sh",
-		Debug:   false,
-	}
-}
-
-// SandboxConfig returns a configuration with defaults for sandbox environment
-func SandboxConfig() *Config {
-	return &Config{
-		BaseURL: "https://sandbox-api.polar.sh",
-		Debug:   true,
-	}
 }

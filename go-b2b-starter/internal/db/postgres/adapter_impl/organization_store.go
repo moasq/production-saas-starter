@@ -3,9 +3,9 @@ package adapterimpl
 import (
 	"context"
 
-	sqlc "github.com/moasq/go-b2b-starter/internal/db/postgres/sqlc/gen"
-	"github.com/moasq/go-b2b-starter/internal/db/adapters"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/moasq/go-b2b-starter/internal/db/adapters"
+	sqlc "github.com/moasq/go-b2b-starter/internal/db/postgres/sqlc/gen"
 )
 
 // organizationStore implements adapters.OrganizationStore

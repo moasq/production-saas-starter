@@ -1,7 +1,7 @@
 // components/layout/sidebar.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -13,72 +13,29 @@ import {
   Settings,
   Menu,
   X,
-  BookOpen,
 } from "lucide-react";
-import { useSidebarStore } from "@/lib/stores/sidebar-store";
-import type { ServerPermissions } from "@/lib/auth/server-permissions";
-import type { LucideIcon } from "lucide-react";
-
-interface NavigationItem {
-  name: string;
-  href: string;
-  icon: LucideIcon;
-  permission?: string;
-  anyPermissions?: string[];
-}
-
-const mainNavigation: NavigationItem[] = [
+const mainNavigation = [
   {
     name: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    // No permission required - everyone can see dashboard
   },
-  {
-    name: "Knowledge Base",
-    href: "/dashboard/knowledge",
-    icon: BookOpen,
-    // No permission required - everyone can access knowledge base
-  },
+
 ];
 
 const accountNavigation = [{ name: "Settings", href: "/dashboard/settings", icon: Settings }];
 
 interface SidebarProps {
-  permissions: ServerPermissions;
+  isCollapsed: boolean;
 }
 
 export function Sidebar({
-  permissions,
+  isCollapsed,
 }: SidebarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
-  const isCollapsed = useSidebarStore((state) => state.isCollapsed);
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
-
-  // Filter navigation items based on permissions
-  const visibleNavigation = useMemo(() => {
-    return mainNavigation.filter((item) => {
-      // If no permission required, always show
-      if (!item.permission && !("anyPermissions" in item)) return true;
-
-      // Check if item has multiple permissions (anyPermissions)
-      if ("anyPermissions" in item && item.anyPermissions) {
-        // User must have at least one of the specified permissions
-        return item.anyPermissions.some((perm) =>
-          permissions.permissions.includes(perm as any)
-        );
-      }
-
-      // Check single permission
-      if (item.permission) {
-        return permissions.permissions.includes(item.permission as any);
-      }
-
-      return true;
-    });
-  }, [permissions.permissions]);
 
   return (
     <>
@@ -144,7 +101,7 @@ export function Sidebar({
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-6">
           <div className="space-y-1">
-            {visibleNavigation.map((item) => {
+            {mainNavigation.map((item) => {
               const isActive =
                 item.href.startsWith("/dashboard/") && item.href !== "/dashboard"
                   ? pathname.startsWith(item.href)

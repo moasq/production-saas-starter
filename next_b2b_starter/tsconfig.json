@@ -27,16 +27,14 @@
       "@/*": [
         "./*"
       ]
-    }
+    },
+    "allowImportingTsExtensions": true
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "app/lib/placeholder-data.ts",
-    "scripts/seed.js",
-    "lib/api/api/dto/error-response",
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [

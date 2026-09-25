@@ -54,11 +54,3 @@ export function useMembersQuery(
     ...queryOptions,
   });
 }
-
-/**
- * Hook to get members array with safe defaults
- */
-export function useMembers(options: UseMembersQueryOptions = {}) {
-  const { data } = useMembersQuery(options);
-  return data?.members ?? [];
-}

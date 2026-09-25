@@ -10,17 +10,9 @@ import (
 	"go.uber.org/dig"
 
 	// Domain interfaces - these are the interfaces we provide
-	billingDomain "github.com/moasq/go-b2b-starter/internal/modules/billing/domain"
-	cognitiveDomain "github.com/moasq/go-b2b-starter/internal/modules/cognitive/domain"
-	documentDomain "github.com/moasq/go-b2b-starter/internal/modules/documents/domain"
-	fileDomain "github.com/moasq/go-b2b-starter/internal/modules/files/domain"
 	orgDomain "github.com/moasq/go-b2b-starter/internal/modules/organizations/domain"
 
 	// Repository implementations from module infra layers
-	billingRepos "github.com/moasq/go-b2b-starter/internal/modules/billing/infra/repositories"
-	cognitiveRepos "github.com/moasq/go-b2b-starter/internal/modules/cognitive/infra/repositories"
-	documentRepos "github.com/moasq/go-b2b-starter/internal/modules/documents/infra/repositories"
-	fileInfra "github.com/moasq/go-b2b-starter/internal/modules/files/infra"
 	orgRepos "github.com/moasq/go-b2b-starter/internal/modules/organizations/infra/repositories"
 
 	// Legacy adapters - kept temporarily for backward compatibility
@@ -90,114 +82,19 @@ func provideDBManager(config postgres.Config, pool *pgxpool.Pool) *postgres.Post
 // registerDomainStores registers all domain-specific repositories.
 // These repositories implement domain ports using SQLC internally - no SQLC types leak out.
 func registerDomainStores(container *dig.Container) error {
-	// ============================================
-	// NEW: Sealed repository implementations
-	// These use domain interfaces and hide SQLC internals
-	// ============================================
-
-	// Register DocumentRepository - implements documents/domain.DocumentRepository
-	if err := container.Provide(func(sqlcStore sqlc.Store) documentDomain.DocumentRepository {
-		return documentRepos.NewDocumentRepository(sqlcStore)
-	}); err != nil {
-		return fmt.Errorf("failed to provide document repository: %w", err)
+	providers := []any{
+		func(store sqlc.Store) orgDomain.OrganizationRepository {
+			return orgRepos.NewOrganizationRepository(store)
+		},
+		func(store sqlc.Store) orgDomain.AccountRepository { return orgRepos.NewAccountRepository(store) },
+		func(store sqlc.Store) adapters.OrganizationStore { return adapterImpl.NewOrganizationStore(store) },
+		func(store sqlc.Store) adapters.AccountStore { return adapterImpl.NewAccountStore(store) },
 	}
-
-	// Register OrganizationRepository - implements organizations/domain.OrganizationRepository
-	if err := container.Provide(func(sqlcStore sqlc.Store) orgDomain.OrganizationRepository {
-		return orgRepos.NewOrganizationRepository(sqlcStore)
-	}); err != nil {
-		return fmt.Errorf("failed to provide organization repository: %w", err)
+	for _, provider := range providers {
+		if err := container.Provide(provider); err != nil {
+			return err
+		}
 	}
-
-	// Register AccountRepository - implements organizations/domain.AccountRepository
-	if err := container.Provide(func(sqlcStore sqlc.Store) orgDomain.AccountRepository {
-		return orgRepos.NewAccountRepository(sqlcStore)
-	}); err != nil {
-		return fmt.Errorf("failed to provide account repository: %w", err)
-	}
-
-	// Register SubscriptionRepository - implements billing/domain.SubscriptionRepository
-	if err := container.Provide(func(sqlcStore sqlc.Store) billingDomain.SubscriptionRepository {
-		return billingRepos.NewSubscriptionRepository(sqlcStore)
-	}); err != nil {
-		return fmt.Errorf("failed to provide subscription repository: %w", err)
-	}
-
-	// Register EmbeddingRepository - implements cognitive/domain.EmbeddingRepository
-	if err := container.Provide(func(sqlcStore sqlc.Store) cognitiveDomain.EmbeddingRepository {
-		return cognitiveRepos.NewEmbeddingRepository(sqlcStore)
-	}); err != nil {
-		return fmt.Errorf("failed to provide embedding repository: %w", err)
-	}
-
-	// Register ChatRepository - implements cognitive/domain.ChatRepository
-	if err := container.Provide(func(sqlcStore sqlc.Store) cognitiveDomain.ChatRepository {
-		return cognitiveRepos.NewChatRepository(sqlcStore)
-	}); err != nil {
-		return fmt.Errorf("failed to provide chat repository: %w", err)
-	}
-
-	// Register FileMetadataRepository - implements files/domain.FileMetadataRepository
-	if err := container.Provide(func(sqlcStore sqlc.Store) fileDomain.FileMetadataRepository {
-		return fileInfra.NewFileMetadataRepository(sqlcStore)
-	}); err != nil {
-		return fmt.Errorf("failed to provide file metadata repository: %w", err)
-	}
-
-	// ============================================
-	// LEGACY: Adapter stores (kept for backward compatibility)
-	// TODO: Migrate callers to use domain interfaces, then remove these
-	// ============================================
-
-	// Register FileAssetStore - thin wrapper for file management operations
-	if err := container.Provide(func(sqlcStore sqlc.Store) adapters.FileAssetStore {
-		return adapterImpl.NewFileAssetStore(sqlcStore)
-	}); err != nil {
-		return fmt.Errorf("failed to provide file asset store: %w", err)
-	}
-
-	// Register OrganizationStore - thin wrapper for organization operations
-	if err := container.Provide(func(sqlcStore sqlc.Store) adapters.OrganizationStore {
-		return adapterImpl.NewOrganizationStore(sqlcStore)
-	}); err != nil {
-		return fmt.Errorf("failed to provide organization store: %w", err)
-	}
-
-	// Register AccountStore - thin wrapper for account operations
-	if err := container.Provide(func(sqlcStore sqlc.Store) adapters.AccountStore {
-		return adapterImpl.NewAccountStore(sqlcStore)
-	}); err != nil {
-		return fmt.Errorf("failed to provide account store: %w", err)
-	}
-
-	// Register SubscriptionStore - thin wrapper for subscription billing operations
-	if err := container.Provide(func(sqlcStore sqlc.Store) adapters.SubscriptionStore {
-		return adapterImpl.NewSubscriptionStore(sqlcStore)
-	}); err != nil {
-		return fmt.Errorf("failed to provide subscription store: %w", err)
-	}
-
-	// Register DocumentStore - thin wrapper for document operations
-	if err := container.Provide(func(sqlcStore sqlc.Store) adapters.DocumentStore {
-		return adapterImpl.NewDocumentStore(sqlcStore)
-	}); err != nil {
-		return fmt.Errorf("failed to provide document store: %w", err)
-	}
-
-	// Register EmbeddingStore - thin wrapper for cognitive embedding operations
-	if err := container.Provide(func(sqlcStore sqlc.Store) adapters.EmbeddingStore {
-		return adapterImpl.NewEmbeddingStore(sqlcStore)
-	}); err != nil {
-		return fmt.Errorf("failed to provide embedding store: %w", err)
-	}
-
-	// Register ChatStore - thin wrapper for cognitive chat operations
-	if err := container.Provide(func(sqlcStore sqlc.Store) adapters.ChatStore {
-		return adapterImpl.NewChatStore(sqlcStore)
-	}); err != nil {
-		return fmt.Errorf("failed to provide chat store: %w", err)
-	}
-
 	return nil
 }
 

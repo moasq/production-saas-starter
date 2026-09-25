@@ -1,17 +1,13 @@
-# Security Policy
+# Security
 
-## Supported Versions
+Please report a suspected vulnerability privately through this repository's GitHub
+security advisory flow, where available, instead of posting credentials or exploit
+details in a public issue. Never include customer data or provider secrets in a
+report. If private reporting is unavailable, contact the repository maintainer
+privately through their GitHub profile before sharing sensitive details.
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
-
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
-| < 1.0   | :x:                |
-
-## Reporting a Vulnerability
-
-We take the security of this starter kit seriously. If you find a vulnerability, please **DO NOT** open a public issue.
-
-
+Keep `.env`, database dumps and local audit reports private. Authentication fails
+closed when unconfigured. Tenant and role checks must be retained when adding
+features. The supplied Docker deployment exposes Caddy only and expects HTTPS
+for public use. Run dependency checks and test provider-backed flows before a
+production release; a starter cannot certify an application's security.

@@ -1,35 +1,13 @@
+import "server-only";
 import { Polar } from "@polar-sh/sdk";
-
+import { isPolarEnabled } from "./config";
+import { createPolarHttpClient } from "./http-client";
 let cachedClient: Polar | null = null;
-
-function createPolarClient(): Polar | null {
-  if (typeof window !== "undefined") {
-    throw new Error("Polar SDK client must only be instantiated on the server.");
-  }
-
-  const accessToken = process.env.POLAR_ACCESS_TOKEN;
-  if (!accessToken) {
-    return null;
-  }
-
-  const server = process.env.NODE_ENV === "production" ? "production" : "sandbox";
-
-  return new Polar({
-    accessToken,
-    server,
-  });
-}
-
 export function getPolarClient(): Polar | null {
-  if (cachedClient) {
-    return cachedClient;
-  }
-
-  const client = createPolarClient();
-  if (!client) {
-    return null;
-  }
-
-  cachedClient = client;
+  if (!isPolarEnabled()) return null;
+  if (!process.env.POLAR_ACCESS_TOKEN) throw new Error("BILLING_ENABLED requires POLAR_ACCESS_TOKEN");
+  const server = process.env.POLAR_ENVIRONMENT || "sandbox";
+  if (server !== "sandbox" && server !== "production") throw new Error("POLAR_ENVIRONMENT must be sandbox or production");
+  cachedClient ??= new Polar({ accessToken: process.env.POLAR_ACCESS_TOKEN, server, httpClient: createPolarHttpClient() });
   return cachedClient;
 }

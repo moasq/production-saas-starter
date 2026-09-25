@@ -12,7 +12,7 @@ export interface LogoutUrlOptions {
 export function sanitizeReturnTo(value: string | undefined): string | undefined {
   if (!value) return undefined;
   const trimmed = value.trim();
-  if (!trimmed.startsWith("/") || trimmed.startsWith("//")) {
+  if (!trimmed.startsWith("/") || trimmed.startsWith("//") || /[\\\x00-\x1f]/.test(trimmed)) {
     return undefined;
   }
   return trimmed;
@@ -23,11 +23,8 @@ export function getBaseUrl(): string {
     return window.location.origin.replace(/\/$/, "");
   }
 
-  let baseUrl =
+  const baseUrl =
     process.env.APP_BASE_URL ||
-    process.env.NEXT_PUBLIC_BASE_URL ||
-    process.env.NEXT_PUBLIC_APP_BASE_URL ||
-    process.env.APP_URL ||
     null;
 
   const resolved = baseUrl || "http://localhost:3000";
@@ -51,7 +48,7 @@ function resolveRoute(value: string | undefined, fallback: string): URL {
 }
 
 export function buildLoginUrl(options?: LoginUrlOptions): string {
-  const url = resolveRoute(process.env.NEXT_PUBLIC_STYTCH_LOGIN_PATH, "/auth");
+  const url = resolveRoute(undefined, "/auth");
   const returnTo = sanitizeReturnTo(options?.returnTo);
 
   if (returnTo) {
@@ -62,7 +59,7 @@ export function buildLoginUrl(options?: LoginUrlOptions): string {
 }
 
 export function buildLogoutUrl(options?: LogoutUrlOptions): string {
-  const url = resolveRoute(process.env.NEXT_PUBLIC_STYTCH_LOGOUT_PATH, "/api/auth/logout");
+  const url = resolveRoute(undefined, "/auth");
   const returnTo = sanitizeReturnTo(options?.returnTo);
 
   if (returnTo) {

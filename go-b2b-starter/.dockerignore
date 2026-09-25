@@ -1,44 +1,10 @@
-# Environment and configuration files
 app.env
-.env
-.air.toml
-example.env
-
-# Version control
+.env*
 .git
-.gitignore
-.gitlab-ci.yml
-
-# IDE and editor files
-.idea
-.vscode
 .claude
-
-# Project files
-Makefile
-README.md
-
-# Directories
-docs/
-deps/
-deployment/
-scripts/
-tmp/
-bin/
-storage/
-.scannerwork/
-coverage/
-/src/pkg/db/postgres/seed
-/src/pkg/db/postgres/sqlc/migrations
-/src/pkg/db/postgres/sqlc/query
-/src/pkg/db/postgres/sqlc.yml
-
-# Build artifacts
+bin
+tmp
+coverage
 *.log
 *.out
-*.env
-*.sql
-
-# Docker files
-Dockerfile
-docker-compose.yml
+# Migrations are embedded in the Go binary; SQL files must be included.

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/moasq/go-b2b-starter/internal/modules/organizations/domain"
 	loggerDomain "github.com/moasq/go-b2b-starter/internal/platform/logger"
@@ -239,6 +240,9 @@ func (s *memberService) BootstrapOrganizationWithOwner(
 		return nil, fmt.Errorf("failed to map auth member locally: %w", err)
 	}
 
+	if err := s.authMemberRepo.SendMagicLink(ctx, &domain.SendMagicLinkRequest{OrganizationID: authOrg.OrganizationID, Email: member.Email}); err != nil {
+		return nil, fmt.Errorf("send signup email: %w", err)
+	}
 	// Success! Disable rollback
 	shouldRollback = false
 
@@ -254,8 +258,8 @@ func (s *memberService) BootstrapOrganizationWithOwner(
 		OwnerMemberID:  member.MemberID,
 		OwnerEmail:     member.Email,
 		OwnerName:      member.Name,
-		InviteSent:     false, // No invite sent
-		MagicLinkSent:  false, // No magic link sent
+		InviteSent:     true,
+		MagicLinkSent:  true,
 	}, nil
 }
 
@@ -306,6 +310,19 @@ func (s *memberService) AddMemberDirect(
 		return nil, fmt.Errorf("failed to create member: %w", err)
 	}
 
+	var rollbacks rollbackStack
+	completed := false
+	rollbacks.add(func(cleanup context.Context) error {
+		return s.authMemberRepo.RemoveMembers(cleanup, &domain.RemoveAuthMembersRequest{OrganizationID: orgID, MemberIDs: []string{member.MemberID}})
+	})
+	defer func() {
+		if !completed {
+			cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
+			defer cancel()
+			rollbacks.execute(cleanup, s.logger)
+		}
+	}()
+
 	if err := s.authMemberRepo.AssignRoles(ctx, &domain.AssignAuthRolesRequest{
 		OrganizationID: orgID,
 		MemberID:       member.MemberID,
@@ -330,6 +347,10 @@ func (s *memberService) AddMemberDirect(
 		return nil, fmt.Errorf("failed to create local account: %w", err)
 	}
 
+	rollbacks.add(func(cleanup context.Context) error {
+		return s.localAccountRepo.Delete(cleanup, localOrgID, localAccount.ID)
+	})
+
 	if _, err := s.localAccountRepo.UpdateStytchInfo(
 		ctx,
 		localOrgID,
@@ -342,10 +363,16 @@ func (s *memberService) AddMemberDirect(
 		return nil, fmt.Errorf("failed to map auth member locally: %w", err)
 	}
 
+	completed = true
+	inviteSent := true
+	if err := s.authMemberRepo.SendMagicLink(ctx, &domain.SendMagicLinkRequest{OrganizationID: orgID, Email: member.Email}); err != nil {
+		inviteSent = false
+		s.logger.Warn("Member created but invitation delivery failed; resend is available", loggerDomain.Fields{"error": err.Error()})
+	}
 	s.logger.Info("member added successfully", loggerDomain.Fields{
 		"org_id":      orgID,
 		"member_id":   member.MemberID,
-		"invite_sent": true,
+		"invite_sent": inviteSent,
 	})
 
 	return &AddMemberResponse{
@@ -354,7 +381,7 @@ func (s *memberService) AddMemberDirect(
 		Name:       member.Name,
 		OrgID:      orgID,
 		RoleSlug:   roleSlug,
-		InviteSent: true, // Always true (passwordless)
+		InviteSent: inviteSent,
 	}, nil
 }
 
@@ -505,27 +532,26 @@ func (s *memberService) DeleteOrganizationMember(
 		"member_id": memberID,
 	})
 
-	// Create remove members request
-	req := &domain.RemoveAuthMembersRequest{
-		OrganizationID: orgID,
-		MemberIDs:      []string{memberID},
-	}
-
-	// Remove from auth organization
-	err := s.authMemberRepo.RemoveMembers(ctx, req)
+	localOrgID, err := s.resolveLocalOrganizationID(ctx, orgID)
 	if err != nil {
-		s.logger.Error("failed to remove member from auth organization", map[string]interface{}{
-			"org_id":    orgID,
-			"member_id": memberID,
-			"error":     err.Error(),
-		})
-		return fmt.Errorf("failed to remove member: %w", err)
+		return err
 	}
-
-	s.logger.Info("member successfully deleted from organization", map[string]interface{}{
-		"org_id":    orgID,
-		"member_id": memberID,
-	})
+	accounts, err := s.localAccountRepo.ListByOrganization(ctx, localOrgID)
+	if err != nil {
+		return err
+	}
+	// Provider deletion is idempotent. If local persistence fails, retrying this
+	// operation can finish cleanup even though the provider member no longer exists.
+	if err := s.authMemberRepo.RemoveMembers(ctx, &domain.RemoveAuthMembersRequest{OrganizationID: orgID, MemberIDs: []string{memberID}}); err != nil {
+		return fmt.Errorf("remove provider member: %w", err)
+	}
+	for _, account := range accounts {
+		if account.StytchMemberID == memberID {
+			if err := s.localAccountRepo.Delete(ctx, localOrgID, account.ID); err != nil && !errors.Is(err, domain.ErrAccountNotFound) {
+				return fmt.Errorf("remove local account: %w", err)
+			}
+		}
+	}
 
 	return nil
 }
@@ -585,4 +611,39 @@ func mapRoleSlugToAccountRole(slug string) string {
 	default:
 		return slug
 	}
+}
+
+// UpdateCurrentUserProfile uses the verified session identity; callers cannot choose
+// another tenant, member or email through their JSON payload.
+func (s *memberService) UpdateCurrentUserProfile(ctx context.Context, orgID, memberID, email, name string) (*ProfileResponse, error) {
+	name = strings.TrimSpace(name)
+	if name == "" || len(name) > 255 {
+		return nil, fmt.Errorf("name must contain 1 to 255 characters")
+	}
+	localOrgID, err := s.resolveLocalOrganizationID(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+	account, err := s.localAccountRepo.GetByEmail(ctx, localOrgID, email)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := s.authMemberRepo.UpdateMember(ctx, &domain.UpdateAuthMemberRequest{OrganizationID: orgID, MemberID: memberID, Name: &name}); err != nil {
+		return nil, err
+	}
+	account.FullName = name
+	if _, err := s.localAccountRepo.Update(ctx, account); err != nil {
+		return nil, err
+	}
+	return s.GetCurrentUserProfile(ctx, orgID, memberID, email)
+}
+func (s *memberService) ResendInvitation(ctx context.Context, orgID, memberID string) error {
+	member, err := s.authMemberRepo.GetMember(ctx, orgID, memberID)
+	if err != nil {
+		return err
+	}
+	if member.OrganizationID != orgID {
+		return fmt.Errorf("member does not belong to this organization")
+	}
+	return s.authMemberRepo.SendMagicLink(ctx, &domain.SendMagicLinkRequest{OrganizationID: orgID, Email: member.Email})
 }

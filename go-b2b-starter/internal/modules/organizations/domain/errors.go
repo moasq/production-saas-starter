@@ -4,12 +4,12 @@ import "errors"
 
 // Organization errors
 var (
-	ErrOrganizationNotFound      = errors.New("organization not found")
-	ErrOrganizationNameRequired  = errors.New("organization name is required")
-	ErrOrganizationSlugRequired  = errors.New("organization slug is required")
-	ErrOrganizationSlugTooShort  = errors.New("organization slug must be at least 3 characters")
-	ErrOrganizationSlugTaken     = errors.New("organization slug is already taken")
-	ErrOrganizationInactive      = errors.New("organization is inactive")
+	ErrOrganizationNotFound     = errors.New("organization not found")
+	ErrOrganizationNameRequired = errors.New("organization name is required")
+	ErrOrganizationSlugRequired = errors.New("organization slug is required")
+	ErrOrganizationSlugTooShort = errors.New("organization slug must be at least 3 characters")
+	ErrOrganizationSlugTaken    = errors.New("organization slug is already taken")
+	ErrOrganizationInactive     = errors.New("organization is inactive")
 )
 
 // Account errors

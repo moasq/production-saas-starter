@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/moasq/go-b2b-starter/internal/modules/billing/domain"
 	"github.com/moasq/go-b2b-starter/internal/db/adapters"
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/moasq/go-b2b-starter/internal/modules/billing/domain"
 )
 
 type organizationAdapter struct {
@@ -30,18 +29,4 @@ func (a *organizationAdapter) GetStytchOrgID(ctx context.Context, organizationID
 	}
 
 	return org.StytchOrgID.String, nil
-}
-
-func (a *organizationAdapter) GetOrganizationIDByStytchOrgID(ctx context.Context, stytchOrgID string) (int32, error) {
-	stytchOrgIDText := pgtype.Text{
-		String: stytchOrgID,
-		Valid:  true,
-	}
-
-	org, err := a.orgStore.GetOrganizationByStytchID(ctx, stytchOrgIDText)
-	if err != nil {
-		return 0, fmt.Errorf("failed to get organization by Stytch org ID: %w", err)
-	}
-
-	return org.ID, nil
 }

@@ -1,7 +1,8 @@
 package postgres
 
 import (
-	"fmt"
+	"net"
+	"net/url"
 	"time"
 
 	"github.com/spf13/viper"
@@ -27,13 +28,18 @@ type Config struct {
 
 // ConnectionString returns a formatted PostgreSQL connection string
 func (c Config) ConnectionString() string {
-	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s application_name=nomadezy_api",
-		c.Host, c.Port, c.User, c.Password, c.DBName, c.SSLMode)
+	u := url.URL{Scheme: "postgres", User: url.UserPassword(c.User, c.Password), Host: net.JoinHostPort(c.Host, c.Port), Path: c.DBName}
+	q := u.Query()
+	q.Set("sslmode", c.SSLMode)
+	q.Set("application_name", "b2b_starter")
+	u.RawQuery = q.Encode()
+	return u.String()
 }
 
 // LoadConfig reads configuration from file or environment variables.
 func LoadConfig() (Config, error) {
 	var cfg Config
+	viper := viper.New()
 
 	viper.SetConfigName("app") // Name of the config file (without extension)
 	viper.SetConfigType("env") // Set the type of the configuration files - .env

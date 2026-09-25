@@ -11,10 +11,3 @@ sql:
         emit_json_tags: true
         emit_interface: true
         emit_empty_slices: true
-        overrides:
-          - column: "travel.places.geom"
-            go_type: "string"
-          - db_type: "vector"
-            go_type: 
-              type: "Vector"
-              import: "github.com/pgvector/pgvector-go"

@@ -22,7 +22,7 @@ import {
   MemberHelpers,
 } from "@/lib/models/member.model";
 import { memberRepository } from "@/lib/api/api/repositories/member-repository";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface MemberListProps {
   members: OrganizationMember[];
@@ -37,12 +37,10 @@ export function MemberList({
   members,
   canManage,
   currentUserId,
-  organizationId,
   isFetching = false,
   onMemberUpdate,
 }: MemberListProps) {
   const [pendingMemberId, setPendingMemberId] = useState<string | null>(null);
-  const { toast } = useToast();
 
   const handleRemoveMember = async (member: OrganizationMember) => {
     const memberName = member.name || member.email;
@@ -54,8 +52,7 @@ export function MemberList({
     try {
       const success = await memberRepository.removeMember(member.id);
       if (success) {
-        toast({
-          title: "Member Removed",
+        toast.success("Member Removed", {
           description: `${memberName} has been removed from your organization`,
         });
         onMemberUpdate?.();
@@ -64,10 +61,8 @@ export function MemberList({
       }
     } catch (error) {
       console.error("[MemberList] Remove member error:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to remove member. Please try again.",
-        variant: "destructive",
       });
     } finally {
       setPendingMemberId(null);
@@ -79,18 +74,15 @@ export function MemberList({
     try {
       const success = await memberRepository.resendInvitation(memberId);
       if (success) {
-        toast({
-          title: "Success",
+        toast.success("Success", {
           description: "Invitation resent successfully",
         });
       } else {
         throw new Error("Failed to resend invitation");
       }
-    } catch (error) {
-      toast({
-        title: "Error",
+    } catch {
+      toast.error("Error", {
         description: "Failed to resend invitation",
-        variant: "destructive",
       });
     } finally {
       setPendingMemberId(null);
@@ -155,9 +147,6 @@ export function MemberList({
                 </TableCell>
                 <TableCell className="py-4 text-sm text-gray-600">
                   {joinedDate}
-                  {member.invitedBy && (
-                    <div className="text-xs text-gray-500 mt-0.5">by {member.invitedBy}</div>
-                  )}
                 </TableCell>
                 {canManage && (
                   <TableCell className="py-4">

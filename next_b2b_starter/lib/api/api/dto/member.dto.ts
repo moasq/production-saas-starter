@@ -5,14 +5,6 @@
  * These match the expected backend API structure
  */
 
-// Member List DTOs
-export interface MemberListRequestDto {
-  organization_id: string;
-  page?: number;
-  page_size?: number;
-  status?: "active" | "pending" | "inactive";
-}
-
 export interface MemberListResponseDto {
   members: MemberDto[];
   total: number;
@@ -38,26 +30,13 @@ export interface InviteMemberRequestDto {
 
 export interface InviteMemberResponseDto {
   success: boolean;
-  member_id?: string;
-  message?: string;
-  invite_link?: string;
-}
-
-// Remove Member DTOs
-export interface RemoveMemberRequestDto {
-  member_id: string;
-  organization_id: string;
-}
-
-export interface RemoveMemberResponseDto {
-  success: boolean;
+  data?: { member_id: string; invite_sent: boolean };
   message?: string;
 }
 
 // Profile DTOs
 export interface UpdateProfileRequestDto {
   name?: string;
-  avatar_url?: string;
 }
 
 export interface UpdateProfileResponseDto {
@@ -65,12 +44,8 @@ export interface UpdateProfileResponseDto {
   message?: string;
 }
 
-// Resend Invitation DTO
-export interface ResendInvitationRequestDto {
-  member_id: string;
-}
-
 export interface ResendInvitationResponseDto {
+  data?: { invite_sent: boolean };
   success: boolean;
   message?: string;
 }
