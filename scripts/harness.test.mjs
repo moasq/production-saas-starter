@@ -26,8 +26,8 @@ function fixture(t) {
 
 test("adapters are portable, deterministic, and check runs from another cwd", (t) => {
   const root = fixture(t);
-  assert.equal(sync(root), 13);
-  assert.equal(sync(root, true), 13);
+  assert.equal(sync(root), 16);
+  assert.equal(sync(root, true), 16);
   const result = spawnSync(process.execPath, [join(root, "scripts/harness.mjs"), "check"], { cwd: tmpdir(), encoding: "utf8" });
   assert.equal(result.status, 0, result.stderr);
   for (const relative of ["CLAUDE.md", "go-b2b-starter/.claude/CLAUDE.md", "next_b2b_starter/.claude/CLAUDE.md"]) {
@@ -38,12 +38,14 @@ test("adapters are portable, deterministic, and check runs from another cwd", (t
   const config = readFileSync(join(root, ".codex/config.toml"), "utf8");
   assert.match(config, /enabled_tools = \["get_doc","search_docs"\]/);
   assert.doesNotMatch(config, /approval_policy|danger-full-access|mcp-remote|\/Users\//);
-  const reviewer = readFileSync(join(root, ".codex/agents/auth-reviewer.toml"), "utf8");
-  assert.match(reviewer, /sandbox_mode = "read-only"/);
-  const claude = readFileSync(join(root, ".claude/agents/auth-reviewer.md"), "utf8");
-  const tools = claude.match(/^tools: (.*)$/m)[1];
-  assert.doesNotMatch(tools, /Bash|Write|Edit|Agent/);
-  assert.match(tools, /mcp__better-auth__get_doc/);
+  for (const name of ["auth-reviewer", "code-reviewer"]) {
+    const reviewer = readFileSync(join(root, `.codex/agents/${name}.toml`), "utf8");
+    assert.match(reviewer, /sandbox_mode = "read-only"/);
+    const claude = readFileSync(join(root, `.claude/agents/${name}.md`), "utf8");
+    const tools = claude.match(/^tools: (.*)$/m)[1];
+    assert.doesNotMatch(tools, /Bash|Write|Edit|Agent/);
+    assert.match(tools, /mcp__better-auth__get_doc/);
+  }
 });
 
 test("check detects drift without repairing it; sync repairs from canonical source", (t) => {
@@ -54,7 +56,7 @@ test("check detects drift without repairing it; sync repairs from canonical sour
   assert.throws(() => sync(root, true), /adapter drift/);
   assert.equal(readFileSync(path, "utf8"), "drift\n");
   sync(root);
-  assert.equal(sync(root, true), 13);
+  assert.equal(sync(root, true), 16);
 });
 
 test("invalid canonical references and orphaned adapters fail before writes", (t) => {

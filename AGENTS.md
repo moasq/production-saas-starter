@@ -25,11 +25,11 @@ contain private repository traffic; do not publish them with source changes.
 
 Repository-local coding skills and roles are development tools, not app features.
 Read only the skill matching the task: `.agents/skills/go-backend/SKILL.md`,
-`.agents/skills/next-frontend/SKILL.md`, or
-`.agents/skills/auth-integration/SKILL.md`. The auth skill distinguishes this
+`.agents/skills/next-frontend/SKILL.md`, `.agents/skills/auth-integration/SKILL.md`,
+or `.agents/skills/pr-review/SKILL.md`. The auth skill distinguishes this
 checkout's provider from proposed migrations; installing guidance never changes auth.
 
-Use `.agents/agents/` role briefs for bounded backend, frontend, or read-only auth
+Use `.agents/agents/` role briefs for bounded backend, frontend, or read-only code/auth
 review work. Delegate only independent work with explicit file ownership and an
 acceptance check; otherwise work locally. Return changed contracts, verification
 results, and unresolved decisions. Never overwrite another worker's changes.

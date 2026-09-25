@@ -1,7 +1,7 @@
 # AI-assisted development
 
-The starter includes three coding roles and three focused skills. They guide work
-on Go, Next.js, and auth security without adding a service or dependency to the app.
+The starter includes four coding roles and four focused skills. They guide work
+on Go, Next.js, auth security, and PR review without adding a service or dependency to the app.
 Normal Docker setup requires none of these tools. The harness scripts use Node.js
 22.18+ with its standard library; the project's Node 24 development runtime works.
 
@@ -13,8 +13,9 @@ only after reviewing it. Ask for a bounded change, for example:
 - “Use backend-builder to add a tenant-scoped endpoint and negative permission tests.”
 - “Use frontend-builder to fix invitation delivery feedback and keyboard focus.”
 - “Use auth-reviewer to inspect this session change without editing files.”
+- “Use code-reviewer and the pr-review skill to review this PR before merging.”
 
-Roles inherit the caller's model. The auth reviewer declares a read-only Codex sandbox
+Roles inherit the caller's model. Both reviewers declare a read-only Codex sandbox
 default and a Claude tool allowlist without shell or write tools. Live parent-session
 permission overrides can supersede Codex defaults. Implementation roles use
 the host's existing approval policy; the harness never disables it. Dispatch is
@@ -24,7 +25,7 @@ and follow it in the main conversation. No parallel workers start automatically.
 | Source | Purpose | Host delivery |
 | --- | --- | --- |
 | `AGENTS.md` | Repository rules | Codex reads directly; `CLAUDE.md` imports it |
-| `.agents/skills/*/SKILL.md` | Go, Next.js, auth procedures | Codex discovers directly; Claude receives generated copies |
+| `.agents/skills/*/SKILL.md` | Go, Next.js, auth, PR review procedures | Codex discovers directly; Claude receives generated copies |
 | `.agents/agents/*.md` | Bounded role input/process/output | Generated `.codex/agents/*.toml` and `.claude/agents/*.md` |
 | `.mcp.json` | One official documentation server | Claude reads directly; `.codex/config.toml` is generated |
 | `.agents/sources.json` | Source revisions, hashes, adaptations | Validated by the harness script |
