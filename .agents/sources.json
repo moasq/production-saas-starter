@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-09-25",
+  "authoredHere": [
+    "go-backend",
+    "next-frontend",
+    "auth-integration"
+  ],
+  "upstreamSkills": [
+    {
+      "name": "best-practices",
+      "repository": "https://github.com/better-auth/skills",
+      "revision": "20c9e88a5c007461a703f1c213572b073196113e",
+      "sourcePath": "better-auth/best-practices/SKILL.md",
+      "url": "https://raw.githubusercontent.com/better-auth/skills/20c9e88a5c007461a703f1c213572b073196113e/better-auth/best-practices/SKILL.md",
+      "sha256": "a5337f186300d187fea2c8f7af339e091afdd130d36c070d0a2dcb8ca04dd413",
+      "cachePath": ".agents/cache/better-auth/best-practices/SKILL.md",
+      "license": null,
+      "redistributed": false
+    },
+    {
+      "name": "organization",
+      "repository": "https://github.com/better-auth/skills",
+      "revision": "20c9e88a5c007461a703f1c213572b073196113e",
+      "sourcePath": "better-auth/organization/SKILL.md",
+      "url": "https://raw.githubusercontent.com/better-auth/skills/20c9e88a5c007461a703f1c213572b073196113e/better-auth/organization/SKILL.md",
+      "sha256": "d0450769aab02fbddfddca5c17257dca451233ac8ae7c6b395fa6a3bad104d27",
+      "cachePath": ".agents/cache/better-auth/organization/SKILL.md",
+      "license": null,
+      "redistributed": false
+    }
+  ],
+  "inspiration": {
+    "repository": "https://github.com/moasq/agentic-ship",
+    "revision": "54cf57ca641f849d2fb3e45ed2c696a51cefdf4b",
+    "license": "MIT",
+    "paths": [
+      ".agents/skills/agent-compatibility/SKILL.md",
+      ".agents/agents/backend-builder.md",
+      ".agents/agents/frontend-builder.md",
+      ".agents/agents/quality-engineer.md",
+      ".agents/skills/testing/SKILL.md",
+      ".agents/skills/frontend-security/SKILL.md"
+    ],
+    "adaptations": "New Go/Next.js procedures and a small independent generator; reuse canonical-source, bounded-role and verification principles. No Convex code, engine, hooks, or installer copied."
+  },
+  "mcp": {
+    "server": "better-auth",
+    "url": "https://mcp.better-auth.com/mcp",
+    "allowedTools": [
+      "get_doc",
+      "search_docs"
+    ],
+    "documentation": "https://better-auth.com/docs/ai-resources/mcp",
+    "versionPolicy": "Remote endpoint is unversioned. Resolve documentation version from the installed package or explicitly requested version. Recheck tools on use."
+  }
+}
