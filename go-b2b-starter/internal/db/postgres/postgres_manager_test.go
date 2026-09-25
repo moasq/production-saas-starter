@@ -94,11 +94,11 @@ func TestMigrationsFreshAndLegacy(t *testing.T) {
 			if err := pool.QueryRow(ctx, "SELECT version,dirty FROM schema_migrations").Scan(&migratedVersion, &dirty); err != nil {
 				t.Fatal(err)
 			}
-			if migratedVersion != 10 || dirty {
+			if migratedVersion != SchemaVersion || dirty {
 				t.Fatalf("version=%d dirty=%t", migratedVersion, dirty)
 			}
 			var orgID int
-			if err := pool.QueryRow(ctx, "INSERT INTO organizations.organizations(slug,name) VALUES('test-company','Test company') RETURNING id").Scan(&orgID); err != nil {
+			if err := pool.QueryRow(ctx, "INSERT INTO organizations.organizations(slug,name,auth_org_id,polar_customer_external_id) VALUES('test-company','Test company','test-auth-org','test-auth-org') RETURNING id").Scan(&orgID); err != nil {
 				t.Fatal(err)
 			}
 			if _, err := pool.Exec(ctx, "INSERT INTO organizations.accounts(organization_id,email,full_name,role) VALUES($1,'manager@example.com','Manager','manager')", orgID); err != nil {

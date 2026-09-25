@@ -116,7 +116,7 @@ export function hasAllPermissions(
 /**
  * Check if user has a specific role
  *
- * @param userRoles - Array of role names from Stytch session
+ * @param userRoles - Array of role names from Better Auth session
  * @param role - Role to check (e.g., "admin", "manager", "member")
  * @returns true if user has the role
  */
@@ -127,7 +127,7 @@ export function hasRole(userRoles: string[], role: string): boolean {
 /**
  * Check if user has ANY of the specified roles
  *
- * @param userRoles - Array of role names from Stytch session
+ * @param userRoles - Array of role names from Better Auth session
  * @param roles - Array of roles to check
  * @returns true if user has at least one of the roles
  */
@@ -138,7 +138,7 @@ export function hasAnyRole(userRoles: string[], roles: string[]): boolean {
 /**
  * Check if user has ALL of the specified roles
  *
- * @param userRoles - Array of role names from Stytch session
+ * @param userRoles - Array of role names from Better Auth session
  * @param roles - Array of roles to check
  * @returns true if user has all roles
  */

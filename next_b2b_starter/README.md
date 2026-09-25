@@ -12,7 +12,9 @@ pnpm dev
 
 Run `pnpm verify` before changing the application. It checks ESLint, TypeScript, regression tests and the production build.
 
-Authentication uses the server Stytch SDK and HttpOnly cookies. Browser API calls stay on `/api`; server calls supply a verified bearer token to `API_BASE_URL_INTERNAL`. No browser SDK, public token or provider secrets are needed at build time. The Go API checks permissions on every protected operation.
+Authentication uses self-hosted Better Auth 1.7.6, its organization and magic-link plugins, PostgreSQL, and SMTP. Browser API calls use HttpOnly cookies; server calls forward the current cookie to `API_BASE_URL_INTERNAL`. Go verifies live session and membership through the secret-protected internal auth bridge on every protected operation. No session JWT or cookie cache delays revocation. Sessions have a fixed eight-hour lifetime: database reads and internal bridge calls never extend expiry; sign in again with a magic link after expiry. Local SMTP uses Mailpit; production SMTP requires separate delivery verification.
+
+Apply the committed auth schema with `node scripts/migrate-auth.mjs`. The optional legacy importer defaults to dry-run and requires a reviewed active-membership snapshot before `--apply`; see the root upgrade guide. Never put owner database credentials in the frontend runtime.
 
 Billing is disabled by default. When enabled, configure `POLAR_ENVIRONMENT`, `POLAR_ACCESS_TOKEN` and one fixed recurring `POLAR_PRODUCT_ID`. Checkout binds the authenticated workspace as the external customer ID. Go reads current Polar state and verifies checkout ownership. The hosted customer portal handles subscription changes. No webhook receiver or local billing replica is required.
 

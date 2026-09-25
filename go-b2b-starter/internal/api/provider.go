@@ -1,67 +1,18 @@
 package api
 
 import (
-	"go.uber.org/dig"
-
 	"github.com/moasq/go-b2b-starter/internal/modules/billing"
 	"github.com/moasq/go-b2b-starter/internal/modules/organizations"
 	server "github.com/moasq/go-b2b-starter/internal/platform/server/domain"
+	"go.uber.org/dig"
 )
 
-// moduleRoutes holds handlers for all API modules
-// 1. OrganizationRoutes - Handles organization, account, and member management routes (includes /auth routes)
-// 2. BillingHandler - Handles billing status and subscription routes (uses billing module)
-type moduleRoutes struct {
-	OrganizationRoutes  *organizations.Routes
-	SubscriptionHandler *billing.Handler
-}
-
-// Init sets up all module dependencies and registers API routes
 func Init(container *dig.Container) error {
-	if err := setupDependencies(container); err != nil {
-		return err
-	}
-
-	if err := registerAPI(container); err != nil {
-		return err
-	}
-	return nil
-}
-
-// registerAPI registers all module handlers and routes
-func registerAPI(container *dig.Container) error {
-	if err := container.Provide(func(
-		organizationRoutes *organizations.Routes,
-		subscriptionHandler *billing.Handler,
-	) *moduleRoutes {
-		return &moduleRoutes{
-			OrganizationRoutes:  organizationRoutes,
-			SubscriptionHandler: subscriptionHandler,
-		}
-	}); err != nil {
-		return err
-	}
-
-	return container.Invoke(func(
-		srv server.Server,
-		modules *moduleRoutes,
-	) {
-		// Register each module's routes
-		srv.RegisterRoutes(modules.OrganizationRoutes.Routes, server.ApiPrefix)
-		srv.RegisterRoutes(modules.SubscriptionHandler.Routes, server.ApiPrefix)
-	})
-}
-
-// setupDependencies initializes all module dependencies
-func setupDependencies(container *dig.Container) error {
-	if err := organizations.NewProvider(container).RegisterDependencies(); err != nil {
-		return err
-	}
-
-	// Initialize billing API (subscription and billing status)
 	if err := billing.RegisterHandlers(container); err != nil {
 		return err
 	}
-
-	return nil
+	return container.Invoke(func(srv server.Server, org *organizations.Routes, bill *billing.Handler) {
+		srv.RegisterRoutes(org.Routes, server.ApiPrefix)
+		srv.RegisterRoutes(bill.Routes, server.ApiPrefix)
+	})
 }

@@ -1,59 +1,81 @@
 # Upgrade an existing installation
 
-This revision removes document upload, OCR, AI chat, RAG, embeddings, object
-storage, Redis, invoice quotas and webhook-based billing replication. Treat it as
-a breaking product simplification, not a patch release. Keep your current checkout
-and a verified database backup until the core flows work in a separate environment.
+This release replaces Stytch with self-hosted Better Auth. It is an authentication
+cutover, not a transparent session migration. Rehearse it on a restored copy of
+your database before changing an installation used by customers.
 
-## Fresh installation
+## Back up and rehearse
 
-Use a fresh Compose project and volume. The embedded baseline creates only the
-organization/account schema on ordinary PostgreSQL. No vector extension or
-specialized image is needed. Migrations run before API readiness.
+1. Keep the previous application images, configuration and verified database dump.
+   Restore that dump into a separate Compose project; keep the original running.
+2. Preserve your PostgreSQL major version and volume mapping. Old installations
+   with pgvector objects still need a compatible image until those objects are
+   deliberately migrated or removed. Never attach an existing volume to a new
+   major version merely by changing the image tag.
+3. Transfer settings into the current `.env.example`; retain the existing database
+   owner password. Generate independent application/auth database passwords,
+   `BETTER_AUTH_SECRET`, and `AUTH_INTERNAL_SECRET`. Set the intended public URL
+   and SMTP settings. Local rehearsal can use Mailpit.
+4. Run the one-shot schema jobs against the restored database. Historical
+   migrations 1–10 are unchanged. New migrations add provider-neutral identifiers
+   and row-level security while retaining old provider IDs and existing data.
+   Dirty migration ledgers fail closed and need deliberate repair.
 
-## Existing data
+The previous lean release retired document, OCR, AI/RAG, storage, Redis and
+webhook billing domains. Their legacy tables are not automatically dropped.
+Fresh installations use ordinary PostgreSQL and create only current schemas.
 
-Existing organization and account rows are preserved. The new migration accepts
-the supported role values and preserves historical ones. Removed-feature tables,
-subscriptions and quota rows are not automatically dropped; they become unused.
-Existing databases with pgvector should keep a compatible pgvector image until
-those legacy objects are explicitly migrated or removed after backup. Do not
-attach such a data volume to the plain PostgreSQL image without a tested plan.
+## Reconcile identities before importing
 
-Original migrations 1–9 remain byte-for-byte in `go-b2b-starter/internal/db/postgres/archive/migrations`.
-The migration source starts fresh installations at baseline 10 and advances clean
-legacy ledgers 1–9 directly to it without executing removed-feature migrations.
-The baseline creates the core schema if absent and preserves existing rows.
-A database with a dirty migration version must be repaired deliberately before
-startup; never force its version just to skip an error. A destructive automatic
-downgrade is not provided. Restore a tested backup for rollback.
+Stytch represents a member separately in every organization. Better Auth uses
+one user with separate organization memberships. The importer combines normalized
+email identities while retaining each organization's ID and membership boundary.
+The original per-organization profile name is retained in the business
+`legacy_full_name` snapshot when the shared Better Auth profile becomes current.
+It does not copy sessions or trust old email verification; users must prove their
+email again through a new magic link.
 
-## Configuration and runtime
+Local account rows are historical snapshots, not proof that a person is still
+entitled to access. Before applying an import, compare the candidate accounts and
+roles with a current Stytch organization/member export. Remove or deactivate stale
+membership snapshots in the rehearsal database, resolve conflicting or missing
+emails, and confirm at least one legitimate administrator per active workspace.
+Review every elevated role. The importer must not be used to restore removed
+users from an old backup.
 
-Use the root `.env.example` as the new configuration contract and transfer values
-manually. Do not overwrite your old secrets or data. There is one `compose.yaml`;
-the old production/dependency compose files are retired. Compose now derives its default project name from the checkout directory.
-Project/volume names may differ from yours; retain the existing project with
-`COMPOSE_PROJECT_NAME` or explicitly configure the existing database volume. Explicitly migrate or configure your
-existing volumes rather than accidentally starting against an empty database.
+The frontend includes `scripts/import-legacy-auth.mjs`. Run it with the auth
+schema connection (`PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`) and a
+separate `LEGACY_DATABASE_URL` owner connection for reading the legacy business
+rows. It defaults to a dry run; `--apply` is required to write. Run it only in a
+short-lived migration job or controlled development shell. Never add the owner
+connection to the long-running frontend or backend environment. Check its output
+and resolve rejected rows before proceeding.
 
-`STYTCH_ENV` is `test` or `live`, independent of build mode. `POLAR_ENVIRONMENT`
-is `sandbox` or `production`, and billing requires `BILLING_ENABLED=true`.
-Public Polar token variables, browser Stytch SDK tokens, storage/LLM/OCR settings,
-Redis settings, and webhook secrets are no longer used. The frontend uses
-server-only runtime credentials. Review the current Stytch RBAC contract and
-callback configuration before enabling sign-in.
+Existing organizations keep their original external customer identity for Polar.
+Do not recreate those customer identities or substitute a user's Better Auth ID.
+Verify billing state for a known organization in rehearsal without taking new
+payments. Unconfigured billing must remain disabled.
 
-The default PostgreSQL version stays on the supported 17.x line to avoid an
-implicit database-major upgrade. Go and Next.js dependencies are upgraded with
-behavioral checks. Pin changes must pass both application and fresh-container
-checks; major database upgrades require their own dump/restore or pg_upgrade plan.
+## Cut over and verify
 
-## Billing behavior
+Pause writes during the final backup/import window, repeat the reviewed migration
+against the final snapshot, then start the new application. Stytch sessions and
+outstanding login/invitation links are invalid after cutover. Tell users to request
+new links; resend still-needed invitations. Do not run both identity authorities
+concurrently against the same live membership data.
 
-The UI uses a single configured recurring Polar product and the customer portal.
-Current state is fetched from Polar using the Stytch organization ID as the
-customer external ID. Old invoice-meter metadata and local subscription tables
-no longer authorize or block core pages. Remove obsolete webhook registrations in
-Polar after verifying the new deployment. Add your product's own entitlement rules
-if paid status should gate a business feature.
+Verify two distinct tenants, invitations, users belonging to both organizations,
+all three roles, logout, member removal, expired links, profile changes and the
+last-administrator guard. Confirm the Go database role is neither superuser nor
+BYPASSRLS and does not own protected tables. Also verify SMTP externally and test
+production billing separately; local email capture and mocks do not prove those
+services work.
+
+## Roll back
+
+Before accepting new writes, rollback can restore the previous images,
+configuration and database backup together. After users have written data to the
+new system, first export and reconcile those changes; restoring an old backup
+blindly would lose them. Do not run an automatic destructive down migration or
+re-enable old Stytch links against a partially migrated database. Keep backups
+and the previous deployment until the new flows have been accepted.

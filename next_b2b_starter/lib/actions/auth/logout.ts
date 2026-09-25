@@ -1,56 +1,13 @@
 "use server";
-import { sanitizeReturnTo } from "@/lib/auth/stytch";
-
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
-import { getStytchB2BClient } from "@/lib/auth/stytch/server";
-import {
-  SESSION_COOKIE_NAME,
-  SESSION_JWT_COOKIE_NAME,
-} from "@/lib/auth/constants";
-
-/**
- * Logout Server Action
- *
- * Revokes the Stytch session and clears session cookies.
- * Redirects user to the specified path or home page.
- *
- * @param returnTo - Optional path to redirect to after logout (must start with /)
- */
+import { getAuth } from "@/lib/auth/configuration";
+import { requireOrigin } from "@/lib/auth/flows";
+import { sanitizeReturnTo } from "@/lib/auth/urls";
 export async function logout(returnTo?: string): Promise<never> {
-  const cookieStore = await cookies();
-
-  const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
-  const sessionJwt = cookieStore.get(SESSION_JWT_COOKIE_NAME)?.value;
-
-  // Revoke the session with Stytch if we have a token
-  if (sessionToken || sessionJwt) {
-    try {
-      const client = getStytchB2BClient();
-
-      if (sessionToken) {
-        await client.sessions.revoke({ session_token: sessionToken });
-        console.info("[Logout] Session revoked via session_token");
-      } else if (sessionJwt) {
-        await client.sessions.revoke({ session_jwt: sessionJwt });
-        console.info("[Logout] Session revoked via session_jwt");
-      }
-    } catch (error) {
-      // Silently fail - user is logging out anyway
-      // Session might already be expired or invalid
-      console.warn("[Logout] Failed to revoke session (continuing anyway):", error);
-    }
-  }
-
-  // Clear session cookies
-  cookieStore.delete(SESSION_COOKIE_NAME);
-  cookieStore.delete(SESSION_JWT_COOKIE_NAME);
-
-  console.info("[Logout] Session cookies cleared");
-
-  // Validate returnTo path for security
-  const redirectPath = sanitizeReturnTo(returnTo) ?? "/";
-
-  // Redirect to the specified path or home
-  redirect(redirectPath);
+  const requestHeaders = new Headers(await headers());
+  requireOrigin(requestHeaders);
+  // A failed revocation must not be reported as a successful logout.
+  await getAuth().api.signOut({ headers: requestHeaders });
+  redirect(sanitizeReturnTo(returnTo) || "/");
 }

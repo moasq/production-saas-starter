@@ -6,35 +6,13 @@ package postgres
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
-	CheckAccountPermission(ctx context.Context, arg CheckAccountPermissionParams) (CheckAccountPermissionRow, error)
-	// Accounts queries
-	CreateAccount(ctx context.Context, arg CreateAccountParams) (OrganizationsAccount, error)
-	CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (OrganizationsOrganization, error)
-	DeleteAccount(ctx context.Context, arg DeleteAccountParams) error
-	DeleteOrganization(ctx context.Context, id int32) error
-	GetAccountByEmail(ctx context.Context, arg GetAccountByEmailParams) (OrganizationsAccount, error)
-	GetAccountByID(ctx context.Context, arg GetAccountByIDParams) (OrganizationsAccount, error)
-	GetAccountOrganization(ctx context.Context, id int32) (OrganizationsOrganization, error)
-	GetAccountStats(ctx context.Context, id int32) (GetAccountStatsRow, error)
-	GetOrganizationByID(ctx context.Context, id int32) (OrganizationsOrganization, error)
-	GetOrganizationBySlug(ctx context.Context, slug string) (OrganizationsOrganization, error)
-	GetOrganizationByStytchID(ctx context.Context, stytchOrgID pgtype.Text) (OrganizationsOrganization, error)
-	// Organization membership queries
-	GetOrganizationByUserEmail(ctx context.Context, email string) (OrganizationsOrganization, error)
-	// Statistics queries (useful for admin panels)
-	GetOrganizationStats(ctx context.Context, id int32) (GetOrganizationStatsRow, error)
-	ListAccountsByOrganization(ctx context.Context, organizationID int32) ([]OrganizationsAccount, error)
-	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]OrganizationsOrganization, error)
-	UpdateAccount(ctx context.Context, arg UpdateAccountParams) (OrganizationsAccount, error)
-	UpdateAccountLastLogin(ctx context.Context, arg UpdateAccountLastLoginParams) (OrganizationsAccount, error)
-	UpdateAccountStytchInfo(ctx context.Context, arg UpdateAccountStytchInfoParams) (OrganizationsAccount, error)
-	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (OrganizationsOrganization, error)
-	UpdateOrganizationStytchInfo(ctx context.Context, arg UpdateOrganizationStytchInfoParams) (OrganizationsOrganization, error)
+	GetTenantOrganization(ctx context.Context, id int32) (OrganizationsOrganization, error)
+	GetTenantStats(ctx context.Context, organizationID int32) (GetTenantStatsRow, error)
+	SyncAccount(ctx context.Context, arg SyncAccountParams) (OrganizationsAccount, error)
+	SyncOrganization(ctx context.Context, arg SyncOrganizationParams) (OrganizationsOrganization, error)
 }
 
 var _ Querier = (*Queries)(nil)

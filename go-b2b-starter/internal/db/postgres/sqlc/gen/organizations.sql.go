@@ -11,103 +11,71 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const checkAccountPermission = `-- name: CheckAccountPermission :one
-SELECT
-    a.id,
-    a.role,
-    a.status,
-    o.status as org_status
-FROM organizations.accounts a
-INNER JOIN organizations.organizations o ON a.organization_id = o.id
-WHERE a.id = $1 AND a.organization_id = $2
+const getTenantOrganization = `-- name: GetTenantOrganization :one
+SELECT id, slug, name, status, stytch_org_id, stytch_connection_id, stytch_connection_name, created_at, updated_at, auth_org_id, polar_customer_external_id FROM organizations.organizations WHERE id=$1
 `
 
-type CheckAccountPermissionParams struct {
-	ID             int32 `json:"id"`
-	OrganizationID int32 `json:"organization_id"`
-}
-
-type CheckAccountPermissionRow struct {
-	ID        int32  `json:"id"`
-	Role      string `json:"role"`
-	Status    string `json:"status"`
-	OrgStatus string `json:"org_status"`
-}
-
-func (q *Queries) CheckAccountPermission(ctx context.Context, arg CheckAccountPermissionParams) (CheckAccountPermissionRow, error) {
-	row := q.db.QueryRow(ctx, checkAccountPermission, arg.ID, arg.OrganizationID)
-	var i CheckAccountPermissionRow
+func (q *Queries) GetTenantOrganization(ctx context.Context, id int32) (OrganizationsOrganization, error) {
+	row := q.db.QueryRow(ctx, getTenantOrganization, id)
+	var i OrganizationsOrganization
 	err := row.Scan(
 		&i.ID,
-		&i.Role,
+		&i.Slug,
+		&i.Name,
 		&i.Status,
-		&i.OrgStatus,
+		&i.StytchOrgID,
+		&i.StytchConnectionID,
+		&i.StytchConnectionName,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.AuthOrgID,
+		&i.PolarCustomerExternalID,
 	)
 	return i, err
 }
 
-const createAccount = `-- name: CreateAccount :one
-
-INSERT INTO organizations.accounts (
-    organization_id,
-    email,
-    full_name,
-    stytch_member_id,
-    stytch_role_id,
-    stytch_role_slug,
-    stytch_email_verified,
-    role,
-    status
-) VALUES (
-    $1,
-    $2,
-    $3,
-    $4,
-    $5,
-    $6,
-    $7,
-    $8,
-    $9
-) RETURNING
-    id,
-    organization_id,
-    email,
-    full_name,
-    stytch_member_id,
-    stytch_role_id,
-    stytch_role_slug,
-    stytch_email_verified,
-    role,
-    status,
-    last_login_at,
-    created_at,
-    updated_at
+const getTenantStats = `-- name: GetTenantStats :one
+SELECT count(*)::bigint AS total_members, count(*) FILTER (WHERE status='active')::bigint AS active_members
+FROM organizations.accounts WHERE organization_id=$1
 `
 
-type CreateAccountParams struct {
-	OrganizationID      int32       `json:"organization_id"`
-	Email               string      `json:"email"`
-	FullName            string      `json:"full_name"`
-	StytchMemberID      pgtype.Text `json:"stytch_member_id"`
-	StytchRoleID        pgtype.Text `json:"stytch_role_id"`
-	StytchRoleSlug      pgtype.Text `json:"stytch_role_slug"`
-	StytchEmailVerified bool        `json:"stytch_email_verified"`
-	Role                string      `json:"role"`
-	Status              string      `json:"status"`
+type GetTenantStatsRow struct {
+	TotalMembers  int64 `json:"total_members"`
+	ActiveMembers int64 `json:"active_members"`
 }
 
-// Accounts queries
-func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (OrganizationsAccount, error) {
-	row := q.db.QueryRow(ctx, createAccount,
+func (q *Queries) GetTenantStats(ctx context.Context, organizationID int32) (GetTenantStatsRow, error) {
+	row := q.db.QueryRow(ctx, getTenantStats, organizationID)
+	var i GetTenantStatsRow
+	err := row.Scan(&i.TotalMembers, &i.ActiveMembers)
+	return i, err
+}
+
+const syncAccount = `-- name: SyncAccount :one
+INSERT INTO organizations.accounts(organization_id,email,full_name,role,auth_user_id,auth_member_id)
+VALUES ($1,$2,$3,$4,$5,$6)
+ON CONFLICT (organization_id,(lower(email))) DO UPDATE SET full_name=EXCLUDED.full_name,role=EXCLUDED.role,
+ auth_user_id=EXCLUDED.auth_user_id,auth_member_id=EXCLUDED.auth_member_id,status='active',last_login_at=CURRENT_TIMESTAMP
+RETURNING id, organization_id, email, full_name, stytch_member_id, stytch_role_id, stytch_role_slug, stytch_email_verified, role, status, last_login_at, created_at, updated_at, legacy_full_name, auth_user_id, auth_member_id
+`
+
+type SyncAccountParams struct {
+	OrganizationID int32       `json:"organization_id"`
+	Email          string      `json:"email"`
+	FullName       string      `json:"full_name"`
+	Role           string      `json:"role"`
+	AuthUserID     pgtype.Text `json:"auth_user_id"`
+	AuthMemberID   pgtype.Text `json:"auth_member_id"`
+}
+
+func (q *Queries) SyncAccount(ctx context.Context, arg SyncAccountParams) (OrganizationsAccount, error) {
+	row := q.db.QueryRow(ctx, syncAccount,
 		arg.OrganizationID,
 		arg.Email,
 		arg.FullName,
-		arg.StytchMemberID,
-		arg.StytchRoleID,
-		arg.StytchRoleSlug,
-		arg.StytchEmailVerified,
 		arg.Role,
-		arg.Status,
+		arg.AuthUserID,
+		arg.AuthMemberID,
 	)
 	var i OrganizationsAccount
 	err := row.Scan(
@@ -124,39 +92,28 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (O
 		&i.LastLoginAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.LegacyFullName,
+		&i.AuthUserID,
+		&i.AuthMemberID,
 	)
 	return i, err
 }
 
-const createOrganization = `-- name: CreateOrganization :one
-INSERT INTO organizations.organizations (
-    slug,
-    name,
-    status
-) VALUES (
-    $1,
-    $2,
-    $3
-) RETURNING
-    id,
-    slug,
-    name,
-    status,
-    stytch_org_id,
-    stytch_connection_id,
-    stytch_connection_name,
-    created_at,
-    updated_at
+const syncOrganization = `-- name: SyncOrganization :one
+INSERT INTO organizations.organizations(auth_org_id,polar_customer_external_id,name,slug)
+VALUES ($1,$1,$2,$3)
+ON CONFLICT (auth_org_id) DO UPDATE SET name=EXCLUDED.name,slug=EXCLUDED.slug
+RETURNING id, slug, name, status, stytch_org_id, stytch_connection_id, stytch_connection_name, created_at, updated_at, auth_org_id, polar_customer_external_id
 `
 
-type CreateOrganizationParams struct {
-	Slug   string `json:"slug"`
-	Name   string `json:"name"`
-	Status string `json:"status"`
+type SyncOrganizationParams struct {
+	AuthOrgID string `json:"auth_org_id"`
+	Name      string `json:"name"`
+	Slug      string `json:"slug"`
 }
 
-func (q *Queries) CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (OrganizationsOrganization, error) {
-	row := q.db.QueryRow(ctx, createOrganization, arg.Slug, arg.Name, arg.Status)
+func (q *Queries) SyncOrganization(ctx context.Context, arg SyncOrganizationParams) (OrganizationsOrganization, error) {
+	row := q.db.QueryRow(ctx, syncOrganization, arg.AuthOrgID, arg.Name, arg.Slug)
 	var i OrganizationsOrganization
 	err := row.Scan(
 		&i.ID,
@@ -168,795 +125,8 @@ func (q *Queries) CreateOrganization(ctx context.Context, arg CreateOrganization
 		&i.StytchConnectionName,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const deleteAccount = `-- name: DeleteAccount :exec
-UPDATE organizations.accounts
-SET
-    status = 'inactive',
-    updated_at = CURRENT_TIMESTAMP
-WHERE id = $1 AND organization_id = $2
-`
-
-type DeleteAccountParams struct {
-	ID             int32 `json:"id"`
-	OrganizationID int32 `json:"organization_id"`
-}
-
-func (q *Queries) DeleteAccount(ctx context.Context, arg DeleteAccountParams) error {
-	_, err := q.db.Exec(ctx, deleteAccount, arg.ID, arg.OrganizationID)
-	return err
-}
-
-const deleteOrganization = `-- name: DeleteOrganization :exec
-DELETE FROM organizations.organizations
-WHERE id = $1
-`
-
-func (q *Queries) DeleteOrganization(ctx context.Context, id int32) error {
-	_, err := q.db.Exec(ctx, deleteOrganization, id)
-	return err
-}
-
-const getAccountByEmail = `-- name: GetAccountByEmail :one
-SELECT
-    id,
-    organization_id,
-    email,
-    full_name,
-    stytch_member_id,
-    stytch_role_id,
-    stytch_role_slug,
-    stytch_email_verified,
-    role,
-    status,
-    last_login_at,
-    created_at,
-    updated_at
-FROM organizations.accounts
-WHERE email = $1 AND organization_id = $2
-`
-
-type GetAccountByEmailParams struct {
-	Email          string `json:"email"`
-	OrganizationID int32  `json:"organization_id"`
-}
-
-func (q *Queries) GetAccountByEmail(ctx context.Context, arg GetAccountByEmailParams) (OrganizationsAccount, error) {
-	row := q.db.QueryRow(ctx, getAccountByEmail, arg.Email, arg.OrganizationID)
-	var i OrganizationsAccount
-	err := row.Scan(
-		&i.ID,
-		&i.OrganizationID,
-		&i.Email,
-		&i.FullName,
-		&i.StytchMemberID,
-		&i.StytchRoleID,
-		&i.StytchRoleSlug,
-		&i.StytchEmailVerified,
-		&i.Role,
-		&i.Status,
-		&i.LastLoginAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getAccountByID = `-- name: GetAccountByID :one
-SELECT
-    id,
-    organization_id,
-    email,
-    full_name,
-    stytch_member_id,
-    stytch_role_id,
-    stytch_role_slug,
-    stytch_email_verified,
-    role,
-    status,
-    last_login_at,
-    created_at,
-    updated_at
-FROM organizations.accounts
-WHERE id = $1 AND organization_id = $2
-`
-
-type GetAccountByIDParams struct {
-	ID             int32 `json:"id"`
-	OrganizationID int32 `json:"organization_id"`
-}
-
-func (q *Queries) GetAccountByID(ctx context.Context, arg GetAccountByIDParams) (OrganizationsAccount, error) {
-	row := q.db.QueryRow(ctx, getAccountByID, arg.ID, arg.OrganizationID)
-	var i OrganizationsAccount
-	err := row.Scan(
-		&i.ID,
-		&i.OrganizationID,
-		&i.Email,
-		&i.FullName,
-		&i.StytchMemberID,
-		&i.StytchRoleID,
-		&i.StytchRoleSlug,
-		&i.StytchEmailVerified,
-		&i.Role,
-		&i.Status,
-		&i.LastLoginAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getAccountOrganization = `-- name: GetAccountOrganization :one
-SELECT
-    o.id,
-    o.slug,
-    o.name,
-    o.status,
-    o.stytch_org_id,
-    o.stytch_connection_id,
-    o.stytch_connection_name,
-    o.created_at,
-    o.updated_at
-FROM organizations.organizations o
-INNER JOIN organizations.accounts a ON o.id = a.organization_id
-WHERE a.id = $1
-`
-
-func (q *Queries) GetAccountOrganization(ctx context.Context, id int32) (OrganizationsOrganization, error) {
-	row := q.db.QueryRow(ctx, getAccountOrganization, id)
-	var i OrganizationsOrganization
-	err := row.Scan(
-		&i.ID,
-		&i.Slug,
-		&i.Name,
-		&i.Status,
-		&i.StytchOrgID,
-		&i.StytchConnectionID,
-		&i.StytchConnectionName,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getAccountStats = `-- name: GetAccountStats :one
-SELECT
-    a.id,
-    a.organization_id,
-    a.email,
-    a.full_name,
-    a.stytch_member_id,
-    a.stytch_role_id,
-    a.stytch_role_slug,
-    a.stytch_email_verified,
-    a.role,
-    a.status,
-    a.last_login_at,
-    a.created_at,
-    a.updated_at,
-    o.name as organization_name,
-    o.slug as organization_slug
-FROM organizations.accounts a
-INNER JOIN organizations.organizations o ON a.organization_id = o.id
-WHERE a.id = $1
-`
-
-type GetAccountStatsRow struct {
-	ID                  int32            `json:"id"`
-	OrganizationID      int32            `json:"organization_id"`
-	Email               string           `json:"email"`
-	FullName            string           `json:"full_name"`
-	StytchMemberID      pgtype.Text      `json:"stytch_member_id"`
-	StytchRoleID        pgtype.Text      `json:"stytch_role_id"`
-	StytchRoleSlug      pgtype.Text      `json:"stytch_role_slug"`
-	StytchEmailVerified bool             `json:"stytch_email_verified"`
-	Role                string           `json:"role"`
-	Status              string           `json:"status"`
-	LastLoginAt         pgtype.Timestamp `json:"last_login_at"`
-	CreatedAt           pgtype.Timestamp `json:"created_at"`
-	UpdatedAt           pgtype.Timestamp `json:"updated_at"`
-	OrganizationName    string           `json:"organization_name"`
-	OrganizationSlug    string           `json:"organization_slug"`
-}
-
-func (q *Queries) GetAccountStats(ctx context.Context, id int32) (GetAccountStatsRow, error) {
-	row := q.db.QueryRow(ctx, getAccountStats, id)
-	var i GetAccountStatsRow
-	err := row.Scan(
-		&i.ID,
-		&i.OrganizationID,
-		&i.Email,
-		&i.FullName,
-		&i.StytchMemberID,
-		&i.StytchRoleID,
-		&i.StytchRoleSlug,
-		&i.StytchEmailVerified,
-		&i.Role,
-		&i.Status,
-		&i.LastLoginAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.OrganizationName,
-		&i.OrganizationSlug,
-	)
-	return i, err
-}
-
-const getOrganizationByID = `-- name: GetOrganizationByID :one
-SELECT
-    id,
-    slug,
-    name,
-    status,
-    stytch_org_id,
-    stytch_connection_id,
-    stytch_connection_name,
-    created_at,
-    updated_at
-FROM organizations.organizations
-WHERE id = $1
-`
-
-func (q *Queries) GetOrganizationByID(ctx context.Context, id int32) (OrganizationsOrganization, error) {
-	row := q.db.QueryRow(ctx, getOrganizationByID, id)
-	var i OrganizationsOrganization
-	err := row.Scan(
-		&i.ID,
-		&i.Slug,
-		&i.Name,
-		&i.Status,
-		&i.StytchOrgID,
-		&i.StytchConnectionID,
-		&i.StytchConnectionName,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getOrganizationBySlug = `-- name: GetOrganizationBySlug :one
-SELECT
-    id,
-    slug,
-    name,
-    status,
-    stytch_org_id,
-    stytch_connection_id,
-    stytch_connection_name,
-    created_at,
-    updated_at
-FROM organizations.organizations
-WHERE slug = $1
-`
-
-func (q *Queries) GetOrganizationBySlug(ctx context.Context, slug string) (OrganizationsOrganization, error) {
-	row := q.db.QueryRow(ctx, getOrganizationBySlug, slug)
-	var i OrganizationsOrganization
-	err := row.Scan(
-		&i.ID,
-		&i.Slug,
-		&i.Name,
-		&i.Status,
-		&i.StytchOrgID,
-		&i.StytchConnectionID,
-		&i.StytchConnectionName,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getOrganizationByStytchID = `-- name: GetOrganizationByStytchID :one
-SELECT
-    id,
-    slug,
-    name,
-    status,
-    stytch_org_id,
-    stytch_connection_id,
-    stytch_connection_name,
-    created_at,
-    updated_at
-FROM organizations.organizations
-WHERE stytch_org_id = $1
-`
-
-func (q *Queries) GetOrganizationByStytchID(ctx context.Context, stytchOrgID pgtype.Text) (OrganizationsOrganization, error) {
-	row := q.db.QueryRow(ctx, getOrganizationByStytchID, stytchOrgID)
-	var i OrganizationsOrganization
-	err := row.Scan(
-		&i.ID,
-		&i.Slug,
-		&i.Name,
-		&i.Status,
-		&i.StytchOrgID,
-		&i.StytchConnectionID,
-		&i.StytchConnectionName,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getOrganizationByUserEmail = `-- name: GetOrganizationByUserEmail :one
-
-SELECT
-    o.id,
-    o.slug,
-    o.name,
-    o.status,
-    o.stytch_org_id,
-    o.stytch_connection_id,
-    o.stytch_connection_name,
-    o.created_at,
-    o.updated_at
-FROM organizations.organizations o
-INNER JOIN organizations.accounts a ON o.id = a.organization_id
-WHERE a.email = $1
-  AND a.status = 'active'
-  AND o.status = 'active'
-LIMIT 1
-`
-
-// Organization membership queries
-func (q *Queries) GetOrganizationByUserEmail(ctx context.Context, email string) (OrganizationsOrganization, error) {
-	row := q.db.QueryRow(ctx, getOrganizationByUserEmail, email)
-	var i OrganizationsOrganization
-	err := row.Scan(
-		&i.ID,
-		&i.Slug,
-		&i.Name,
-		&i.Status,
-		&i.StytchOrgID,
-		&i.StytchConnectionID,
-		&i.StytchConnectionName,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getOrganizationStats = `-- name: GetOrganizationStats :one
-
-SELECT
-    o.id,
-    o.slug,
-    o.name,
-    o.status,
-    o.stytch_org_id,
-    o.stytch_connection_id,
-    o.stytch_connection_name,
-    o.created_at,
-    o.updated_at,
-    COUNT(a.id) as account_count,
-    COUNT(CASE WHEN a.status = 'active' THEN 1 END) as active_account_count
-FROM organizations.organizations o
-LEFT JOIN organizations.accounts a ON o.id = a.organization_id
-WHERE o.id = $1
-GROUP BY o.id
-`
-
-type GetOrganizationStatsRow struct {
-	ID                   int32            `json:"id"`
-	Slug                 string           `json:"slug"`
-	Name                 string           `json:"name"`
-	Status               string           `json:"status"`
-	StytchOrgID          pgtype.Text      `json:"stytch_org_id"`
-	StytchConnectionID   pgtype.Text      `json:"stytch_connection_id"`
-	StytchConnectionName pgtype.Text      `json:"stytch_connection_name"`
-	CreatedAt            pgtype.Timestamp `json:"created_at"`
-	UpdatedAt            pgtype.Timestamp `json:"updated_at"`
-	AccountCount         int64            `json:"account_count"`
-	ActiveAccountCount   int64            `json:"active_account_count"`
-}
-
-// Statistics queries (useful for admin panels)
-func (q *Queries) GetOrganizationStats(ctx context.Context, id int32) (GetOrganizationStatsRow, error) {
-	row := q.db.QueryRow(ctx, getOrganizationStats, id)
-	var i GetOrganizationStatsRow
-	err := row.Scan(
-		&i.ID,
-		&i.Slug,
-		&i.Name,
-		&i.Status,
-		&i.StytchOrgID,
-		&i.StytchConnectionID,
-		&i.StytchConnectionName,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.AccountCount,
-		&i.ActiveAccountCount,
-	)
-	return i, err
-}
-
-const listAccountsByOrganization = `-- name: ListAccountsByOrganization :many
-SELECT
-    id,
-    organization_id,
-    email,
-    full_name,
-    stytch_member_id,
-    stytch_role_id,
-    stytch_role_slug,
-    stytch_email_verified,
-    role,
-    status,
-    last_login_at,
-    created_at,
-    updated_at
-FROM organizations.accounts
-WHERE organization_id = $1
-ORDER BY created_at DESC
-`
-
-func (q *Queries) ListAccountsByOrganization(ctx context.Context, organizationID int32) ([]OrganizationsAccount, error) {
-	rows, err := q.db.Query(ctx, listAccountsByOrganization, organizationID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []OrganizationsAccount{}
-	for rows.Next() {
-		var i OrganizationsAccount
-		if err := rows.Scan(
-			&i.ID,
-			&i.OrganizationID,
-			&i.Email,
-			&i.FullName,
-			&i.StytchMemberID,
-			&i.StytchRoleID,
-			&i.StytchRoleSlug,
-			&i.StytchEmailVerified,
-			&i.Role,
-			&i.Status,
-			&i.LastLoginAt,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listOrganizations = `-- name: ListOrganizations :many
-SELECT
-    id,
-    slug,
-    name,
-    status,
-    stytch_org_id,
-    stytch_connection_id,
-    stytch_connection_name,
-    created_at,
-    updated_at
-FROM organizations.organizations
-ORDER BY created_at DESC
-LIMIT $1 OFFSET $2
-`
-
-type ListOrganizationsParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
-}
-
-func (q *Queries) ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]OrganizationsOrganization, error) {
-	rows, err := q.db.Query(ctx, listOrganizations, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []OrganizationsOrganization{}
-	for rows.Next() {
-		var i OrganizationsOrganization
-		if err := rows.Scan(
-			&i.ID,
-			&i.Slug,
-			&i.Name,
-			&i.Status,
-			&i.StytchOrgID,
-			&i.StytchConnectionID,
-			&i.StytchConnectionName,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const updateAccount = `-- name: UpdateAccount :one
-UPDATE organizations.accounts
-SET
-    full_name = $3,
-    stytch_role_id = $4,
-    stytch_role_slug = $5,
-    stytch_email_verified = $6,
-    role = $7,
-    status = $8,
-    updated_at = CURRENT_TIMESTAMP
-WHERE id = $1 AND organization_id = $2
-RETURNING
-    id,
-    organization_id,
-    email,
-    full_name,
-    stytch_member_id,
-    stytch_role_id,
-    stytch_role_slug,
-    stytch_email_verified,
-    role,
-    status,
-    last_login_at,
-    created_at,
-    updated_at
-`
-
-type UpdateAccountParams struct {
-	ID                  int32       `json:"id"`
-	OrganizationID      int32       `json:"organization_id"`
-	FullName            string      `json:"full_name"`
-	StytchRoleID        pgtype.Text `json:"stytch_role_id"`
-	StytchRoleSlug      pgtype.Text `json:"stytch_role_slug"`
-	StytchEmailVerified bool        `json:"stytch_email_verified"`
-	Role                string      `json:"role"`
-	Status              string      `json:"status"`
-}
-
-func (q *Queries) UpdateAccount(ctx context.Context, arg UpdateAccountParams) (OrganizationsAccount, error) {
-	row := q.db.QueryRow(ctx, updateAccount,
-		arg.ID,
-		arg.OrganizationID,
-		arg.FullName,
-		arg.StytchRoleID,
-		arg.StytchRoleSlug,
-		arg.StytchEmailVerified,
-		arg.Role,
-		arg.Status,
-	)
-	var i OrganizationsAccount
-	err := row.Scan(
-		&i.ID,
-		&i.OrganizationID,
-		&i.Email,
-		&i.FullName,
-		&i.StytchMemberID,
-		&i.StytchRoleID,
-		&i.StytchRoleSlug,
-		&i.StytchEmailVerified,
-		&i.Role,
-		&i.Status,
-		&i.LastLoginAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const updateAccountLastLogin = `-- name: UpdateAccountLastLogin :one
-UPDATE organizations.accounts
-SET
-    last_login_at = CURRENT_TIMESTAMP,
-    updated_at = CURRENT_TIMESTAMP
-WHERE id = $1 AND organization_id = $2
-RETURNING
-    id,
-    organization_id,
-    email,
-    full_name,
-    stytch_member_id,
-    stytch_role_id,
-    stytch_role_slug,
-    stytch_email_verified,
-    role,
-    status,
-    last_login_at,
-    created_at,
-    updated_at
-`
-
-type UpdateAccountLastLoginParams struct {
-	ID             int32 `json:"id"`
-	OrganizationID int32 `json:"organization_id"`
-}
-
-func (q *Queries) UpdateAccountLastLogin(ctx context.Context, arg UpdateAccountLastLoginParams) (OrganizationsAccount, error) {
-	row := q.db.QueryRow(ctx, updateAccountLastLogin, arg.ID, arg.OrganizationID)
-	var i OrganizationsAccount
-	err := row.Scan(
-		&i.ID,
-		&i.OrganizationID,
-		&i.Email,
-		&i.FullName,
-		&i.StytchMemberID,
-		&i.StytchRoleID,
-		&i.StytchRoleSlug,
-		&i.StytchEmailVerified,
-		&i.Role,
-		&i.Status,
-		&i.LastLoginAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const updateAccountStytchInfo = `-- name: UpdateAccountStytchInfo :one
-UPDATE organizations.accounts
-SET
-    stytch_member_id = $3,
-    stytch_role_id = $4,
-    stytch_role_slug = $5,
-    stytch_email_verified = $6,
-    updated_at = CURRENT_TIMESTAMP
-WHERE id = $1 AND organization_id = $2
-RETURNING
-    id,
-    organization_id,
-    email,
-    full_name,
-    stytch_member_id,
-    stytch_role_id,
-    stytch_role_slug,
-    stytch_email_verified,
-    role,
-    status,
-    last_login_at,
-    created_at,
-    updated_at
-`
-
-type UpdateAccountStytchInfoParams struct {
-	ID                  int32       `json:"id"`
-	OrganizationID      int32       `json:"organization_id"`
-	StytchMemberID      pgtype.Text `json:"stytch_member_id"`
-	StytchRoleID        pgtype.Text `json:"stytch_role_id"`
-	StytchRoleSlug      pgtype.Text `json:"stytch_role_slug"`
-	StytchEmailVerified bool        `json:"stytch_email_verified"`
-}
-
-func (q *Queries) UpdateAccountStytchInfo(ctx context.Context, arg UpdateAccountStytchInfoParams) (OrganizationsAccount, error) {
-	row := q.db.QueryRow(ctx, updateAccountStytchInfo,
-		arg.ID,
-		arg.OrganizationID,
-		arg.StytchMemberID,
-		arg.StytchRoleID,
-		arg.StytchRoleSlug,
-		arg.StytchEmailVerified,
-	)
-	var i OrganizationsAccount
-	err := row.Scan(
-		&i.ID,
-		&i.OrganizationID,
-		&i.Email,
-		&i.FullName,
-		&i.StytchMemberID,
-		&i.StytchRoleID,
-		&i.StytchRoleSlug,
-		&i.StytchEmailVerified,
-		&i.Role,
-		&i.Status,
-		&i.LastLoginAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const updateOrganization = `-- name: UpdateOrganization :one
-UPDATE organizations.organizations
-SET
-    name = $2,
-    status = $3,
-    stytch_org_id = $4,
-    stytch_connection_id = $5,
-    stytch_connection_name = $6,
-    updated_at = CURRENT_TIMESTAMP
-WHERE id = $1
-RETURNING
-    id,
-    slug,
-    name,
-    status,
-    stytch_org_id,
-    stytch_connection_id,
-    stytch_connection_name,
-    created_at,
-    updated_at
-`
-
-type UpdateOrganizationParams struct {
-	ID                   int32       `json:"id"`
-	Name                 string      `json:"name"`
-	Status               string      `json:"status"`
-	StytchOrgID          pgtype.Text `json:"stytch_org_id"`
-	StytchConnectionID   pgtype.Text `json:"stytch_connection_id"`
-	StytchConnectionName pgtype.Text `json:"stytch_connection_name"`
-}
-
-func (q *Queries) UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (OrganizationsOrganization, error) {
-	row := q.db.QueryRow(ctx, updateOrganization,
-		arg.ID,
-		arg.Name,
-		arg.Status,
-		arg.StytchOrgID,
-		arg.StytchConnectionID,
-		arg.StytchConnectionName,
-	)
-	var i OrganizationsOrganization
-	err := row.Scan(
-		&i.ID,
-		&i.Slug,
-		&i.Name,
-		&i.Status,
-		&i.StytchOrgID,
-		&i.StytchConnectionID,
-		&i.StytchConnectionName,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const updateOrganizationStytchInfo = `-- name: UpdateOrganizationStytchInfo :one
-UPDATE organizations.organizations
-SET
-    stytch_org_id = $2,
-    stytch_connection_id = $3,
-    stytch_connection_name = $4,
-    updated_at = CURRENT_TIMESTAMP
-WHERE id = $1
-RETURNING
-    id,
-    slug,
-    name,
-    status,
-    stytch_org_id,
-    stytch_connection_id,
-    stytch_connection_name,
-    created_at,
-    updated_at
-`
-
-type UpdateOrganizationStytchInfoParams struct {
-	ID                   int32       `json:"id"`
-	StytchOrgID          pgtype.Text `json:"stytch_org_id"`
-	StytchConnectionID   pgtype.Text `json:"stytch_connection_id"`
-	StytchConnectionName pgtype.Text `json:"stytch_connection_name"`
-}
-
-func (q *Queries) UpdateOrganizationStytchInfo(ctx context.Context, arg UpdateOrganizationStytchInfoParams) (OrganizationsOrganization, error) {
-	row := q.db.QueryRow(ctx, updateOrganizationStytchInfo,
-		arg.ID,
-		arg.StytchOrgID,
-		arg.StytchConnectionID,
-		arg.StytchConnectionName,
-	)
-	var i OrganizationsOrganization
-	err := row.Scan(
-		&i.ID,
-		&i.Slug,
-		&i.Name,
-		&i.Status,
-		&i.StytchOrgID,
-		&i.StytchConnectionID,
-		&i.StytchConnectionName,
-		&i.CreatedAt,
-		&i.UpdatedAt,
+		&i.AuthOrgID,
+		&i.PolarCustomerExternalID,
 	)
 	return i, err
 }

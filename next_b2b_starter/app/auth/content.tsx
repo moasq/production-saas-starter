@@ -95,19 +95,6 @@ export default function AuthPage() {
     }
   }, [isInitialized, member, handleAuthSuccess]);
 
-  useEffect(() => {
-    const hasMagicLinkParams =
-      searchParams.has("stytch_token") ||
-      searchParams.has("token") ||
-      searchParams.has("stytch_token_type");
-
-    if (hasMagicLinkParams) {
-      setStatus({
-        type: "info",
-        message: "We’re verifying your sign-in link. This usually takes just a moment.",
-      });
-    }
-  }, [searchParams]);
 
   const submitEmail = useCallback(
     async (
@@ -420,7 +407,7 @@ export default function AuthPage() {
             )}
             <div className="mt-8 flex items-center justify-center gap-2 text-xs text-gray-400">
               <span>Powered by</span>
-              <span className="font-semibold text-gray-600">Stytch</span>
+              <span className="font-semibold text-gray-600">Better Auth</span>
             </div>
           </div>
         </aside>

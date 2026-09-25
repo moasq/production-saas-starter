@@ -1,97 +1,97 @@
 package organizations
 
 import (
+	"encoding/json"
 	"github.com/gin-gonic/gin"
-	platformstytch "github.com/moasq/go-b2b-starter/internal/platform/stytch"
-
 	"github.com/moasq/go-b2b-starter/internal/modules/auth"
-	serverDomain "github.com/moasq/go-b2b-starter/internal/platform/server/domain"
+	"github.com/moasq/go-b2b-starter/internal/platform/betterauth"
+	server "github.com/moasq/go-b2b-starter/internal/platform/server/domain"
 )
 
-type Routes struct {
-	organizationHandler *OrganizationHandler
-	accountHandler      *AccountHandler
-	memberHandler       *MemberHandler
+type Routes struct{ bridge *betterauth.Client }
+
+func NewRoutes(bridge *betterauth.Client) *Routes { return &Routes{bridge} }
+func (r *Routes) Routes(router *gin.RouterGroup, resolver server.MiddlewareResolver) {
+	group := router.Group("/auth", resolver.Get("auth"), resolver.Get("org_context"))
+	group.GET("/profile/me", r.profile)
+	group.PUT("/profile/me", r.updateProfile)
+	members := group.Group("/members", auth.RequirePermissionFunc("org", "manage"))
+	members.GET("", func(c *gin.Context) { r.forward(c, "members-list", struct{}{}) })
+	members.POST("", r.invite)
+	members.DELETE("/:member_id", func(c *gin.Context) { r.forward(c, "members-remove", gin.H{"member_id": c.Param("member_id")}) })
+	members.POST("/:member_id/resend-invitation", func(c *gin.Context) { r.forward(c, "members-resend", gin.H{"member_id": c.Param("member_id")}) })
+	members.PUT("/:member_id", r.updateRole)
+	org := router.Group("/organizations", resolver.Get("auth"), resolver.Get("org_context"))
+	org.GET("", auth.RequirePermissionFunc("org", "view"), func(c *gin.Context) {
+		i := auth.GetIdentity(c)
+		c.JSON(200, gin.H{"success": true, "data": i.Organization})
+	})
+	org.PUT("", auth.RequirePermissionFunc("org", "manage"), r.updateOrganization)
 }
-
-func NewRoutes(
-	organizationHandler *OrganizationHandler,
-	accountHandler *AccountHandler,
-	memberHandler *MemberHandler,
-) *Routes {
-	return &Routes{
-		organizationHandler: organizationHandler,
-		accountHandler:      accountHandler,
-		memberHandler:       memberHandler,
-	}
+func (r *Routes) profile(c *gin.Context) {
+	scope := auth.GetRequestContext(c)
+	i := scope.Identity
+	c.JSON(200, gin.H{"success": true, "data": gin.H{
+		"member_id": i.MemberID, "email": i.Email, "name": i.User.Name, "roles": i.Roles, "permissions": i.Permissions, "email_verified": i.EmailVerified, "status": "active",
+		"organization": gin.H{"organization_id": i.OrganizationID, "slug": i.Organization.Slug, "name": i.Organization.Name, "status": "active"},
+		"account_id":   scope.AccountID, "created_at": scope.CreatedAt, "updated_at": scope.UpdatedAt,
+	}})
 }
-
-// RegisterRoutes registers organization, account, and auth member management routes
-func (r *Routes) RegisterRoutes(router *gin.RouterGroup, resolver serverDomain.MiddlewareResolver) {
-	// Auth routes - member management and authentication
-	authGroup := router.Group("/auth")
-	{
-		// Public endpoint - Organization signup (no authentication required)
-		authGroup.POST("/signup", requireConfiguredAuth(), r.memberHandler.BootstrapOrganization)
-
-		// Protected endpoint - Add member (requires JWT authentication)
-		authGroup.POST("/members",
-			resolver.Get("auth"),
-			resolver.Get("org_context"),
-			auth.RequirePermissionFunc("org", "manage"),
-			r.memberHandler.AddMember)
-
-		// Protected endpoint - List members (requires JWT authentication and org:manage permission)
-		authGroup.GET("/members",
-			resolver.Get("auth"),
-			resolver.Get("org_context"),
-			auth.RequirePermissionFunc("org", "manage"),
-			r.memberHandler.ListMembers)
-
-		// Protected endpoint - Get current user profile (requires JWT authentication only)
-		authGroup.GET("/profile/me",
-			resolver.Get("auth"),
-			resolver.Get("org_context"),
-			r.memberHandler.GetProfile)
-
-		authGroup.PUT("/profile/me", resolver.Get("auth"), resolver.Get("org_context"), r.memberHandler.UpdateProfile)
-		authGroup.POST("/members/:member_id/resend-invitation", resolver.Get("auth"), resolver.Get("org_context"), auth.RequirePermissionFunc("org", "manage"), r.memberHandler.ResendInvitation)
-
-		// Protected endpoint - Delete organization member (requires JWT authentication and org:manage permission)
-		authGroup.DELETE("/members/:member_id",
-			resolver.Get("auth"),
-			resolver.Get("org_context"),
-			auth.RequirePermissionFunc("org", "manage"),
-			r.memberHandler.DeleteMember)
+func (r *Routes) updateProfile(c *gin.Context) {
+	var body struct {
+		Name string `json:"name" binding:"required,min=1,max=255"`
 	}
-
-	// Organization routes - require JWT authentication
-	orgGroup := router.Group("/organizations")
-	orgGroup.Use(
-		resolver.Get("auth"),
-		resolver.Get("org_context"),
-	)
-	{
-		// Current organization endpoints
-		orgGroup.GET("", auth.RequirePermissionFunc("org", "view"), r.organizationHandler.GetOrganization)
-		orgGroup.PUT("", auth.RequirePermissionFunc("org", "manage"), r.organizationHandler.UpdateOrganization)
-		orgGroup.GET("/stats", auth.RequirePermissionFunc("org", "view"), r.organizationHandler.GetOrganizationStats)
+	if c.ShouldBindJSON(&body) != nil {
+		c.AbortWithStatusJSON(400, gin.H{"error": "valid name required"})
+		return
 	}
-
+	r.forward(c, "profile", body)
 }
-
-// Routes returns a RouteRegistrar function compatible with the server interface
-func (r *Routes) Routes(router *gin.RouterGroup, resolver serverDomain.MiddlewareResolver) {
-	r.RegisterRoutes(router, resolver)
-}
-
-func requireConfiguredAuth() gin.HandlerFunc {
-	cfg, err := platformstytch.LoadConfig()
-	return func(c *gin.Context) {
-		if err != nil || !cfg.Configured() {
-			c.AbortWithStatusJSON(503, gin.H{"error": "Authentication is not configured"})
-			return
-		}
-		c.Next()
+func (r *Routes) updateOrganization(c *gin.Context) {
+	var body struct {
+		Name string `json:"name" binding:"required,min=1,max=255"`
 	}
+	if c.ShouldBindJSON(&body) != nil {
+		c.AbortWithStatusJSON(400, gin.H{"error": "valid name required"})
+		return
+	}
+	r.forward(c, "organization-update", body)
+}
+func (r *Routes) invite(c *gin.Context) {
+	var body struct {
+		Email string `json:"email" binding:"required,email,max=255"`
+		Name  string `json:"name" binding:"required,min=1,max=255"`
+		Role  string `json:"role_slug"`
+	}
+	if c.ShouldBindJSON(&body) != nil {
+		c.AbortWithStatusJSON(400, gin.H{"error": "valid email and name required"})
+		return
+	}
+	if body.Role == "" {
+		body.Role = "member"
+	}
+	if !validRole(body.Role) {
+		c.AbortWithStatusJSON(400, gin.H{"error": "invalid role"})
+		return
+	}
+	r.forward(c, "members-invite", gin.H{"email": body.Email, "name": body.Name, "role": body.Role})
+}
+func (r *Routes) updateRole(c *gin.Context) {
+	var body struct {
+		Role string `json:"role"`
+	}
+	if c.ShouldBindJSON(&body) != nil || !validRole(body.Role) {
+		c.AbortWithStatusJSON(400, gin.H{"error": "invalid role"})
+		return
+	}
+	r.forward(c, "members-role", gin.H{"member_id": c.Param("member_id"), "role": body.Role})
+}
+func validRole(role string) bool { return role == "admin" || role == "manager" || role == "member" }
+func (r *Routes) forward(c *gin.Context, operation string, body any) {
+	status, data, err := r.bridge.Call(c.Request.Context(), c.GetHeader("Cookie"), operation, body)
+	if err != nil || status >= 500 || status < 200 || status >= 400 && status != 400 && status != 401 && status != 403 && status != 404 && status != 409 && status != 429 || !json.Valid(data) {
+		c.AbortWithStatusJSON(502, gin.H{"error": "authentication service unavailable"})
+		return
+	}
+	c.Data(status, "application/json", data)
 }

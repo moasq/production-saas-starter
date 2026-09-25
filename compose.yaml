@@ -14,6 +14,53 @@ services:
       retries: 10
     restart: unless-stopped
 
+  database-init:
+    image: postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+    entrypoint: ["sh", "/scripts/database-roles.sh"]
+    environment:
+      PGHOST: postgres
+      PGDATABASE: ${POSTGRES_DB:-starter}
+      PGUSER: ${POSTGRES_USER:-starter}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Run ./setup.sh first}
+      APP_DATABASE_PASSWORD: ${APP_DATABASE_PASSWORD:?Run ./setup.sh first}
+      AUTH_DATABASE_PASSWORD: ${AUTH_DATABASE_PASSWORD:?Run ./setup.sh first}
+    volumes:
+      - ./scripts/database-roles.sh:/scripts/database-roles.sh:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  backend-migrate:
+    build: ./go-b2b-starter
+    command: ["migrate"]
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER:-starter}
+      POSTGRES_DB: ${POSTGRES_DB:-starter}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run ./setup.sh first}
+      DB_SSL_MODE: disable
+    depends_on:
+      database-init:
+        condition: service_completed_successfully
+    restart: "no"
+
+  auth-migrate:
+    build: ./next_b2b_starter
+    command: ["node", "scripts/migrate-auth.mjs"]
+    environment: &auth_database
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGDATABASE: ${POSTGRES_DB:-starter}
+      PGUSER: starter_auth
+      PGPASSWORD: ${AUTH_DATABASE_PASSWORD:?Run ./setup.sh first}
+      AUTH_SCHEMA: auth
+    depends_on:
+      database-init:
+        condition: service_completed_successfully
+    restart: "no"
+
   backend:
     build: ./go-b2b-starter
     environment:
@@ -24,32 +71,37 @@ services:
       ALLOWED_ORIGINS: ${APP_BASE_URL:-http://localhost:3000}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: "5432"
-      POSTGRES_USER: ${POSTGRES_USER:-starter}
+      POSTGRES_USER: starter_app
       POSTGRES_DB: ${POSTGRES_DB:-starter}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run ./setup.sh first}
+      POSTGRES_PASSWORD: ${APP_DATABASE_PASSWORD:?Run ./setup.sh first}
       DB_SSL_MODE: disable
-      STYTCH_PROJECT_ID: ${STYTCH_PROJECT_ID:-}
-      STYTCH_SECRET: ${STYTCH_SECRET:-}
-      STYTCH_ENV: ${STYTCH_ENV:-test}
-      STYTCH_INVITE_REDIRECT_URL: ${APP_BASE_URL:-http://localhost:3000}/authenticate
-      STYTCH_LOGIN_REDIRECT_URL: ${APP_BASE_URL:-http://localhost:3000}/authenticate
+      AUTH_BRIDGE_URL: http://frontend:3000
+      AUTH_INTERNAL_SECRET: ${AUTH_INTERNAL_SECRET:?Run ./setup.sh first}
       BILLING_ENABLED: ${BILLING_ENABLED:-false}
       POLAR_ACCESS_TOKEN: ${POLAR_ACCESS_TOKEN:-}
       POLAR_ENVIRONMENT: ${POLAR_ENVIRONMENT:-sandbox}
       POLAR_PRODUCT_ID: ${POLAR_PRODUCT_ID:-}
     depends_on:
-      postgres:
-        condition: service_healthy
+      backend-migrate:
+        condition: service_completed_successfully
+      auth-migrate:
+        condition: service_completed_successfully
     restart: unless-stopped
 
   frontend:
     build: ./next_b2b_starter
     environment:
+      <<: *auth_database
       APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
       API_BASE_URL_INTERNAL: http://backend:8080/api
-      STYTCH_PROJECT_ID: ${STYTCH_PROJECT_ID:-}
-      STYTCH_SECRET: ${STYTCH_SECRET:-}
-      STYTCH_ENV: ${STYTCH_ENV:-test}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Run ./setup.sh first}
+      AUTH_INTERNAL_SECRET: ${AUTH_INTERNAL_SECRET:?Run ./setup.sh first}
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      EMAIL_FROM: ${EMAIL_FROM:-Starter <starter@localhost.test>}
       BILLING_ENABLED: ${BILLING_ENABLED:-false}
       POLAR_ACCESS_TOKEN: ${POLAR_ACCESS_TOKEN:-}
       POLAR_ENVIRONMENT: ${POLAR_ENVIRONMENT:-sandbox}
@@ -57,6 +109,15 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+      auth-migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:v1.31.2@sha256:74d609a42ec279aa63c6b4622a6fa9b5408d1ad5b1d76a1c4be40a265ce0863d
+    profiles: [local]
+    ports:
+      - "127.0.0.1:${MAILPIT_PORT:-8025}:8025"
     restart: unless-stopped
 
   caddy:

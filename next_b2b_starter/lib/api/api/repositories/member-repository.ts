@@ -169,6 +169,10 @@ export class MemberRepository {
     return true;
   }
 
+  async updateRole(memberId: string, role: MemberRole): Promise<void> {
+    await this.client.put(`/auth/members/${encodeURIComponent(memberId)}`, { role });
+  }
+
   /**
    * Resend invitation to pending member
    */
@@ -184,13 +188,13 @@ export class MemberRepository {
 
   /**
    * Transform DTO to UserProfile model
-   * Extracts first non-Stytch role from roles array as the primary role
+   * Extracts first non-provider role from roles array as the primary role
    */
   private toUserProfile(dto: ProfileResponseDto): UserProfile {
-    // Extract first non-stytch role as the primary role with null safety
+    // The bridge returns one canonical organization role
     const roles = dto.roles || [];
     const primaryRole =
-      roles.find((r) => !r.startsWith("stytch_")) || roles[0] || "member";
+      roles[0] || "member";
     const normalizedRole: MemberRole = ["admin", "manager", "member"].includes(
       primaryRole
     )
@@ -209,13 +213,13 @@ export class MemberRepository {
 
   /**
    * Transform DTO to OrganizationMember model
-   * Extracts first non-Stytch role from roles array as the primary role
+   * Extracts first non-provider role from roles array as the primary role
    */
   private toOrganizationMember(dto: MemberDto): OrganizationMember {
-    // Extract first non-stytch role as the primary role with null safety
+    // The bridge returns one canonical organization role
     const roles = dto.roles || [];
     const primaryRole =
-      roles.find((r) => !r.startsWith("stytch_")) || roles[0] || "member";
+      roles[0] || "member";
     const normalizedRole: MemberRole = ["admin", "manager", "member"].includes(
       primaryRole
     )

@@ -20,6 +20,7 @@ import { MoreVertical, Mail, UserMinus } from "lucide-react";
 import {
   OrganizationMember,
   MemberHelpers,
+  type MemberRole,
 } from "@/lib/models/member.model";
 import { memberRepository } from "@/lib/api/api/repositories/member-repository";
 import { toast } from "sonner";
@@ -67,6 +68,13 @@ export function MemberList({
     } finally {
       setPendingMemberId(null);
     }
+  };
+
+  const handleRoleChange = async (memberId: string, role: MemberRole) => {
+    setPendingMemberId(memberId);
+    try { await memberRepository.updateRole(memberId, role); toast.success("Role updated"); onMemberUpdate?.(); }
+    catch { toast.error("Could not update role", { description: "A workspace must retain an administrator." }); }
+    finally { setPendingMemberId(null); }
   };
 
   const handleResendInvite = async (memberId: string) => {
@@ -173,6 +181,9 @@ export function MemberList({
                               Resend Invite
                             </DropdownMenuItem>
                           )}
+                          {member.status === "active" && (["admin", "manager", "member"] as const).filter((role) => role !== member.role).map((role) => (
+                            <DropdownMenuItem key={role} disabled={pendingMemberId === member.id} onClick={() => handleRoleChange(member.id, role)}>Make {role}</DropdownMenuItem>
+                          ))}
                           <DropdownMenuItem
                             disabled={pendingMemberId === member.id}
                             onClick={() => handleRemoveMember(member)}

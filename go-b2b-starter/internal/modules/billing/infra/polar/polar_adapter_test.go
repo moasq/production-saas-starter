@@ -71,7 +71,7 @@ func TestMalformedCustomerStateIsUnavailableInsteadOfFreeOrPaid(t *testing.T) {
 
 type organizationStub struct{}
 
-func (organizationStub) GetStytchOrgID(context.Context, int32) (string, error) {
+func (organizationStub) GetExternalCustomerID(context.Context, int32) (string, error) {
 	return "org-owned", nil
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 /**
  * Query Client Provider
@@ -43,32 +43,12 @@ function makeQueryClient() {
   });
 }
 
-// Browser: Create query client once
-let browserQueryClient: QueryClient | undefined = undefined;
-
-function getQueryClient() {
-  if (typeof window === "undefined") {
-    // Server: Always create a new query client
-    return makeQueryClient();
-  } else {
-    // Browser: Create query client if it doesn't exist
-    if (!browserQueryClient) {
-      browserQueryClient = makeQueryClient();
-    }
-    return browserQueryClient;
-  }
-}
-
 interface QueryProviderProps {
   children: ReactNode;
 }
 
 export function QueryProvider({ children }: QueryProviderProps) {
-  // NOTE: Avoid useState when initializing the query client if you don't
-  // have a suspense boundary between this and the code that may
-  // suspend because React will throw away the client on the initial
-  // render if it suspends and there is no boundary
-  const queryClient = getQueryClient();
+  const [queryClient] = useState(makeQueryClient);
 
   return (
     <QueryClientProvider client={queryClient}>

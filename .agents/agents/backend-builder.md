@@ -24,4 +24,3 @@ Do not expand into UI work or select a different auth design unilaterally.
 Return changed paths, endpoint and DTO shapes, authorization/migration implications,
 exact test results, and the frontend or auth-review handoff. Distinguish skipped
 checks and external-provider evidence from completed local tests.
-

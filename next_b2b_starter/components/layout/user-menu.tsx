@@ -75,6 +75,7 @@ export function UserMenu() {
         <DropdownMenuItem asChild>
           <Link href="/dashboard">Dashboard</Link>
         </DropdownMenuItem>
+        <DropdownMenuItem asChild><Link href="/workspaces">Switch workspace</Link></DropdownMenuItem>
         <DropdownMenuItem onClick={handleLogout} disabled={isPending}>
           {isPending ? "Logging out..." : "Log out"}
         </DropdownMenuItem>

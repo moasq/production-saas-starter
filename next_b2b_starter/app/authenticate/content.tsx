@@ -2,13 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { consumeMagicLink } from "@/lib/actions/auth/consume-magic-link";
+import { completeAuthentication } from "@/lib/actions/auth/complete-login";
 
-const DEFAULT_DESTINATION = "/dashboard";
 
 type StatusState = {
   state: "verifying" | "success" | "error";
@@ -39,22 +38,16 @@ function extractErrorMessage(error: unknown): string {
 }
 
 export default function AuthenticateRedirectPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<StatusState>(INITIAL_STATUS);
 
   const hasAttemptedAuthRef = useRef(false);
 
-  const magicLinkToken = searchParams.get("stytch_token") || searchParams.get("token");
-  const returnTo = searchParams.get("returnTo")?.trim() || DEFAULT_DESTINATION;
-
-  const redirectToDestination = useCallback(() => {
-    router.push(returnTo);
-    router.refresh();
-  }, [returnTo, router]);
+  const signupId = searchParams.get("signup") || undefined;
+  const linkError = searchParams.get("error");
 
   const exchangeMagicLink = useCallback(async () => {
-    if (!magicLinkToken) {
+    if (linkError) {
       setStatus({
         state: "error",
         headline: "Magic link is missing or invalid",
@@ -67,21 +60,10 @@ export default function AuthenticateRedirectPage() {
     setStatus(INITIAL_STATUS);
 
     try {
-      const result = await consumeMagicLink(
-        magicLinkToken
-      );
+      const result = await completeAuthentication(signupId);
 
       if (!result.success) {
         throw new Error(result.error || "Failed to verify magic link.");
-      }
-
-      if (!result.data.memberAuthenticated) {
-        setStatus({
-          state: "error",
-          headline: "Additional verification required",
-          message: "We need a bit more information to finish signing you in. Please continue from the login page.",
-        });
-        return;
       }
 
       setStatus({
@@ -90,7 +72,7 @@ export default function AuthenticateRedirectPage() {
         message: "You're all set. Redirecting you to your workspace…",
       });
 
-      redirectToDestination();
+      window.location.assign(result.data.destination);
     } catch (error) {
       setStatus({
         state: "error",
@@ -98,7 +80,7 @@ export default function AuthenticateRedirectPage() {
         message: extractErrorMessage(error),
       });
     }
-  }, [magicLinkToken, redirectToDestination]);
+  }, [signupId, linkError]);
 
   useEffect(() => {
     if (hasAttemptedAuthRef.current) return;

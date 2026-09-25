@@ -29,7 +29,7 @@ func (s *billingService) GetBillingStatus(ctx context.Context, orgID int32) (*do
 		result.Reason = "Billing is disabled"
 		return result, nil
 	}
-	externalID, err := s.orgAdapter.GetStytchOrgID(ctx, orgID)
+	externalID, err := s.orgAdapter.GetExternalCustomerID(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (s *billingService) VerifyPaymentFromCheckout(ctx context.Context, orgID in
 	if !s.provider.Enabled() {
 		return nil, platform.ErrDisabled
 	}
-	externalID, err := s.orgAdapter.GetStytchOrgID(ctx, orgID)
+	externalID, err := s.orgAdapter.GetExternalCustomerID(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}

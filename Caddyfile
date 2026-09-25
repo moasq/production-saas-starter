@@ -1,6 +1,9 @@
 {$SITE_ADDRESS::80} {
   encode zstd gzip
-  @frontend_api path /api/auth/session /api/auth/session/* /api/health
+  handle /internal/* {
+    respond 404
+  }
+  @frontend_api path /api/identity/* /api/workspaces /api/workspaces/* /api/health
   handle @frontend_api {
     reverse_proxy frontend:3000
   }

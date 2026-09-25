@@ -1,7 +1,9 @@
 package bootstrap
 
 import (
+	"github.com/moasq/go-b2b-starter/internal/db/postgres"
 	"log"
+	"os"
 
 	"github.com/joho/godotenv"
 	"go.uber.org/dig"
@@ -14,6 +16,25 @@ func Execute() {
 		log.Printf("Warning: Error loading app.env file: %v", err)
 	}
 
+	if len(os.Args) > 1 {
+		if len(os.Args) != 2 || os.Args[1] != "migrate" {
+			log.Fatal("usage: api [migrate]")
+		}
+		cfg, err := postgres.LoadConfig()
+		if err != nil {
+			log.Fatal(err)
+		}
+		pool, err := postgres.InitDB(cfg)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer pool.Close()
+		if err := postgres.NewPostgresManager(cfg, pool).RunMigrations(); err != nil {
+			log.Fatal(err)
+		}
+		log.Print("database migrations complete")
+		return
+	}
 	container := dig.New()
 
 	InitMods(container)
