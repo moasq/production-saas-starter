@@ -6,21 +6,12 @@ import { apiClient } from "../client/api-client";
 import type { ProfileResponseDto } from "../dto/profile.dto";
 
 class ProfileRepository {
-  /**
-   * Get current user profile with backend-computed permissions
-   * Backend resolves Stytch RBAC policy and returns expanded permissions
-   *
-   * @param sessionToken - Optional JWT token. If provided, uses this token directly.
-   *                      If not provided, API client will read JWT from cookies automatically.
-   *                      Server-side calls should pass the token explicitly.
-   *                      Client-side calls can omit it to use automatic cookie-based auth.
-   * @returns Profile with computed permissions array
-   */
-  async getProfile(sessionToken?: string): Promise<ProfileResponseDto> {
-    const options = sessionToken
+  // The server forwards the verified request cookie; browsers use their HttpOnly cookie.
+  async getProfile(cookieHeader?: string): Promise<ProfileResponseDto> {
+    const options = cookieHeader
       ? {
           headers: {
-            Authorization: `Bearer ${sessionToken}`,
+            Cookie: cookieHeader,
           },
         }
       : undefined;

@@ -3,7 +3,7 @@ package domain
 import "context"
 
 type OrganizationAdapter interface {
-	GetStytchOrgID(ctx context.Context, organizationID int32) (string, error)
+	GetExternalCustomerID(ctx context.Context, organizationID int32) (string, error)
 }
 
 type BillingProvider interface {

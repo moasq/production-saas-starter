@@ -1,5 +1,5 @@
 "use server";
-import { getMemberSession } from "@/lib/auth/stytch/server";
+import { getMemberSession } from "@/lib/auth/server";
 import { getServerPermissions } from "@/lib/auth/server-permissions";
 import { getPolarClient } from "@/lib/polar/client";
 import { createActionError, createActionSuccess, type ActionResult } from "@/lib/utils/server-action-helpers";

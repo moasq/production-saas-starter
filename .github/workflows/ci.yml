@@ -40,6 +40,17 @@ jobs:
   frontend:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17.11-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: test-only
+          POSTGRES_DB: starter_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d starter_test"
+          --health-interval 5s --health-timeout 3s --health-retries 10
     defaults:
       run:
         working-directory: next_b2b_starter
@@ -56,15 +67,27 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint && pnpm typecheck && pnpm test && pnpm build
       - run: pnpm audit --prod --audit-level=high
+      - name: Verify legacy auth import on disposable databases
+        run: node scripts/test-legacy-import.mjs
+        env:
+          AUTH_IMPORT_TEST_DATABASE_URL: postgres://postgres:test-only@localhost:5432/starter_test?sslmode=disable
   deployment:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: ./setup.sh
         env:
           COMPOSE_PROJECT_NAME: starter-ci
       - run: ./scripts/smoke.sh
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.21.0'
+      - name: Exercise real self-hosted auth, SMTP and tenant APIs
+        run: node scripts/test-auth.mjs
+        env:
+          COMPOSE_PROJECT_NAME: starter-ci
+          TEST_SESSION_EXPIRY: 'true'
       - name: Check setup does not replace existing configuration
         run: |
           cp .env /tmp/starter-env-before

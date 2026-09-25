@@ -1,7 +1,7 @@
 "use server";
-import { getMemberSession } from "@/lib/auth/stytch/server";
+import { getMemberSession } from "@/lib/auth/server";
 import { getServerPermissions } from "@/lib/auth/server-permissions";
-import { getBaseUrl } from "@/lib/auth/stytch";
+import { getBaseUrl } from "@/lib/auth/urls";
 import { getPolarClient } from "@/lib/polar/client";
 import { fetchProducts } from "@/lib/polar/server-products";
 import { resolveCurrentSubscription } from "@/lib/polar/current-subscription";

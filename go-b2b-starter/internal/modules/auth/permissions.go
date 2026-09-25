@@ -18,7 +18,7 @@ func (p Permission) Action() string {
 	return action
 }
 
-// MatchesWithWildcard supports resource:*, *:action and *:* grants from Stytch.
+// MatchesWithWildcard supports resource:*, *:action and *:* explicit provider grants.
 func (p Permission) MatchesWithWildcard(other Permission) bool {
 	return (p.Resource() == "*" || p.Resource() == other.Resource()) &&
 		(p.Action() == "*" || p.Action() == other.Action())

@@ -25,8 +25,8 @@ A lean B2B SaaS boilerplate for founders. Built with **Next.js 16** and **Go 1.2
   Accessible components for the dashboard, team management, and settings.
 - **[TanStack Query](https://tanstack.com/query)** (v5.103.2)
   Powerful data fetching and state management.
-- **[Stytch](https://stytch.com)**
-  B2B magic-link authentication with server-managed sessions.
+- **[Better Auth](https://better-auth.com)**
+  Self-hosted magic-link authentication and organization membership.
 - **[Polar.sh](https://polar.sh)**
   Optional checkout and subscription management.
 
@@ -37,11 +37,11 @@ A lean B2B SaaS boilerplate for founders. Built with **Next.js 16** and **Go 1.2
 - **[Gin](https://gin-gonic.com)**
   Fast HTTP web framework with middleware support.
 - **[PostgreSQL](https://www.postgresql.org)**
-  Organization and account data, with migrations applied at startup.
+  Organization and account data, with isolated migration and runtime database roles.
 - **[SQLC](https://sqlc.dev)**
   Type-safe SQL compiler for Go (no ORM).
-- **[Stytch B2B](https://stytch.com)**
-  Organization identity, membership, and provider-managed RBAC.
+- **Organization authorization**
+  Live Better Auth membership checks and PostgreSQL row-level security.
 - **[Polar.sh](https://polar.sh)**
   Optional subscription status and customer portal integration.
 - **[Docker](https://www.docker.com)** + **Docker Compose**
@@ -49,9 +49,9 @@ A lean B2B SaaS boilerplate for founders. Built with **Next.js 16** and **Go 1.2
 
 ## 🥇 Features
 
-- **Authentication**: Sign in with a magic link through Stytch B2B.
-- **Multi-Tenancy**: Organization-scoped access enforced by the Go API.
-- **Roles & Permissions**: Three roles (Member, Manager, Admin), with permissions managed by Stytch.
+- **Authentication**: Sign in with a magic link through self-hosted Better Auth.
+- **Multi-Tenancy**: Organization-scoped access enforced by the Go API and PostgreSQL.
+- **Roles & Permissions**: Three explicit roles (Member, Manager, Admin), checked against current membership.
 - **Billing & Subscriptions**: Optional Polar checkout, customer portal, and current subscription status.
 - **Team Management**: Invite members, manage roles, and update settings.
 - **Responsive Design**: Mobile-first UI built with Tailwind CSS and shadcn/ui.
@@ -86,7 +86,7 @@ From the cloned repository, run this command to create a private `.env` and star
 **After Setup:**
 
 1. **Visit:** [http://localhost:3000](http://localhost:3000).
-2. **Enable sign-in:** Add your Stytch B2B credentials and configure the roles and callback URLs in [SETUP.md](./SETUP.md), then run `docker compose up -d`. Until then, the app shows setup instructions.
+2. **Sign in:** Create your workspace and open the magic link in the local [email inbox](http://localhost:8025). Configure real SMTP for deployment using [SETUP.md](./SETUP.md).
 3. **Enable billing when needed:** Configure Polar and set `BILLING_ENABLED=true`. Billing is disabled by default.
 
 > [!IMPORTANT]

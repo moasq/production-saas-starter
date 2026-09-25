@@ -1,81 +1,60 @@
 # Verification — 25 September 2026
 
-The revival targets the latest stable Next.js and Go releases, verified on this
-date as Next.js 16.3.6 and Go 1.27.1. No external deployment or live provider
-account changes were made. Authentication intentionally shows configuration instructions
-until Stytch credentials and its RBAC policy are configured.
+This revision implements issue #64 with self-hosted Better Auth 1.7.6, Next.js
+16.3.6, Go 1.27.1 and PostgreSQL 17.11. Verification uses disposable local tenants
+and a captured SMTP inbox. No production identity system or customer data was
+changed. README branding, layout and the original dashboard asset are preserved.
 
-## Passed
+## Application and database checks
 
-- Go 1.27.1: full `go test -race ./...` and `go vet ./...`.
-- Real PostgreSQL 17 integration: fresh schema, clean legacy ledgers 1–9,
-  preserved organization/account data, repeated startup, dirty-ledger refusal.
-  All 18 historical migration files match the original repository bytes.
-- Backend behavior: provider-derived permissions, configuration from environment,
-  cookie Origin checks, profile/member routes, invitation delivery reporting,
-  delete/reinvite recovery, protected organization provider linkage.
-- Billing behavior: disabled mode, cross-tenant and wrong-product rejection,
-  expired/canceled state, provider errors, repeat checkout verification, and
-  HTTP JSON fixtures using Polar's documented `external_customer_id` field.
-  Go and Next.js pin API version `2026-04` and reject malformed provider state.
-- Frontend: ESLint, TypeScript, nine behavioral regressions, production build.
-  The regressions cover request token isolation, mutation retry behavior,
-  invitation responses, redirects, no-content API responses, and the Polar SDK
-  API-version contract.
-- Fresh Compose build/start without provider credentials or host Go/Node,
-  plus repeat setup preserving the existing private configuration;
-  frontend/API health, public pages, and unauthenticated API rejection.
-- Database outage returns API readiness 503; restoring PostgreSQL restores 200.
-- API production mode starts correctly with TLS terminated by the private proxy.
-- Frontend image built without provider credentials renders the sign-in form when
-  runtime-only test configuration is supplied. No provider requests were submitted.
-- Browser: landing, workspace setup state, and unauthenticated dashboard redirect;
-  no browser errors observed on those paths. System font stack corrected after
-  visual inspection. Authenticated pages are covered by code/contracts, not a
-  live authenticated browser session.
-- Go and frontend containers run as non-root users. Public provider secret build
-  arguments are removed; local audit reports are ignored by Git.
+- Full Go race tests and vet pass. PostgreSQL integration covers fresh schema,
+  clean legacy ledgers 1–9, repeated migrations, dirty-ledger refusal, preserved
+  profile/provider identifiers and Polar customer mapping.
+- Tenant isolation is tested using a real non-owner, non-superuser, non-BYPASSRLS
+  role. Unscoped reads/writes fail closed, cross-tenant reads/inserts/updates/deletes
+  are denied, and a single pooled connection loses tenant context after both
+  commit and rollback. Runtime checks reject elevated and inherited bypass roles.
+- The real Better Auth schema and legacy importer pass fresh/repeat migration,
+  dry-run with no writes, two-tenant identity mapping, inactive-row exclusion,
+  duplicate/unknown-role refusal and repeat import. Import markers prevent an
+  importer rerun from restoring a deliberately removed membership.
+- Frontend lint, TypeScript, 15 behavior tests, production build and dependency
+  audit pass. The public magic-link boundary rejects oversized names before
+  persistence. Runtime secrets are not build arguments.
 
-## Dependency evidence
+## Integrated behavior
 
-Retained production packages and compatible transitive dependencies were refreshed.
-The lean core has 11 direct Go dependencies and 14 frontend production packages.
-Unused RBAC discovery endpoints, duplicate logging and policy services, inactive
-UI controls, and obsolete feature wrappers were removed.
-Go is 1.27.1; Docker Node is 24.21.0; Next.js is 16.3.6; React is 19.3.0;
-Stytch Go is 18.1.0 and Node 14.2.0; Polar Node is 0.49.0. Base images use
-version tags plus verified multi-architecture digests.
+The checked-in `scripts/test-auth.mjs` uses real Better Auth sessions, Go endpoints,
+PostgreSQL and SMTP capture. CI runs it after a fresh Compose startup. It covers
+one-use magic links, two organizations, forged tenant selectors/headers, member
+ID substitution, invitation resend/acceptance/wrong recipient, all three roles,
+profile updates, multiple memberships, removal/reinvitation, concurrent last-admin
+protection, logout cookie replay, fixed session expiry and disabled billing.
+Rate limits stay enabled; the test honors server retry intervals.
 
-`pnpm audit --prod`: zero known vulnerabilities across all severities.
-`govulncheck` 1.8.0: zero vulnerabilities in called symbols or imported packages.
-It reports GO-2026-5932 in the unimported `golang.org/x/crypto/openpgp` package
-inside a required module; there is no upstream fixed version. The finding has
-not been suppressed. An initial run with the obsolete scanner 1.1.4 could not
-parse Go 1.27; the final result uses the supported newer scanner.
+Browser verification follows the actual UI: workspace signup, captured email,
+authenticated dashboard, administrator invitation, logout, recipient email proof,
+invitation acceptance, second workspace creation and switching between member and
+admin access. Capturing an email locally is not proof of external delivery.
 
-Tailwind 3.4.19 plus tailwind-merge 2.6.1, TypeScript 5.9.3 and ESLint 9.39.4
-remain intentionally compatible. ESLint 10 conflicts with the current Next.js
-plugin peer range; Tailwind 4 and TypeScript 7 are separate migrations, not
-requirements for removing the obsolete product features. PostgreSQL remains on
-supported 17.11 to avoid an implicit database-major upgrade.
+The deployment uses separate schema/runtime roles, one-shot migrations, a private
+auth bridge and Caddy routing. Repeat setup must preserve existing secrets and
+rows. The original migration files 1–10 and dashboard image are unchanged.
 
-## Not verified
+## Dependency evidence and limits
 
-Live Stytch email/sign-in/invitation delivery, live Polar payment/portal lifecycle,
-public DNS and certificate issuance, and a restoration of an actual user's
-production database. Existing pgvector databases require the
-explicit upgrade guidance; legacy data is never automatically dropped.
+Frontend production audit reports no known vulnerabilities. Pinned govulncheck
+1.8.0 reports zero affected symbols and zero affected imported packages. The
+required module graph still includes advisory GO-2026-5932 in the unimported
+`golang.org/x/crypto/openpgp` package; no upstream fixed version is available and
+the finding is not suppressed. This is not a claim that every module is free of
+known vulnerabilities.
 
-CI now defines backend/race/migration/security, frontend, and fresh deployment
-checks. The pull request checks are the authority for remote CI results. Local results
-do not imply those remote checks passed.
+Live external SMTP delivery, Polar payment/portal lifecycle, public DNS/TLS, and
+restoration of a customer's production database are not verified here. Review
+[Upgrading](UPGRADING.md), reconcile source memberships, and rehearse the cutover
+on a restored backup. Source review and passing negative tests reduce risk; they
+do not establish perfect isolation or compliance certification.
 
-## Primary references
-
-- [Polar customer state](https://polar.sh/docs/api-reference/customers/state-external)
-- [Polar checkout response](https://polar.sh/docs/api-reference/checkouts/get-session)
-- [Stytch RBAC policy](https://stytch.com/docs/multi-tenant-auth/enterprise-ready/rbac/create-rbac-policy)
-- [Go vulnerability](https://pkg.go.dev/vuln/GO-2026-5932)
-- [Dependabot ecosystems](https://docs.github.com/en/code-security/reference/supply-chain-security/supported-ecosystems-and-repositories)
-
-The five workstreams are tracked in issues [#54](https://github.com/moasq/production-saas-starter/issues/54), [#55](https://github.com/moasq/production-saas-starter/issues/55), [#56](https://github.com/moasq/production-saas-starter/issues/56), [#57](https://github.com/moasq/production-saas-starter/issues/57), and [#58](https://github.com/moasq/production-saas-starter/issues/58).
+The PR's remote checks are the authority for CI state; local checks do not imply
+remote success. Engineering references are linked in [Architecture](ARCHITECTURE.md).

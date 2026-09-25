@@ -23,11 +23,14 @@ type OrganizationsAccount struct {
 	// Whether Stytch reports the member email as verified
 	StytchEmailVerified bool `json:"stytch_email_verified"`
 	// Last known role for business logic (e.g., owner, reviewer, employee)
-	Role        string           `json:"role"`
-	Status      string           `json:"status"`
-	LastLoginAt pgtype.Timestamp `json:"last_login_at"`
-	CreatedAt   pgtype.Timestamp `json:"created_at"`
-	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
+	Role           string           `json:"role"`
+	Status         string           `json:"status"`
+	LastLoginAt    pgtype.Timestamp `json:"last_login_at"`
+	CreatedAt      pgtype.Timestamp `json:"created_at"`
+	UpdatedAt      pgtype.Timestamp `json:"updated_at"`
+	LegacyFullName pgtype.Text      `json:"legacy_full_name"`
+	AuthUserID     pgtype.Text      `json:"auth_user_id"`
+	AuthMemberID   pgtype.Text      `json:"auth_member_id"`
 }
 
 // Organizations (tenants) in the system
@@ -42,7 +45,9 @@ type OrganizationsOrganization struct {
 	// Optional Stytch connection or project identifier associated with the organization
 	StytchConnectionID pgtype.Text `json:"stytch_connection_id"`
 	// Optional Stytch connection name associated with the organization
-	StytchConnectionName pgtype.Text      `json:"stytch_connection_name"`
-	CreatedAt            pgtype.Timestamp `json:"created_at"`
-	UpdatedAt            pgtype.Timestamp `json:"updated_at"`
+	StytchConnectionName    pgtype.Text      `json:"stytch_connection_name"`
+	CreatedAt               pgtype.Timestamp `json:"created_at"`
+	UpdatedAt               pgtype.Timestamp `json:"updated_at"`
+	AuthOrgID               string           `json:"auth_org_id"`
+	PolarCustomerExternalID string           `json:"polar_customer_external_id"`
 }

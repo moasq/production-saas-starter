@@ -54,7 +54,7 @@ export default function HomePage() {
                 Secure Authentication
               </h3>
               <p className="text-sm text-slate-600">
-                Built-in auth with magic link login powered by Stytch.
+                Built-in auth with magic link login powered by Better Auth.
               </p>
             </div>
 

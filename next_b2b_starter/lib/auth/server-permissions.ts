@@ -3,7 +3,7 @@
  * Fetch permissions from backend API with proper cache control
  */
 
-import type { VerifiedSession } from "./stytch/server";
+import type { VerifiedSession } from "./server";
 
 import { profileRepository } from "@/lib/api/api/repositories/profile-repository";
 import type { ProfileResponseDto } from "@/lib/api/api/dto/profile.dto";
@@ -28,9 +28,9 @@ export interface ServerPermissions {
  * Fetches permissions from backend API - NO CACHING to ensure fresh data
  *
  * Architecture:
- * 1. Get email/name from session.member (Stytch session object)
+ * 1. Get email/name from session.member (verified organization session object)
  * 2. Fetch permissions from backend /auth/profile/me API
- * 3. Backend computes permissions from Stytch RBAC
+ * 3. Backend computes permissions from verified organization RBAC
  * 4. Backend validates permissions on every API call (security maintained)
  */
 export async function getServerPermissions(
@@ -47,13 +47,13 @@ export async function getServerPermissions(
     backendError: null,
   };
 
-  if (!session || !session.session_jwt) {
+  if (!session || !session.cookie_header || !session.membership) {
     return emptyPermissions;
   }
 
   try {
     // Fetch profile with backend-computed permissions
-    const profile = await profileRepository.getProfile(session.session_jwt);
+    const profile = await profileRepository.getProfile(session.cookie_header);
 
     if (!profile) {
       return emptyPermissions;

@@ -5,13 +5,4 @@ import (
 	"go.uber.org/dig"
 )
 
-// ProvideDependencies registers all database dependencies using the centralized inject
-func ProvideDependencies(container *dig.Container) error {
-	// Use the centralized inject function with default options
-	return db.InjectWithOptions(container, db.InjectOptions{})
-}
-
-// ProvideDependenciesWithOptions registers database dependencies with custom options
-func ProvideDependenciesWithOptions(container *dig.Container, opts db.InjectOptions) error {
-	return db.InjectWithOptions(container, opts)
-}
+func ProvideDependencies(container *dig.Container) error { return db.Inject(container) }

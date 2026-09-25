@@ -3,7 +3,9 @@
 Enable with `BILLING_ENABLED=true`, a server-only `POLAR_ACCESS_TOKEN`, a configured `POLAR_PRODUCT_ID`, and an explicit
 `POLAR_ENVIRONMENT=sandbox` or `production`. Both applications must use the same
 provider environment. The frontend creates checkout and customer portal sessions
-using the authenticated organization as the external customer ID.
+using the authenticated organization as the external customer ID. Existing companies
+retain their original ID in `polar_customer_external_id`; Go reads that immutable
+mapping under tenant RLS instead of deriving a new ID during auth migration.
 Leave `BILLING_ENABLED` unset or `false` to run without any Polar configuration.
 
 The Go API resolves the caller's organization and reads Polar's customer state.

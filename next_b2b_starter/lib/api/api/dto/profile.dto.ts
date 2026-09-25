@@ -10,7 +10,7 @@ export interface ProfileOrganizationDto {
 }
 
 export interface ProfileResponseDto {
-  // Stytch member details
+  // Verified member details
   member_id: string;
   email: string;
   name: string;

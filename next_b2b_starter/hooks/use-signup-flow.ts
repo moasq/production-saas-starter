@@ -121,8 +121,6 @@ export function useSignupFlow(): UseSignupFlowState {
     setError(null);
 
     try {
-      // Backend signup endpoint already sends magic link via Stytch
-      // No need to call sendMagicLink() Server Action separately
       const signupResult = await signupRepository.createOrganizationWithMagicLink(
         owner,
         organization

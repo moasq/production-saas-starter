@@ -1,17 +1,30 @@
-# PostgreSQL
+# PostgreSQL and tenant isolation
 
-PostgreSQL is the only required state service. Fresh installs contain organizations and accounts. Billing reads authoritative Polar state on demand, so there is no local quota or subscription replica.
+Business SQL is in `postgres/sqlc/query/`; regenerate its bindings with `make sqlc`.
+Every application query uses `tenant.Store.Run` with an already verified tenant
+context. It begins a transaction, sets `app.tenant_id` with `set_config(..., true)`,
+runs generated queries and commits. Rollback and pooled-connection reuse cannot
+carry the tenant setting to the next operation. SQL must still include meaningful
+organization predicates; FORCE RLS is an additional independent boundary.
 
-SQL lives in `postgres/sqlc/query/`. SQLC generates the typed repository layer in `postgres/sqlc/gen/`; regenerate with `make sqlc` and do not hand-edit generated files. Domain repository interfaces belong to each module, and implementations receive the SQLC store. Keep every tenant query scoped by organization ID.
+Organizations and accounts enforce row security even for their table owner. The
+API runs as a separate NOSUPERUSER NOBYPASSRLS role with no table ownership and no
+auth-schema grants. An absent scope sees no tenant rows and cannot insert them.
+The auth server owns only its separate auth schema; it does not query business data
+in normal request handling.
 
-Migrations are embedded in the API binary and run before it serves traffic. `golang-migrate` uses its PostgreSQL lock and `schema_migrations` ledger, refuses dirty migration state, and skips already applied versions. Add new migrations after version 10.
+Run the embedded migration command `api migrate` with privileged credentials before
+starting the restricted API. The serving command validates clean schema version 11
+and both forced row policies; it never executes migrations. Historical migrations
+1–9 and baseline 10 remain unchanged. Migration 11 preserves legacy organization,
+account and billing identifiers, adds neutral auth/billing mapping columns and
+activates RLS. It snapshots every pre-cutover account's `full_name` in nullable
+`legacy_full_name`. Current profile names can follow the shared Better Auth user
+without erasing distinct original per-organization names; synchronization never
+updates the snapshot and new accounts leave it empty. It never deletes customer data. Roll back with a coordinated,
+verified pre-cutover backup, not a partial auth downgrade.
 
-Version 10 is a non-destructive baseline. It works on a fresh plain PostgreSQL instance and on the former clean versions 1–9; existing organizations, accounts, documents and billing data remain in place. Old feature tables and storage objects are not deleted automatically. Back up an existing database and verify the upgrade on a restored copy before production use. The baseline corrects the two conflicting legacy role constraints and accepts the `manager` role. Its downgrade intentionally refuses to destroy tenant data; restore a verified backup if a rollback is necessary. Historical migrations remain byte-for-byte in `postgres/archive/migrations/`. A source adapter validates old ledger versions against this archive while starting and advancing at version 10; removed feature migrations never run during fresh setup or upgrade.
-
-Run database behavior tests against a disposable PostgreSQL service:
-
-```sh
-TEST_DATABASE_URL='postgres://postgres:test@localhost:5432/postgres?sslmode=disable' go test ./internal/db/postgres -v
-```
-
-The test account needs CREATE DATABASE. Tests create temporary databases, exercise fresh installs, repeated startup, legacy tenant preservation, manager roles, and dirty-state refusal, then remove only their own databases. Without this variable integration tests explicitly skip.
+With a disposable superuser `TEST_DATABASE_URL`, `go test ./internal/db/postgres`
+checks fresh and repeated migration, legacy data and billing linkage, two-tenant
+reads/writes, unscoped access, rolled-back scope, pooled reuse and privileged-role
+refusal. These integration tests explicitly skip when no test database is given.

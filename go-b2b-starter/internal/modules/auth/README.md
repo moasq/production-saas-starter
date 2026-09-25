@@ -1,11 +1,26 @@
 # Authentication and tenant boundaries
 
-Stytch B2B verifies each session with its `Sessions.Authenticate` API. The application reads the provider RBAC policy into a bounded five-minute process cache; permission failures deny access. There is no mock authentication or unsigned JWT mode. Empty credentials allow the setup page and API health check; signup returns 503 and protected requests remain unauthorized.
+Next.js owns self-hosted Better Auth users, sessions, organization memberships and
+canonical admin/manager/member policy. Go sends the raw Cookie to
+`POST /internal/auth/session`, authenticated with `X-Internal-Auth-Secret`.
+The bridge reads live session and membership state on every request. There is no
+cookie cache, bearer/JWT alternative or role-name fallback. Expiry, logout, member
+removal and role changes take effect on the next request. The server-only bridge
+secret must never be exposed through browser build variables or public ingress.
 
-Configure Stytch custom role IDs `admin`, `manager`, and `member`. Add resource `org` with actions `view` and `manage`. Grant both actions to `admin` and `view` to the other roles. Signup assigns `admin`. This is the recommended provider policy. The app has no separate role catalog or public permission-check API; profile permissions and member roles come from Stytch. A change to provider permissions can take up to five minutes to clear a process cache.
+The bridge returns verified user/email, active organization, current membership,
+explicit permissions and expiry. Go checks the organization binding and expiry,
+then synchronizes organization/account mirrors using a transaction-local tenant
+setting. The database FORCE RLS policies deny rows without matching scope; the
+runtime role cannot own tables, bypass RLS, or run as superuser. A suspended local
+business organization stays suspended regardless of identity-provider membership.
 
-The server resolves the verified Stytch organization and member into organization-scoped PostgreSQL records. Every tenant operation uses this context, never an organization ID supplied in JSON. Organization and billing writes require `org:manage`. Profile updates use the session member and email.
+Members and profile changes are delegated to private bridge operations with the
+original end-user Cookie. Both Go and the bridge enforce current org:manage for
+member and organization changes. Payload organization IDs never choose the scope.
+All cookie-authenticated writes require an Origin matching APP_BASE_URL.
 
-Server callers pass an Authorization bearer token per request. Browsers use the HttpOnly `stytch_session_jwt` cookie. Cookie-authenticated mutations require an Origin matching `APP_BASE_URL` (or request Host when no URL is configured). Bearer calls do not use ambient browser credentials.
-
-Set `STYTCH_PROJECT_ID`, `STYTCH_SECRET`, `STYTCH_ENV=test|live`, and both `STYTCH_LOGIN_REDIRECT_URL` and `STYTCH_INVITE_REDIRECT_URL`. Redirects normally point to your frontend `/authenticate` route. Partial credentials and mismatched environments are configuration errors. Provider secrets remain server-side.
+Existing identity identifiers are retained as historical columns by migration 11.
+The separate migration/import step creates Better Auth users and memberships;
+users must verify a new magic link. Old cookies and outstanding identity links do
+not authenticate. Existing Polar external customer IDs are preserved separately.

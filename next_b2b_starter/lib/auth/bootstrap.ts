@@ -1,4 +1,4 @@
-import { getMemberSession } from "@/lib/auth/stytch/server";
+import { getMemberSession } from "@/lib/auth/server";
 import { getServerPermissions } from "@/lib/auth/server-permissions";
 
 export async function authBootstrap() {

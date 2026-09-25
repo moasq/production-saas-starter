@@ -1,5 +1,5 @@
 import "server-only";
-import { getMemberSession } from "@/lib/auth/stytch/server";
+import { getMemberSession } from "@/lib/auth/server";
 import { getServerPermissions } from "@/lib/auth/server-permissions";
 import { getPolarClient } from "./client";
 import type { PolarPlan } from "./plans";

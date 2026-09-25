@@ -12,7 +12,7 @@ import (
 
 type orgStub struct{}
 
-func (orgStub) GetStytchOrgID(context.Context, int32) (string, error) { return "org-owned", nil }
+func (orgStub) GetExternalCustomerID(context.Context, int32) (string, error) { return "org-owned", nil }
 
 type providerStub struct {
 	enabled  bool
