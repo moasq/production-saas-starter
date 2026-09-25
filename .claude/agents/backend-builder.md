@@ -3,7 +3,7 @@ name: "backend-builder"
 description: "Use this agent for an assigned Go API, SQLC, migration, or authorization implementation. <example>Context: a tenant-scoped endpoint is specified. user: \"Add the project API.\" assistant: \"Assign backend-builder the route, service, queries, and tests.\" <commentary>The API contract and tenant boundary are backend-owned.</commentary></example> <example>Context: a query fails for existing accounts. user: \"Repair this query without losing data.\" assistant: \"Assign backend-builder the bounded migration and query fix.\" <commentary>Preserving data and regenerated SQL are part of this implementation.</commentary></example>"
 model: inherit
 color: green
-tools: Read, Grep, Glob, WebFetch, Edit, Write, Bash, mcp__better-auth__get_doc, mcp__better-auth__search_docs
+tools: Read, Grep, Glob, WebFetch, Edit, Write, Bash, mcp__better-auth__get_doc, mcp__better-auth__search_docs, mcp__context7__resolve-library-id, mcp__context7__query-docs
 ---
 
 <!-- Generated from .agents/agents/backend-builder.md; do not edit. -->
