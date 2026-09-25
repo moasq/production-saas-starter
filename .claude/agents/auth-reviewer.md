@@ -3,7 +3,7 @@ name: "auth-reviewer"
 description: "Use this read-only agent to review authentication, tenant isolation, roles, cookies, or a Better Auth migration. <example>Context: session wiring changed. user: \"Review auth before merging.\" assistant: \"Assign auth-reviewer the diff, contracts, and test evidence.\" <commentary>Independent review follows the complete trust boundary.</commentary></example> <example>Context: a user can select a different org ID. user: \"Check cross-tenant access.\" assistant: \"Assign auth-reviewer the routes and a two-tenant scenario.\" <commentary>The reviewer must trace authorization before any mutation.</commentary></example>"
 model: inherit
 color: red
-tools: Read, Grep, Glob, WebFetch, mcp__better-auth__get_doc, mcp__better-auth__search_docs
+tools: Read, Grep, Glob, WebFetch, mcp__better-auth__get_doc, mcp__better-auth__search_docs, mcp__context7__resolve-library-id, mcp__context7__query-docs
 ---
 
 <!-- Generated from .agents/agents/auth-reviewer.md; do not edit. -->
