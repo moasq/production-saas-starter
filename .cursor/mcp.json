@@ -10,27 +10,6 @@
         "scripts/mcp-launch.mjs",
         "context7"
       ]
-    },
-    "next-devtools": {
-      "command": "node",
-      "args": [
-        "scripts/mcp-launch.mjs",
-        "next-devtools"
-      ]
-    },
-    "shadcn": {
-      "command": "node",
-      "args": [
-        "scripts/mcp-launch.mjs",
-        "shadcn"
-      ]
-    },
-    "playwright": {
-      "command": "node",
-      "args": [
-        "scripts/mcp-launch.mjs",
-        "playwright"
-      ]
     }
   }
 }

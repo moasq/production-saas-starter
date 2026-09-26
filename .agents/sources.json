@@ -1,13 +1,159 @@
 {
-  "schemaVersion": 1,
-  "verifiedAt": "2026-09-25",
+  "schemaVersion": 2,
+  "verifiedAt": "2026-09-26",
   "authoredHere": [
-    "go-backend",
-    "next-frontend",
-    "auth-integration",
-    "pr-review",
-    "dev-tools",
-    "service-connections"
+    {
+      "name": "dev-tools",
+      "path": ".agents/skills/dev-tools/SKILL.md",
+      "source": "authored-here",
+      "version": "2.0.0",
+      "sha256": "7f32ec374e68598995a43ba3431b5a6ff401f5eb0a253574574f102059849724",
+      "license": "MIT",
+      "verifiedAt": "2026-09-26",
+      "references": [
+        ".agents/skills/service-connections/SKILL.md",
+        ".agents/tools.json",
+        "AGENTS.md",
+        "docs/AI_TOOLS.md",
+        "go-b2b-starter/.agents/skills/go-backend/SKILL.md",
+        "next_b2b_starter/.agents/skills/auth-integration/SKILL.md",
+        "next_b2b_starter/.agents/skills/frontend-tools/SKILL.md"
+      ],
+      "adaptations": "Repository orchestration, review and tool routing; application procedures remain project-local."
+    },
+    {
+      "name": "orchestration",
+      "path": ".agents/skills/orchestration/SKILL.md",
+      "source": "authored-here",
+      "version": "2.0.0",
+      "sha256": "19a7d13ed17a5b9c0828d44be0af8948637b929d88c8e1250b7a500129b208d7",
+      "license": "MIT",
+      "verifiedAt": "2026-09-26",
+      "references": [
+        ".agents/agents/code-reviewer.md",
+        ".agents/skills/dev-tools/SKILL.md",
+        ".agents/skills/pr-review/SKILL.md",
+        ".agents/skills/service-connections/SKILL.md",
+        "AGENTS.md",
+        "go-b2b-starter/.agents/agents/backend-builder.md",
+        "go-b2b-starter/AGENTS.md",
+        "go-b2b-starter/apicontract/openapi.json",
+        "next_b2b_starter/.agents/agents/auth-reviewer.md",
+        "next_b2b_starter/.agents/agents/frontend-builder.md",
+        "next_b2b_starter/.agents/agents/quality-engineer.md",
+        "next_b2b_starter/.agents/skills/auth-integration/SKILL.md",
+        "next_b2b_starter/AGENTS.md"
+      ],
+      "adaptations": "Repository orchestration, review and tool routing; application procedures remain project-local."
+    },
+    {
+      "name": "pr-review",
+      "path": ".agents/skills/pr-review/SKILL.md",
+      "source": "authored-here",
+      "version": "2.0.0",
+      "sha256": "cd5199dbc310b9d9120a379f08fa76f5745abf9737c10371449092d9160a0706",
+      "license": "MIT",
+      "verifiedAt": "2026-09-26",
+      "references": [
+        "AGENTS.md",
+        "next_b2b_starter/.agents/skills/auth-integration/SKILL.md"
+      ],
+      "adaptations": "Repository orchestration, review and tool routing; application procedures remain project-local."
+    },
+    {
+      "name": "service-connections",
+      "path": ".agents/skills/service-connections/SKILL.md",
+      "source": "authored-here",
+      "version": "2.0.0",
+      "sha256": "b31b8c0f56500b654f84e8c80266a6010063defdb2c63ac7ba1515607146caef",
+      "license": "MIT",
+      "verifiedAt": "2026-09-26",
+      "references": [
+        ".agents/tools.json",
+        "AGENTS.md",
+        "docs/AI_TOOLS.md"
+      ],
+      "adaptations": "Repository orchestration, review and tool routing; application procedures remain project-local."
+    },
+    {
+      "name": "go-backend",
+      "path": "go-b2b-starter/.agents/skills/go-backend/SKILL.md",
+      "source": "authored-here",
+      "version": "2.0.1",
+      "sha256": "f934344c527a10116eee7b3989b4fa47cedda3e17115376b686ea6a4cce3d2af",
+      "license": "MIT",
+      "verifiedAt": "2026-09-26",
+      "references": [
+        "SETUP.md",
+        "docs/ARCHITECTURE.md",
+        "docs/decisions/0001-business-api.md",
+        "go-b2b-starter/AGENTS.md",
+        "go-b2b-starter/apicontract/openapi.json",
+        "go-b2b-starter/go.mod",
+        "go-b2b-starter/internal/db/postgres/sqlc/gen",
+        "go-b2b-starter/internal/db/postgres/sqlc/query",
+        "go-b2b-starter/internal/modules",
+        "go-b2b-starter/internal/modules/auth",
+        "go-b2b-starter/internal/modules/organizations/authorization_contract_test.go",
+        "next_b2b_starter/.agents/skills/auth-integration/SKILL.md",
+        "scripts/smoke.sh"
+      ],
+      "adaptations": "Go-specific service, SQLC, tenant-isolation and behavior checks; no Convex runtime."
+    },
+    {
+      "name": "auth-integration",
+      "path": "next_b2b_starter/.agents/skills/auth-integration/SKILL.md",
+      "source": "authored-here",
+      "version": "2.0.0",
+      "sha256": "3988d2bd733b6314f644b039886562131cd2a7adb7617ec98af71c3a37070b38",
+      "license": "MIT",
+      "verifiedAt": "2026-09-26",
+      "references": [
+        ".agents/sources.json",
+        "docs/ARCHITECTURE.md",
+        "next_b2b_starter/AGENTS.md"
+      ],
+      "adaptations": "Next.js and Better Auth ownership, server-only boundaries and synthetic browser checks; no Agentic Ship runtime."
+    },
+    {
+      "name": "frontend-tools",
+      "path": "next_b2b_starter/.agents/skills/frontend-tools/SKILL.md",
+      "source": "authored-here",
+      "version": "2.0.0",
+      "sha256": "b345c5818dc9e9dd3aecea8cd69ad79cf79fcdd0e9fa92362338d1df9c91eb68",
+      "license": "MIT",
+      "verifiedAt": "2026-09-26",
+      "references": [
+        ".agents/tools.json",
+        "docs/AI_TOOLS.md",
+        "next_b2b_starter/.agents/skills/auth-integration/SKILL.md",
+        "next_b2b_starter/.agents/skills/next-frontend/SKILL.md",
+        "next_b2b_starter/AGENTS.md"
+      ],
+      "adaptations": "Next.js and Better Auth ownership, server-only boundaries and synthetic browser checks; no Agentic Ship runtime."
+    },
+    {
+      "name": "next-frontend",
+      "path": "next_b2b_starter/.agents/skills/next-frontend/SKILL.md",
+      "source": "authored-here",
+      "version": "2.0.1",
+      "sha256": "6c1d0e97179f1e7fb9900296bef090bc560dbeebd13a63738bd49eedd2d0942e",
+      "license": "MIT",
+      "verifiedAt": "2026-09-26",
+      "references": [
+        "docs/FRONTEND_CHECKS.md",
+        "docs/decisions/0001-business-api.md",
+        "next_b2b_starter/.agents/skills/auth-integration/SKILL.md",
+        "next_b2b_starter/AGENTS.md",
+        "next_b2b_starter/app/globals.css",
+        "next_b2b_starter/components/ui",
+        "next_b2b_starter/lib/api",
+        "next_b2b_starter/lib/api/generated/schema.ts",
+        "next_b2b_starter/tailwind.config.ts",
+        "next_b2b_starter/tests"
+      ],
+      "adaptations": "Next.js and Better Auth ownership, server-only boundaries and synthetic browser checks; no Agentic Ship runtime."
+    }
   ],
   "upstreamSkills": [
     {
@@ -17,7 +163,7 @@
       "sourcePath": "better-auth/best-practices/SKILL.md",
       "url": "https://raw.githubusercontent.com/better-auth/skills/20c9e88a5c007461a703f1c213572b073196113e/better-auth/best-practices/SKILL.md",
       "sha256": "a5337f186300d187fea2c8f7af339e091afdd130d36c070d0a2dcb8ca04dd413",
-      "cachePath": ".agents/cache/better-auth/best-practices/SKILL.md",
+      "cachePath": "next_b2b_starter/.agents/cache/better-auth/best-practices/SKILL.md",
       "license": null,
       "redistributed": false
     },
@@ -28,7 +174,7 @@
       "sourcePath": "better-auth/organization/SKILL.md",
       "url": "https://raw.githubusercontent.com/better-auth/skills/20c9e88a5c007461a703f1c213572b073196113e/better-auth/organization/SKILL.md",
       "sha256": "d0450769aab02fbddfddca5c17257dca451233ac8ae7c6b395fa6a3bad104d27",
-      "cachePath": ".agents/cache/better-auth/organization/SKILL.md",
+      "cachePath": "next_b2b_starter/.agents/cache/better-auth/organization/SKILL.md",
       "license": null,
       "redistributed": false
     }

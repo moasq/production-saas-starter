@@ -1,9 +1,26 @@
 # AI-assisted development
 
-The starter includes five coding roles and six focused skills. They guide work
-on Go, Next.js, auth security, PR review, testing, and service connections without adding an app service or dependency.
+The root coordinates work; Go and Next.js own separate project-local skills and
+roles. Six roles and eight focused skills cover implementation, auth security,
+review, testing and tool routing without adding an app service or dependency.
 Normal Docker setup requires none of these tools. The harness scripts use Node.js
 22.18+ with its standard library; the project's Node 24 development runtime works.
+
+## Scope and ownership
+
+| Working directory | Canonical guidance | Responsibility |
+| --- | --- | --- |
+| Repository root | [AGENTS.md](../AGENTS.md), orchestration, PR review and tool-routing skills | Route independent work, reconcile shared contracts and collect verification |
+| `go-b2b-starter/` | [Go AGENTS.md](../go-b2b-starter/AGENTS.md), its `.agents/skills/` and `.agents/agents/` | Go implementation, business authorization, SQLC and RLS |
+| `next_b2b_starter/` | [Next.js AGENTS.md](../next_b2b_starter/AGENTS.md), its `.agents/skills/` and `.agents/agents/` | UI, Better Auth, sessions and browser QA |
+
+There is one canonical source for each skill. Root contains no Go, frontend or
+Better Auth skill copies. It routes those tasks into the relevant project.
+`orchestrator` and `code-reviewer` are root roles; `backend-builder` is Go-local;
+`frontend-builder`, `auth-reviewer` and `quality-engineer` are Next.js-local.
+The six legacy Claude enforcer files were replaced because they still prescribed
+Stytch/JWT, document features, old Swagger generation and unrelated architecture.
+Current scoped guidance follows the actual Better Auth and generated API contract.
 
 ## Dedicated frontend and backend specialists
 
@@ -11,8 +28,8 @@ Each implementation role has its own skill, responsibility and verification path
 
 | Area | Agent and skill | Owns | Verification |
 | --- | --- | --- | --- |
-| Backend | [backend-builder](../.agents/agents/backend-builder.md) + [go-backend](../.agents/skills/go-backend/SKILL.md) | Go endpoints and business rules, tenant authorization/RLS, SQLC and migrations, public API schema | Formatting, deterministic SQLC, race/vet/database tests, mounted API contract checks |
-| Frontend | [frontend-builder](../.agents/agents/frontend-builder.md) + [next-frontend](../.agents/skills/next-frontend/SKILL.md) | Next.js routes and components, session-bound API consumers, loading/error states, accessibility | Generated-type drift check, lint/typecheck/tests/build, keyboard and production browser journeys |
+| Backend | [backend-builder](../go-b2b-starter/.agents/agents/backend-builder.md) + [go-backend](../go-b2b-starter/.agents/skills/go-backend/SKILL.md) | Go endpoints and business rules, tenant authorization/RLS, SQLC and migrations, public API schema | Formatting, deterministic SQLC, race/vet/database tests, mounted API contract checks |
+| Frontend | [frontend-builder](../next_b2b_starter/.agents/agents/frontend-builder.md) + [next-frontend](../next_b2b_starter/.agents/skills/next-frontend/SKILL.md) | Next.js routes and components, session-bound API consumers, loading/error states, accessibility | Generated-type drift check, lint/typecheck/tests/build, keyboard and production browser journeys |
 
 The backend role uses local Go/database tools plus the catalog's documentation
 servers. Its generated adapters disable frontend development MCPs. The frontend
@@ -27,14 +44,17 @@ consumes that [generated contract](decisions/0001-business-api.md), then returns
 user-journey evidence and any missing behavior. Parallel work requires a stable
 contract; do not have both specialists invent or overwrite it independently.
 
-Both specialists use the [auth-integration skill](../.agents/skills/auth-integration/SKILL.md)
+Both specialists consult the single Next.js-owned [auth-integration skill](../next_b2b_starter/.agents/skills/auth-integration/SKILL.md)
 for identity or session work. `auth-reviewer` checks the shared Better Auth boundary;
 `code-reviewer` provides the separate PR review. This does not start agents automatically.
 
 ## Start with the task
 
-Open the repository in Codex or Claude Code and trust the project configuration
-only after reviewing it. Ask for a bounded change, for example:
+Open the root for coordination, or either project directly for domain work.
+Trust project configuration only after reviewing it. Each project has its own
+`AGENTS.md`, Claude imports, generated role/skill adapters and MCP configuration.
+When a host opened at root does not discover a nested role, read its canonical
+brief or open the corresponding project; do not copy domain sources into root. Ask for a bounded change, for example:
 
 - “Use backend-builder to add a tenant-scoped endpoint and negative permission tests.”
 - “Use frontend-builder to fix invitation delivery feedback and keyboard focus.”
@@ -53,11 +73,12 @@ and follow it in the main conversation. No parallel workers start automatically.
 
 | Source | Purpose | Host delivery |
 | --- | --- | --- |
-| `AGENTS.md` | Repository rules | Codex reads directly; `CLAUDE.md` imports it |
-| `.agents/skills/*/SKILL.md` | Focused coding and integration procedures | Codex discovers directly; Claude receives generated copies |
-| `.agents/agents/*.md` | Bounded role input/process/output | Generated `.codex/agents/*.toml` and `.claude/agents/*.md` |
-| `.agents/tools.json` | Tool catalog, exact executable pins, enabled selection | Generates `.mcp.json`, `.codex/config.toml`, and `.cursor/mcp.json` |
-| `.agents/sources.json` | Source revisions, hashes, adaptations | Validated by the harness script |
+| Root `AGENTS.md` | Shared invariants and orchestration | Codex reads directly; root `CLAUDE.md` imports it |
+| Project `AGENTS.md` | Domain ownership, routing and local commands | Each project's Claude entry points import its own instructions |
+| Each scope's `.agents/skills/*/SKILL.md` | Canonical procedures | Direct Codex discovery in that scope; generated scoped Claude copies |
+| Each scope's `.agents/agents/*.md` | Bounded role input/process/output | Generated `.codex/agents/*.toml` and `.claude/agents/*.md` in the same scope |
+| Root `.agents/tools.json` | Exact executable pins and enabled selection | Scoped `.mcp.json`, `.codex/config.toml` and `.cursor/mcp.json` |
+| Root `.agents/sources.json` | Versions, content hashes, license, references and adaptations | Validated before adapter generation |
 
 Generated adapter directories belong to this harness. Edit canonical sources,
 then run from the repository root:
@@ -68,9 +89,13 @@ node scripts/harness.mjs check
 node --test scripts/harness.test.mjs scripts/mcp-probe.test.mjs
 ```
 
-`check` is offline and does not write files. CI runs the same structural and
-behavior checks. Paths are relative to the script, so invoking it by its absolute
-path from another directory works. No command modifies a global agent config,
+From either project, run `node ../scripts/harness.mjs check` (or `sync`).
+`check` is offline and does not write files. It checks scope ownership, canonical
+hashes, local references, documented Node/shell paths and pnpm/Make targets,
+generated drift, and stale adapter files. It does not execute those app commands
+or establish their runtime behavior. CI runs the same structural and behavior
+checks, including invocation and MCP launcher resolution from each project cwd.
+Paths are relative to the script, so absolute-path invocation also works. No command modifies a global agent config,
 installs packages, changes permissions, or starts the application. Tool startup and
 the opt-in MCP probes can fetch pinned npm executables. See [Tools and integrations](AI_TOOLS.md)
 for local developer tools, optional provider connections, and verification boundaries.
@@ -104,15 +129,23 @@ are not redistributed here. Download the exact files for local reference with:
 node scripts/harness.mjs fetch-skills
 ```
 
-The command only downloads Markdown into the gitignored `.agents/cache/` directory.
+The command only downloads Markdown into the gitignored `next_b2b_starter/.agents/cache/` directory.
 It verifies both hashes before saving either file and runs no upstream commands.
 The auth integration skill explains when to read them. Missing cache is allowed;
 the pinned links remain usable. An altered cache causes `check` to fail. Do not
 commit cached files or infer a license from Better Auth's separate runtime package.
 
-To update, inspect the upstream commit and license, review both file diffs, update
+For authored skills, `.agents/sources.json` records `authored-here`, the scoped
+path, semantic version, SHA-256 content revision, MIT license, references,
+adaptations and verification date. On a local edit, review the diff, increment
+its version and update the digest/reference inventory before running sync/check.
+A stale digest fails before generated files are written. There is no command that
+overwrites canonical local skills with upstream content.
+
+For upstream references, inspect the new commit and license, review both file diffs, update
 their revision/URL/hash records, then rerun fetch, sync, check, and tests. Do not
-silently follow `main` or execute `npx ...@latest` from a fetched example.
+silently follow `main` or execute `npx ...@latest` from a fetched example. Retain
+local adaptations explicitly; a source conflict needs review, not a blind copy.
 
 ## Application auth boundary
 

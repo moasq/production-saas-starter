@@ -24,22 +24,34 @@ contain private repository traffic; do not publish them with source changes.
 
 ## Developer harness
 
-Repository-local coding skills and roles are development tools, not app features.
-Read only the skill matching the task: `.agents/skills/go-backend/SKILL.md`,
-`.agents/skills/next-frontend/SKILL.md`, `.agents/skills/auth-integration/SKILL.md`,
-`.agents/skills/pr-review/SKILL.md`, `.agents/skills/dev-tools/SKILL.md`, or
-`.agents/skills/service-connections/SKILL.md`. The auth skill distinguishes this
-checkout's provider from proposed migrations; installing guidance never changes auth.
+The root only coordinates work, shared contracts, review and developer tool routing.
+Its entry skill is `.agents/skills/orchestration/SKILL.md`. Application implementation
+belongs to the appropriate project; load only that project's instructions and skill:
 
-Use `.agents/agents/` role briefs for bounded backend, frontend, quality, or read-only code/auth
-review work. Delegate only independent work with explicit file ownership and an
-acceptance check; otherwise work locally. Return changed contracts, verification
-results, and unresolved decisions. Never overwrite another worker's changes.
+- Go APIs, application authorization, SQLC and RLS: `go-b2b-starter/AGENTS.md`,
+  `go-b2b-starter/.agents/skills/go-backend/SKILL.md`, and its `backend-builder` role.
+- Next.js presentation, cookies and Better Auth: `next_b2b_starter/AGENTS.md`,
+  `next_b2b_starter/.agents/skills/next-frontend/SKILL.md` or
+  `next_b2b_starter/.agents/skills/auth-integration/SKILL.md`, and its frontend,
+  auth-review or quality role.
+- Cross-project review and tool routing: `.agents/skills/pr-review/SKILL.md`,
+  `.agents/skills/dev-tools/SKILL.md`, `.agents/skills/service-connections/SKILL.md`.
 
-Keep instructions here, procedures in `.agents/skills/`, roles in `.agents/agents/`,
-and developer tool definitions and selection in `.agents/tools.json`. `.mcp.json`,
-`.codex/config.toml`, and `.cursor/mcp.json` are generated from that catalog. Host adapters are
-outputs: run `node scripts/harness.mjs sync`, then `node scripts/harness.mjs check`.
+Delegate independent work only when requested, with explicit file/worktree ownership,
+contracts and acceptance checks. Without delegation, enter the matching project
+scope before implementation. Return changed contracts, verification results and
+unresolved decisions. Never overwrite another worker's changes. Developer roles
+and skills are optional coding guidance, not product agents or app dependencies.
+
+Each scope owns canonical `.agents/skills/` and `.agents/agents/` sources; do not
+copy domain skills into the root. `.agents/tools.json` is the shared tool catalog.
+The generator creates scoped Claude/Codex adapters and MCP configs; root and Go
+receive documentation tools, and Next.js additionally receives development tools.
+Selected provider tools stay in the root session under existing task authorization.
+Host adapters are outputs: run `node scripts/harness.mjs sync`, then
+`node scripts/harness.mjs check` from the repository root (or invoke the script by its absolute path
+from either project). Update authored skill hashes and versions in
+`.agents/sources.json` when changing their canonical source.
 Run `node --test scripts/harness.test.mjs scripts/mcp-probe.test.mjs` after changing the harness. See
 `docs/AI_DEVELOPMENT.md` and `docs/AI_TOOLS.md` for hosts, sources, tool scope, and verification.
 Developer tools are optional for running the app. Use browser tooling with isolated

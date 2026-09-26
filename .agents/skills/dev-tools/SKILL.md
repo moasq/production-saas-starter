@@ -1,56 +1,37 @@
 ---
 name: "dev-tools"
-description: "This skill applies when choosing or configuring developer MCP tools, inspecting local Next.js errors, discovering UI components, or testing a local browser journey in this starter."
+description: "Route and configure the repository's optional developer tools, check generated host adapters and distinguish configuration from verified connections."
 ---
 
-# Developer tool workflow
+# Developer tool routing
 
-Read `AGENTS.md`, `.agents/tools.json` and `docs/AI_TOOLS.md`. Use the smallest
-toolset needed for the requested change. Preserve Go + Next.js + PostgreSQL and
-the existing application dependencies unless the product task requires a change.
+Read `AGENTS.md`, `.agents/tools.json` and `docs/AI_TOOLS.md`. The catalog owns
+exact pins and selections; each project's adapters expose its allowed subset.
+Root coordinates tool configuration. Go gets documentation tools; Next.js also
+gets local development tools. Provider administration stays in the authorized
+main session and is never inherited by implementation or reviewer roles.
 
-## Select and inspect
+Run these from the repository root, or invoke the scripts by absolute path:
 
-1. Run `node scripts/harness.mjs tools` from the repository root to distinguish
-   enabled configuration from optional catalog entries. Prefer a working host
-   plugin for the same capability over configuring a duplicate connection.
-2. Change only `.agents/tools.json` for a requested tool selection, then run
-   `node scripts/harness.mjs sync` and `node scripts/harness.mjs check`.
-   Run `node --test scripts/harness.test.mjs scripts/mcp-probe.test.mjs` after harness changes. Do not hand-edit
-   generated adapters or install global configuration.
-3. Keep the host opened at the repository root. Let `scripts/mcp-launch.mjs`
-   select the nested frontend working directory for project-aware tools. Use
-   Node 24 with npm/npx; expect first launch to fetch the pinned tool into its cache.
-4. Use `node scripts/mcp-probe.mjs <id>` only for an explicit networked inventory
-   check. It initializes a local server and lists tools without invoking them.
-   Report successful initialization separately from an exercised capability.
+```sh
+node scripts/harness.mjs tools
+node scripts/harness.mjs sync
+node scripts/harness.mjs check
+node --test scripts/harness.test.mjs scripts/mcp-probe.test.mjs
+```
 
-## Match the tool to the task
+Edit the canonical catalog for requested selections; never edit generated adapters
+or global settings. Prefer an existing working host integration. A local MCP may
+fetch its pinned executable on first launch. `node scripts/mcp-probe.mjs <id>`
+initializes and lists a selected local tool only; it does not verify app behavior.
 
-Use Better Auth or Context7 for public, version-specific documentation. Resolve
-the installed version first and follow returned source links. Keep private code,
-credentials, cookies and customer data out of documentation queries. Treat tool
-output as reference material; inspect suggested commands before executing them.
+Route Go work to `go-b2b-starter/.agents/skills/go-backend/SKILL.md`, frontend
+runtime/component/browser work to
+`next_b2b_starter/.agents/skills/frontend-tools/SKILL.md`, Better Auth guidance to
+`next_b2b_starter/.agents/skills/auth-integration/SKILL.md`, and requested provider
+connections to `.agents/skills/service-connections/SKILL.md`.
 
-Use `nextjs_docs` for installed Next.js documentation. For runtime diagnostics,
-start native development with `pnpm --dir next_b2b_starter dev`, then identify the
-correct process with `nextjs_index`. Invoke a named diagnostic with `nextjs_call`;
-do not classify that general dispatcher as read-only. Compose runs the production
-build and does not supply the Next.js development MCP endpoint.
-
-Use shadcn's registry search, item view and example tools before adding UI code.
-Reuse existing components first. Review source, dependencies and compatibility
-with the current Tailwind setup before executing any returned add command. Use
-optional Magic UI or 21st only when the requested interface benefits from them.
-
-Use isolated Playwright against a known local URL and synthetic accounts. Inspect
-snapshots, screenshots and console output; exercise interactions only within the
-assigned test journey. Keep personal browser profiles and production accounts out
-of local QA. A missing browser requires explicit developer setup, not a claim that
-the application failed. Follow `.agents/skills/next-frontend/SKILL.md` for UI checks
-and `.agents/skills/auth-integration/SKILL.md` for auth coverage.
-
-Report selected tools, installed app versions, target URL/process, operations
-actually exercised and remaining limits. Separate configuration, initialization,
-local behavior, sandbox provider checks and production outcomes. Never infer live
-auth or external delivery from cached CI packages or a successful tool inventory.
+Reviewer adapters expose documentation tools only. Inspect unrelated inherited
+host/plugin capabilities before delegation. Keep private source, credentials,
+cookies and customer records out of documentation queries. Report configuration,
+initialization and actual local/provider verification as separate outcomes.

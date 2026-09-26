@@ -18,7 +18,7 @@ failure handling. Check relevant existing tests and reproduce uncertain claims i
 a disposable environment when the caller permits execution. Read-only reviewers
 request reproductions from the caller instead of running migrations or app actions.
 
-- Auth or tenancy: use `.agents/skills/auth-integration/SKILL.md`. Trace cookies,
+- Auth or tenancy: use `next_b2b_starter/.agents/skills/auth-integration/SKILL.md`. Trace cookies,
   proxy routes, current membership, Go authorization, and database scope together.
   UI visibility alone does not establish permission enforcement.
 - Database or deployment: preserve applied migrations and existing identities;

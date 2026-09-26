@@ -3,8 +3,8 @@
 The optional developer tools help inspect documentation, build UI and test local
 user journeys. Docker setup and the deployed Go + Next.js application do not need
 them. No application AI feature, provider SDK or Agentic Ship runtime is installed.
-Open the **repository root** in the coding host and use the project's Node 24
-development runtime, including npm/npx, for local MCP servers.
+Open the repository root for coordination or a project directory for its domain
+work. Use Node 24, including npm/npx, for local MCP servers.
 
 ## Choose tools
 
@@ -25,8 +25,13 @@ node scripts/harness.mjs check
 node --test scripts/harness.test.mjs scripts/mcp-probe.test.mjs
 ```
 
-The outputs are `.mcp.json`, `.cursor/mcp.json`, `.codex/config.toml`, Claude skill
-copies and Claude/Codex role adapters. Edit canonical files rather than these
+The outputs are scoped `.mcp.json`, `.cursor/mcp.json`, `.codex/config.toml`,
+Claude skill copies and Claude/Codex role adapters in root and both projects.
+Root config exposes documentation and selected providers; Go exposes documentation;
+Next.js exposes documentation and development tools. Codex project/role configs
+explicitly disable catalog tools outside their scope, including inherited provider
+tools in project roles. The table below describes catalog selection, not identical
+availability in every scope. Edit canonical files rather than these
 outputs. Cursor receives MCP configuration; native role adapters are generated
 for Claude Code and Codex. See [AI development](AI_DEVELOPMENT.md) for role usage.
 No command above installs a global plugin or changes global host configuration.
@@ -45,8 +50,10 @@ No command above installs a global plugin or changes global host configuration.
 | [Linear](https://linear.app/docs/mcp) | Optional | Issue inspection through the catalog's `/mcp/readonly` endpoint |
 
 Local MCP launchers resolve paths from their own file location. Next Devtools,
-shadcn, Magic UI and Playwright run in `next_b2b_starter/`; keep the coding host
-opened at the repository root so Go and shared instructions remain visible.
+shadcn, Magic UI and Playwright run in `next_b2b_starter/`. Each scope's MCP
+configuration uses the launcher path relative to that project cwd. Open the Next.js
+project for these tools; root routes implementation to the project's canonical
+brief and does not carry duplicate frontend instructions.
 Local servers use pinned `npx` packages, which may download to the npm cache on
 first launch. They are not added to the frontend's dependency manifest.
 
@@ -104,7 +111,7 @@ reviewer adapters allow only documentation servers from this catalog. Codex can
 also inherit unrelated host/plugin MCPs; inspect those before delegation and keep
 reviewers within their source-and-documentation brief. Its filesystem sandbox
 does not block arbitrary remote tool actions. Claude roles use explicit tool lists.
-The quality-engineer role can
+The Next.js-local quality-engineer role can
 write local tests and exercise synthetic local journeys. Provider administration
 stays in the main session under the user's actual task authorization.
 

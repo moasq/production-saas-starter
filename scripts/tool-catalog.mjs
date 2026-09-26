@@ -36,22 +36,23 @@ function validUrl(value) {
   catch { return false; }
 }
 
-export function mcpConfig(catalog) {
-  return { mcpServers: Object.fromEntries(catalog.enabled.map((id) => {
+export function mcpConfig(catalog, { launcherPath = "scripts/mcp-launch.mjs", allowedKinds = ["documentation", "development", "provider"] } = {}) {
+  return { mcpServers: Object.fromEntries(catalog.enabled.filter((id) => allowedKinds.includes(catalog.servers[id].kind)).map((id) => {
     const server = catalog.servers[id];
-    return [id, server.url ? { type: "http", url: server.url } : { command: "node", args: ["scripts/mcp-launch.mjs", id] }];
+    return [id, server.url ? { type: "http", url: server.url } : { command: "node", args: [launcherPath, id] }];
   })) };
 }
 
 export function codexName(id) { return id === "better-auth" ? id : `workspace-${id}`; }
 
-export function codexServers(catalog, reviewer = false) {
+export function codexServers(catalog, reviewer = false, { launcherPath = "scripts/mcp-launch.mjs", allowedKinds = reviewer ? ["documentation"] : ["documentation", "development", "provider"] } = {}) {
   return catalog.enabled.map((id) => {
     const server = catalog.servers[id];
-    const lines = [`[mcp_servers.${codexName(id)}]`];
-    if (reviewer && server.kind !== "documentation") return [...lines, "enabled = false"].join("\n");
+    // Codex merges fields across directory/role layers. Omitting true inherits a
+    // parent's false; omitting transport makes a standalone disabled entry invalid.
+    const lines = [`[mcp_servers.${codexName(id)}]`, `enabled = ${allowedKinds.includes(server.kind)}`];
     if (server.url) lines.push(`url = ${JSON.stringify(server.url)}`);
-    else lines.push('command = "node"', `args = ${JSON.stringify(["scripts/mcp-launch.mjs", id])}`, "startup_timeout_sec = 120");
+    else lines.push('command = "node"', `args = ${JSON.stringify([launcherPath, id])}`, "startup_timeout_sec = 120");
     if (server.tools) lines.push(`enabled_tools = ${JSON.stringify(server.tools)}`);
     return lines.join("\n");
   }).join("\n\n");
