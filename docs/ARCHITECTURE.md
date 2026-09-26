@@ -88,6 +88,8 @@ auth migration. Checkout verification checks tenant ownership and does not grant
 access or maintain a local webhook replica. Provider availability is therefore
 required for billing requests. Live payments and external email delivery need
 separate deployment verification.
+The [billing scope](BILLING.md) documents the single-product checkout and hosted
+cancellation lifecycle; plan switching and paid-feature entitlements are not built in.
 
 Add product features behind the same transaction-scoped tenant boundary, with
 RLS on every new tenant-owned table and cross-tenant tests. No document, OCR, AI,
