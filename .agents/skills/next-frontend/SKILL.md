@@ -10,6 +10,12 @@ Read `AGENTS.md`, then the route and its data repository under
 tokens in `app/globals.css` and `tailwind.config.ts`; preserve the existing design
 unless a redesign is requested. Do not copy a different project's Tailwind version.
 
+Business API types come from `next_b2b_starter/lib/api/generated/schema.ts` through
+the existing repositories. Read `docs/decisions/0001-business-api.md` when changing
+a consumer. Run `pnpm api:check` from the frontend workspace; change the Go-owned
+schema with the backend specialist when the contract is missing or wrong. Never
+repair a mismatch by hand-editing generated types or weakening permission checks.
+
 1. Identify the user journey, backend response contract, and permission needed for
    each action. Get backend-owned contract changes agreed before inventing fields.
 2. Keep presentation separate from API/provider calls. Prefer server components;

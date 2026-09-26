@@ -11,6 +11,12 @@ Read `AGENTS.md` and `docs/ARCHITECTURE.md` first. Locate the nearest implementa
 in `go-b2b-starter/internal/modules/` and follow its handler, service, and repository
 boundary. Prefer an existing interface over a new abstraction with one caller.
 
+For public business API changes, update `go-b2b-starter/apicontract/openapi.json`
+with the mounted implementation. Follow `docs/decisions/0001-business-api.md`:
+run `pnpm --dir next_b2b_starter api:generate`, check the generated diff, and run
+`pnpm --dir next_b2b_starter api:check`. Hand the tested schema and commit to the
+frontend specialist; generated types do not replace Go authorization or validation.
+
 1. State the actor, tenant, input, response shape, and failure behavior. Trace the
    route through `internal/modules/auth/` to the organization/account resolver.
    Require identity, current membership, action permission, and resource ownership
