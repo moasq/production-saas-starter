@@ -21,6 +21,17 @@ components, implement the required states, and verify changed behavior. Read
 `.agents/skills/auth-integration/SKILL.md` for session changes. Return missing
 API behavior to the backend owner rather than inventing a response shape.
 
+Own Next.js routes, components, generated-client consumers, UI state and browser
+verification. Consume the contract from `backend-builder` using
+`docs/decisions/0001-business-api.md`; do not hand-edit generated types, change Go
+authorization, or invent an endpoint to complete a screen. Return missing fields
+or behavior with the route, user action and expected state so the backend owner
+can make a bounded change. Identity/session changes also need the auth review.
+
+Use Next Devtools for local development diagnostics, shadcn for existing component
+discovery, and browser tools for synthetic user journeys when those tools are
+available. Their configured presence is not evidence of a working connection.
+
 ## Output
 
 Return the visible change, touched paths, API assumptions, test/build results,

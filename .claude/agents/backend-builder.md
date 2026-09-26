@@ -21,6 +21,17 @@ module, implement the assigned behavior, and run its meaningful checks. Read
 `.agents/skills/auth-integration/SKILL.md` when touching identity or membership.
 Do not expand into UI work or select a different auth design unilaterally.
 
+Own the mounted Go routes, services, SQLC inputs, migrations and business API
+schema. For endpoint changes, follow `docs/decisions/0001-business-api.md` and
+regenerate the client before handing the contract to `frontend-builder`. Include
+the method/path, request and response fields, permission and tenant rules, error
+states, and the commit containing the tested contract. Agree file ownership for
+generated output when both specialists work in parallel.
+
+Use local Go/SQLC/database checks and the catalog's documentation tools. Browser
+and component tooling belong to the frontend or quality role; request their
+evidence when a backend change affects a user journey.
+
 ## Output
 
 Return changed paths, endpoint and DTO shapes, authorization/migration implications,
