@@ -49,6 +49,13 @@ including requests using an already issued cookie. The private mutation bridge
 also rechecks membership and management grants. There is no stale-data fallback
 when the auth service or its database is unavailable.
 
+The private bridge's `org:manage` check is essential even with plugin ACLs.
+Better Auth can allow its configured creator role to bypass the role ACL for
+role-assignment operations. Do not expose direct SDK membership mutations or
+assume that a denied `roles.admin.authorize` call secures those operations by
+itself. Public organization mutation routes remain blocked; supported mutations
+pass through the application's current-membership and permission checks.
+
 A request authorized before a concurrent revocation can already be in flight.
 These checks do not cancel completed or previously authorized operations. Browser
 controls may also remain visible until navigation refreshes the profile; their
@@ -58,7 +65,8 @@ cached visibility never authorizes an API call.
 
 - `pnpm --dir next_b2b_starter test` verifies current role behavior, unsupported
   roles, denied organization deletion and a restrictive policy edit that removes
-  management from both bridge grants and Better Auth operation authorization.
+  management from both bridge grants and the generated Better Auth role ACL.
+  This tests the ACL object, not every SDK endpoint's creator-role exceptions.
 - Go's `internal/platform/betterauth/authorization_test.go` mounts real auth and
   permission middleware against an HTTP bridge fixture. Reusing one cookie, it
   checks permission removal without changing the `admin` role, demotion, restored
