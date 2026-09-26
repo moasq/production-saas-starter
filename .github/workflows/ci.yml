@@ -40,6 +40,9 @@ jobs:
   frontend:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      matrix:
+        node: ['24.21.0', '26.9.0']
     services:
       postgres:
         image: postgres:17.11-alpine
@@ -61,7 +64,7 @@ jobs:
           version: 10.32.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '24.21.0'
+          node-version: ${{ matrix.node }}
           cache: pnpm
           cache-dependency-path: next_b2b_starter/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile

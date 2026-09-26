@@ -1,13 +1,14 @@
-FROM node:24.21.0-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS build
+FROM node:26.9.0-alpine@sha256:dbaa92e5758cbbcf85d65d5403fdb530fe3442cbe8c6dbfb7ef23365450d5070 AS build
 WORKDIR /app
-RUN corepack enable && corepack prepare pnpm@10.32.1 --activate
+# Node 25+ no longer bundles Corepack. Keep the package manager pinned.
+RUN npm install --global pnpm@10.32.1
 COPY package.json pnpm-lock.yaml .npmrc* ./
 RUN pnpm install --frozen-lockfile
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm build
 
-FROM node:24.21.0-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS runtime
+FROM node:26.9.0-alpine@sha256:dbaa92e5758cbbcf85d65d5403fdb530fe3442cbe8c6dbfb7ef23365450d5070 AS runtime
 WORKDIR /app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
 RUN addgroup -S -g 1001 app && adduser -S -u 1001 -G app app
