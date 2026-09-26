@@ -236,6 +236,7 @@ test('billing UI fixtures: checkout, outage, cancellation and revoked access', a
   await refresh({ ...empty, canStartCheckout: false, reason: 'INSUFFICIENT_PERMISSIONS' },
     'Billing status unavailable', 'billing-fixture-revoked');
   await expect(page.getByRole('alert').filter({ hasText: 'You cannot view subscription details.' })).toBeVisible();
+  await expect(page.getByText(/Current period ends/)).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Open billing portal', exact: true })).toBeDisabled();
   expect(actions.filter(name => name === 'createCheckout')).toHaveLength(1);
   expect(actions.filter(name => name === 'openBillingPortal')).toHaveLength(1);

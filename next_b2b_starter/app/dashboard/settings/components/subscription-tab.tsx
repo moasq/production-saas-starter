@@ -30,7 +30,7 @@ export function SubscriptionTab({ state, isLoading, error, onRefresh }: {
     <h3 className="text-lg font-semibold">{summary.title}</h3>
     <p className="mt-2 text-sm text-gray-600">{summary.description}</p>
     <p className="mt-2 text-sm text-gray-600">This starter supports one subscription plan. Plan switching is not available.</p>
-    {state?.subscription?.currentPeriodEnd && <p className="mt-2 text-sm">Current period ends {new Date(state.subscription.currentPeriodEnd).toLocaleDateString()}</p>}
+    {!error && state?.backendAvailable && state.subscription?.currentPeriodEnd && <p className="mt-2 text-sm">Current period ends {new Date(state.subscription.currentPeriodEnd).toLocaleDateString()}</p>}
     <div className="mt-4 flex flex-wrap gap-3"><Button disabled={pending || Boolean(error) || !state?.isAuthenticated || state.reason === "BILLING_DISABLED" || state.reason === "INSUFFICIENT_PERMISSIONS"} onClick={() => start()}>Open billing portal</Button><Button variant="outline" disabled={pending} onClick={() => { setActionError(null); onRefresh(); }}>Refresh status</Button></div>
    </div>
    {canCheckout && <div className="grid gap-4 sm:grid-cols-2">
