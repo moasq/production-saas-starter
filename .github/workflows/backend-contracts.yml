@@ -1,0 +1,20 @@
+name: Backend source contracts
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: backend-contracts-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  backend-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check Go formatting without rewriting files
+        run: make -C go-b2b-starter fmt-check
+      - name: Verify SQLC matches its SQL and regenerates deterministically
+        run: make -C go-b2b-starter sqlc-check
