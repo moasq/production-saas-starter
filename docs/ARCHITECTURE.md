@@ -15,6 +15,10 @@ account, additional auth service, Redis, or application AI runtime is required.
 SMTP delivers login links and invitations. Mailpit captures local development
 email; replace it with a real SMTP provider in production.
 
+The versioned [business API contract and generated client](decisions/0001-business-api.md)
+define the Go/Next.js boundary. Go route tests and the disposable deployment suite
+check the schema against mounted endpoints; frontend CI rejects generated drift.
+
 ## Authentication and authorization
 
 Better Auth owns identities, sessions, organizations, memberships and roles.

@@ -1,13 +1,10 @@
 import "server-only";
 import { getMemberSession } from "@/lib/auth/server";
 import { getServerPermissions } from "@/lib/auth/server-permissions";
-import { apiClient } from "@/lib/api/api/client/api-client";
+import { apiClient, unwrap } from "@/lib/api/api/client/api-client";
 import { isPolarEnabled } from "./config";
-export interface BillingStatus {
-  BillingEnabled: boolean; HasActiveSubscription: boolean; Reason: string;
-  SubscriptionID?: string; SubscriptionStatus?: string; ProductID?: string;
-  CurrentPeriodEnd?: string | null; CancelAtPeriodEnd?: boolean;
-}
+import type { components } from "@/lib/api/generated/schema";
+export type BillingStatus = components["schemas"]["BillingStatus"];
 export interface SubscriptionGateState {
   isAuthenticated: boolean; isActive: boolean; reason?: string; status?: string | null;
   productId: string | null; planId: string | null;
@@ -22,7 +19,7 @@ export async function resolveCurrentSubscription(): Promise<SubscriptionGateStat
  const permissions = await getServerPermissions(session);
  if (!permissions.canManageSubscriptions) return { ...empty, reason: "INSUFFICIENT_PERMISSIONS" };
  try {
-   const status = await apiClient.get<BillingStatus>("/subscriptions/status", { headers: { Cookie: session.cookie_header } });
+   const status = unwrap(await apiClient.GET("/subscriptions/status", { headers: { Cookie: session.cookie_header } }));
    return { ...empty, isActive: status.HasActiveSubscription, reason: status.Reason, status: status.SubscriptionStatus,
      productId: status.ProductID ?? null,
      subscription: status.SubscriptionID ? { id: status.SubscriptionID, status: status.SubscriptionStatus ?? "unknown", productId: status.ProductID ?? "", productName: null, currentPeriodEnd: status.CurrentPeriodEnd ?? null, cancelAtPeriodEnd: status.CancelAtPeriodEnd ?? false } : null };

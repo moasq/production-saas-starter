@@ -15,7 +15,7 @@ test("member removal accepts the backend's HTTP 204 contract", async () => {
 test("resending invitations uses the authenticated member route and verifies delivery", async () => {
  const original = globalThis.fetch;
  let route = "";
- globalThis.fetch = async (url) => { route = String(url); return Response.json({ success: true, data: { invite_sent: true } }); };
+ globalThis.fetch = async (url) => { route = (url as Request).url; return Response.json({ success: true, data: { invite_sent: true } }); };
  try {
    const repo = new MemberRepository(new ApiClient({ baseUrl: "https://example.test/api" }));
    assert.equal(await repo.resendInvitation("member-a"), true);

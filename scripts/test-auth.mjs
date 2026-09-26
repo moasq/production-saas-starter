@@ -7,6 +7,8 @@ const inbox = process.env.MAILPIT_URL || 'http://localhost:8025';
 for (const url of [base, inbox]) {
   assert.ok(['localhost', '127.0.0.1'].includes(new URL(url).hostname), 'Use a disposable local stack only');
 }
+const contract = process.env.API_CONTRACT_CHECK === 'true'
+  ? await import('../next_b2b_starter/scripts/api-contract.mjs') : undefined;
 const run = randomUUID().slice(0, 8);
 const check = (name) => console.log(`PASS ${name}`);
 class Client {
@@ -34,6 +36,7 @@ class Client {
     }
     const text = await response.text();
     let data; try { data = JSON.parse(text); } catch { data = text; }
+    contract?.assertApiResponse(new URL(path, base), method, response.status, data, body);
     return { status: response.status, data, location: response.headers.get('location') };
   }
   async ok(path, method = 'GET', body) {
@@ -101,6 +104,10 @@ assert.equal(profileB.organization.organization_id, orgB.id);
 assert.deepEqual(profileA.roles, ['admin']);
 assert.equal(profileA.email_verified, true);
 assert.equal(profileA.email, ownerA.email);
+assert.equal((await ownerA.client.ok('/api/organizations')).data.id, orgA.id);
+await ownerA.client.ok('/api/organizations', 'PUT', {name:`Updated Alpha ${run}`});
+assert.equal((await ownerA.client.ok('/api/organizations')).data.name, `Updated Alpha ${run}`);
+assert.ok((await ownerA.client.ok('/api/auth/members')).data.members.some(m => m.member_id === profileA.member_id));
 check('two workspaces created through real authenticated frontend API and mirrored in Go');
 const forbiddenSelection = await ownerA.client.request('/api/workspaces/select', 'POST', {organizationId:orgB.id});
 assert.ok([400,401,403,404].includes(forbiddenSelection.status));
@@ -165,6 +172,7 @@ assert.equal((await ownerA.client.request('/internal/auth/session','POST',{})).s
 const billing = await ownerA.client.ok('/api/subscriptions/status');
 assert.equal(billing.BillingEnabled, false, 'Billing is disabled');
 assert.equal(billing.HasActiveSubscription, false);
+assert.equal((await ownerA.client.request('/api/subscriptions/verify-payment', 'POST', {session_id:randomUUID()})).status, 503);
 check('cross-origin writes denied, private bridge hidden, billing disabled');
 const oldCookies = new Map(member.client.cookies);
 await member.client.ok('/api/identity/sign-out','POST',{});
@@ -186,4 +194,5 @@ if (process.env.TEST_SESSION_EXPIRY === 'true') {
   assert.ok([401,403].includes((await ownerB.client.request('/api/auth/profile/me')).status));
   check('expired sessions rejected by frontend authority and Go API');
 }
+contract?.assertApiCoverage();
 console.log(`Self-hosted authentication integration passed (fixture ${run}).`);

@@ -69,11 +69,11 @@ export async function getServerPermissions(
 
     // Filter to only valid string permissions (trust backend as source of truth)
     const permissions = rawPermissions.filter(
-      (permission): permission is string =>
+      (permission) =>
         typeof permission === 'string' && permission.trim().length > 0
     );
     const roles = rawRoles.filter(
-      (role): role is string => typeof role === 'string'
+      (role) => typeof role === 'string'
     );
 
     return {

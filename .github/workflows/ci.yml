@@ -68,7 +68,7 @@ jobs:
           cache: pnpm
           cache-dependency-path: next_b2b_starter/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint && pnpm typecheck && pnpm test && pnpm build
+      - run: pnpm api:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build
       - run: pnpm audit --prod --audit-level=high
       - name: Verify legacy auth import on disposable databases
         run: node scripts/test-legacy-import.mjs
@@ -86,6 +86,10 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24.21.0'
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 10.32.1
+      - run: pnpm --dir next_b2b_starter install --frozen-lockfile
       - name: Verify PostgreSQL major upgrade safety and restore
         run: ./scripts/test-postgres-upgrade.sh
       - name: Exercise real self-hosted auth, SMTP and tenant APIs
@@ -93,6 +97,7 @@ jobs:
         env:
           COMPOSE_PROJECT_NAME: starter-ci
           TEST_SESSION_EXPIRY: 'true'
+          API_CONTRACT_CHECK: 'true'
       - name: Check setup does not replace existing configuration
         run: |
           cp .env /tmp/starter-env-before
