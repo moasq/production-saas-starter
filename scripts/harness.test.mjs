@@ -1,12 +1,13 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { cpSync, existsSync, linkSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, existsSync, linkSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { delimiter, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { test } from "node:test";
 import { adapterPlan, checkMcp, fetchSkills, safePath, sources, sync } from "./harness.mjs";
+import { toolCatalog, mcpConfig } from "./tool-catalog.mjs";
 
 const repository = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 function fixture(t) {
@@ -16,8 +17,9 @@ function fixture(t) {
   cpSync(join(repository, ".mcp.json"), join(root, ".mcp.json"));
   mkdirSync(join(root, "scripts"));
   cpSync(join(repository, "scripts/harness.mjs"), join(root, "scripts/harness.mjs"));
+  cpSync(join(repository, "scripts/tool-catalog.mjs"), join(root, "scripts/tool-catalog.mjs"));
   // Only path contracts are needed, not a copied app or installed dependencies.
-  for (const path of ["docs/ARCHITECTURE.md", "go-b2b-starter/internal/modules", "go-b2b-starter/internal/modules/auth", "go-b2b-starter/internal/db/postgres/sqlc/query", "next_b2b_starter/lib/api", "next_b2b_starter/tests"]) {
+  for (const path of ["docs/ARCHITECTURE.md", "docs/AI_TOOLS.md", "go-b2b-starter/internal/modules", "go-b2b-starter/internal/modules/auth", "go-b2b-starter/internal/db/postgres/sqlc/query", "next_b2b_starter/lib/api", "next_b2b_starter/tests"]) {
     if (path.endsWith(".md")) { mkdirSync(dirname(join(root, path)), { recursive: true }); writeFileSync(join(root, path), "Fixture"); }
     else mkdirSync(join(root, path), { recursive: true });
   }
@@ -26,8 +28,9 @@ function fixture(t) {
 
 test("adapters are portable, deterministic, and check runs from another cwd", (t) => {
   const root = fixture(t);
-  assert.equal(sync(root), 16);
-  assert.equal(sync(root, true), 16);
+  const count = adapterPlan(root).size;
+  assert.equal(sync(root), count);
+  assert.equal(sync(root, true), count);
   const result = spawnSync(process.execPath, [join(root, "scripts/harness.mjs"), "check"], { cwd: tmpdir(), encoding: "utf8" });
   assert.equal(result.status, 0, result.stderr);
   for (const relative of ["CLAUDE.md", "go-b2b-starter/.claude/CLAUDE.md", "next_b2b_starter/.claude/CLAUDE.md"]) {
@@ -56,7 +59,7 @@ test("check detects drift without repairing it; sync repairs from canonical sour
   assert.throws(() => sync(root, true), /adapter drift/);
   assert.equal(readFileSync(path, "utf8"), "drift\n");
   sync(root);
-  assert.equal(sync(root, true), 16);
+  assert.equal(sync(root, true), adapterPlan(root).size);
 });
 
 test("invalid canonical references and orphaned adapters fail before writes", (t) => {
@@ -117,7 +120,78 @@ test("unapproved endpoints and unpinned skills are rejected", (t) => {
   assert.throws(() => sources(root), /Invalid pinned/);
   cpSync(join(repository, ".agents/sources.json"), join(root, ".agents/sources.json"));
   writeFileSync(join(root, ".mcp.json"), JSON.stringify({ mcpServers: { unreviewed: { url: "https://example.com" } } }));
-  assert.throws(() => adapterPlan(root), /MCP inventory/);
+  assert.throws(() => sync(root, true), /adapter drift/);
+});
+
+test("tool selection produces matching host configs and keeps reviewers away from mutation tools", (t) => {
+  const root = fixture(t);
+  const catalog = toolCatalog(root);
+  assert.equal(catalog.enabled.includes("resend"), false);
+  catalog.enabled.push("resend", "linear");
+  writeFileSync(join(root, ".agents/tools.json"), JSON.stringify(catalog));
+  sync(root);
+  const mcp = JSON.parse(readFileSync(join(root, ".mcp.json"), "utf8"));
+  assert.deepEqual(mcp, mcpConfig(catalog));
+  assert.deepEqual(mcp, JSON.parse(readFileSync(join(root, ".cursor/mcp.json"), "utf8")));
+  assert.equal(mcp.mcpServers.linear.url, "https://mcp.linear.app/mcp/readonly");
+  assert.deepEqual(mcp.mcpServers.shadcn.args, ["scripts/mcp-launch.mjs", "shadcn"]);
+  for (const name of ["code-reviewer", "auth-reviewer", "backend-builder"]) {
+    const codex = readFileSync(join(root, `.codex/agents/${name}.toml`), "utf8");
+    assert.match(codex, /\[mcp_servers.workspace-playwright\]\nenabled = false/);
+    assert.match(codex, /\[mcp_servers.workspace-next-devtools\]\nenabled = false/);
+    assert.match(codex, /\[mcp_servers.workspace-resend\]\nenabled = false/);
+    assert.match(codex, /enabled_tools = \["resolve-library-id","query-docs"\]/);
+    const claude = readFileSync(join(root, `.claude/agents/${name}.md`), "utf8").match(/^tools: (.*)$/m)[1];
+    assert.doesNotMatch(claude, /mcp__(playwright|resend|linear|next-devtools)__/);
+  }
+  const frontend = readFileSync(join(root, ".codex/agents/frontend-builder.toml"), "utf8");
+  assert.match(frontend, /\[mcp_servers.workspace-resend\]\nenabled = false/);
+  assert.match(frontend, /\[mcp_servers.workspace-playwright\]\ncommand = "node"/);
+});
+
+test("tool catalog rejects floating pins, shell metacharacters, credentials and unknown selections before writes", (t) => {
+  const root = fixture(t);
+  const original = toolCatalog(root);
+  for (const mutate of [
+    (c) => { c.servers.shadcn.version = "latest"; },
+    (c) => { c.servers.shadcn.args.push("x;unexpected"); },
+    (c) => { c.servers.shadcn.cwd = "../outside"; },
+    (c) => { c.servers.resend.headers = { Authorization: "fixture-only" }; },
+    (c) => { c.servers.resend.url = "https://user:fixture@example.com/mcp"; },
+    (c) => { c.servers.resend.url += "?key=fixture"; },
+    (c) => { c.enabled.push("missing"); },
+    (c) => { c.enabled.push(c.enabled[0]); },
+  ]) {
+    const catalog = structuredClone(original); mutate(catalog);
+    writeFileSync(join(root, ".agents/tools.json"), JSON.stringify(catalog));
+    assert.throws(() => sync(root));
+    assert.equal(existsSync(join(root, "CLAUDE.md")), false);
+  }
+});
+
+test("local MCP launcher resolves the frontend from its own path and propagates exit status", (t) => {
+  const root = fixture(t);
+  cpSync(join(repository, "scripts/mcp-launch.mjs"), join(root, "scripts/mcp-launch.mjs"));
+  const bin = join(root, "test bin"); mkdirSync(bin);
+  const reporter = `console.log(JSON.stringify({ cwd: process.cwd(), args: process.argv.slice(2) })); process.exit(17);\n`;
+  if (process.platform === "win32") {
+    writeFileSync(join(bin, "report.mjs"), reporter);
+    writeFileSync(join(bin, "npx.cmd"), '@node "%~dp0report.mjs" %*\r\n');
+  } else {
+    writeFileSync(join(bin, "npx"), '#!/usr/bin/env node\n' + reporter);
+    chmodSync(join(bin, "npx"), 0o755);
+  }
+  const pathKey = Object.keys(process.env).find((key) => key.toLowerCase() === "path") || "PATH";
+  const run = (id) => spawnSync(process.execPath, [join(root, "scripts/mcp-launch.mjs"), id], {
+    cwd: tmpdir(), encoding: "utf8", env: { ...process.env, [pathKey]: `${bin}${delimiter}${process.env[pathKey]}` }, timeout: 5000,
+  });
+  const result = run("shadcn");
+  assert.equal(result.status, 17, result.stderr);
+  assert.deepEqual(JSON.parse(result.stdout), { cwd: realpathSync(join(root, "next_b2b_starter")), args: ["--yes", `shadcn@${toolCatalog(root).servers.shadcn.version}`, "mcp"] });
+  const disabled = run("magicui");
+  assert.equal(disabled.status, 1);
+  assert.equal(disabled.stdout, "");
+  assert.match(disabled.stderr, /enabled local tool/);
 });
 
 function mcpFixture({ extraTool = false, documentError = false } = {}) {

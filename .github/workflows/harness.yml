@@ -21,4 +21,4 @@ jobs:
         with:
           node-version: '24.21.0'
       - run: node scripts/harness.mjs check
-      - run: node --test scripts/harness.test.mjs
+      - run: node --test scripts/harness.test.mjs scripts/mcp-probe.test.mjs

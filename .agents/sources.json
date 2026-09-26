@@ -5,7 +5,9 @@
     "go-backend",
     "next-frontend",
     "auth-integration",
-    "pr-review"
+    "pr-review",
+    "dev-tools",
+    "service-connections"
   ],
   "upstreamSkills": [
     {
@@ -33,7 +35,7 @@
   ],
   "inspiration": {
     "repository": "https://github.com/moasq/agentic-ship",
-    "revision": "54cf57ca641f849d2fb3e45ed2c696a51cefdf4b",
+    "revision": "8fbf56f3d17defd0544d1d5ce328ab3c46851bf5",
     "license": "MIT",
     "paths": [
       ".agents/skills/agent-compatibility/SKILL.md",
@@ -41,9 +43,13 @@
       ".agents/agents/frontend-builder.md",
       ".agents/agents/quality-engineer.md",
       ".agents/skills/testing/SKILL.md",
-      ".agents/skills/frontend-security/SKILL.md"
+      ".agents/skills/frontend-security/SKILL.md",
+      ".mcp.json",
+      "skills.lock.json",
+      ".agents/connections/providers.json",
+      ".agents/skills/service-connections/SKILL.md"
     ],
-    "adaptations": "New Go/Next.js procedures and a small independent generator; reuse canonical-source, bounded-role and verification principles. No Convex code, engine, hooks, or installer copied."
+    "adaptations": "Adapted developer tool catalog, host adapters, scoped quality and connection procedures for Go/Next.js. Updated executable pins from current official package metadata; standalone Playwright MCP replaces Ship test-server wiring. New lightweight scripts; no Convex, durable queue, hooks, provisioning engine, or installer copied."
   },
   "mcp": {
     "server": "better-auth",
