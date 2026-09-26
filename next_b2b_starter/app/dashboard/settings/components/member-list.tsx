@@ -162,6 +162,7 @@ export function MemberList({
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
+                            aria-label={`Actions for ${member.name || member.email}`}
                             variant="ghost"
                             size="sm"
                             disabled={pendingMemberId === member.id || isFetching}

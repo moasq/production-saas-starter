@@ -20,15 +20,14 @@ export default function HomePage() {
 
             {/* CTA Button */}
             <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-              <Link href="/signup">
-                <Button
+                <Button asChild
                   size="lg"
                   className="h-14 rounded-full bg-slate-900 px-8 text-base font-semibold text-white shadow-lg hover:bg-slate-800"
                 >
-                  Create workspace
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <Link href="/signup">Create workspace
+                  <ArrowRight className="ml-2 h-5 w-5" aria-hidden />
+                  </Link>
                 </Button>
-              </Link>
             </div>
           </div>
 
@@ -50,9 +49,9 @@ export default function HomePage() {
                   />
                 </svg>
               </div>
-              <h3 className="mb-2 text-lg font-semibold text-slate-900">
+              <h2 className="mb-2 text-lg font-semibold text-slate-900">
                 Secure Authentication
-              </h3>
+              </h2>
               <p className="text-sm text-slate-600">
                 Built-in auth with magic link login powered by Better Auth.
               </p>
@@ -74,9 +73,9 @@ export default function HomePage() {
                   />
                 </svg>
               </div>
-              <h3 className="mb-2 text-lg font-semibold text-slate-900">
+              <h2 className="mb-2 text-lg font-semibold text-slate-900">
                 Optional Billing
-              </h3>
+              </h2>
               <p className="text-sm text-slate-600">
                 Add subscription payments with Polar when you need them.
               </p>
@@ -98,9 +97,9 @@ export default function HomePage() {
                   />
                 </svg>
               </div>
-              <h3 className="mb-2 text-lg font-semibold text-slate-900">
+              <h2 className="mb-2 text-lg font-semibold text-slate-900">
                 Team Management
-              </h3>
+              </h2>
               <p className="text-sm text-slate-600">
                 Invite members, manage roles, and collaborate.
               </p>
