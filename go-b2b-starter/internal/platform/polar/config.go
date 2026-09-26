@@ -26,7 +26,7 @@ func LoadConfig() (Config, error) {
 	cfg := Config{Enabled: true, AccessToken: strings.TrimSpace(os.Getenv("POLAR_ACCESS_TOKEN")), ProductID: strings.TrimSpace(os.Getenv("POLAR_PRODUCT_ID"))}
 	environment := strings.TrimSpace(os.Getenv("POLAR_ENVIRONMENT"))
 	switch environment {
-	case "", "sandbox":
+	case "sandbox":
 		cfg.BaseURL = "https://sandbox-api.polar.sh"
 	case "production":
 		cfg.BaseURL = "https://api.polar.sh"
