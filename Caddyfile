@@ -10,7 +10,8 @@
   handle /api/* {
     reverse_proxy backend:8080
   }
-  handle /health {
+  @backend_health path /health /livez /readyz
+  handle @backend_health {
     reverse_proxy backend:8080
   }
   handle {

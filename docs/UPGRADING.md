@@ -165,6 +165,9 @@ services work.
 
 ## Roll back
 
+See [Readiness and recovery](RECOVERY.md) for probe behavior, failed-migration
+handling and the executable separate-volume restore rehearsal.
+
 Before accepting new writes, rollback can restore the previous images,
 configuration and database backup together. After users have written data to the
 new system, first export and reconcile those changes; restoring an old backup
