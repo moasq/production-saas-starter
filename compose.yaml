@@ -6,7 +6,9 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-starter}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run ./setup.sh or set POSTGRES_PASSWORD in .env}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # PostgreSQL 18+ keeps PGDATA in a major-version subdirectory. Keep the
+      # volume name so the upstream entrypoint detects and rejects old data.
+      - postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s

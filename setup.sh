@@ -23,7 +23,8 @@ done
 chmod 600 .env
 docker compose config --quiet
 if ! docker compose up --build -d --wait --wait-timeout 240; then
-  echo "Startup failed. Inspect: docker compose logs --tail=80 database-init backend-migrate auth-migrate backend frontend" >&2
+  echo "Startup failed. Inspect: docker compose logs --tail=80 postgres database-init backend-migrate auth-migrate backend frontend" >&2
+  echo "Existing PostgreSQL 17 volumes require the backup/restore procedure in docs/UPGRADING.md." >&2
   exit 1
 fi
 echo "Starter is running. Default local URL: http://localhost:3000 (APP_BASE_URL in .env)."
