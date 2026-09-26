@@ -1,6 +1,11 @@
 #!/usr/bin/env sh
 set -eu
 cd "$(dirname "$0")"
+case "${1:-}" in
+  --doctor) [ "$#" -eq 1 ] || { echo "Usage: ./setup.sh [--doctor]" >&2; exit 2; }; exec sh scripts/doctor.sh ;;
+  '') ;;
+  *) echo "Usage: ./setup.sh [--doctor]" >&2; exit 2 ;;
+esac
 command -v docker >/dev/null 2>&1 || { echo "Install Docker with Compose first." >&2; exit 1; }
 docker compose version >/dev/null
 docker info >/dev/null 2>&1 || { echo "Start Docker first." >&2; exit 1; }

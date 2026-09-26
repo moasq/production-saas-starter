@@ -24,6 +24,51 @@ and Next.js remain on the private Compose network. `database-init`,
 `backend-migrate`, and `auth-migrate` are one-shot jobs: a successful exited job
 is expected. An unsuccessful migration prevents startup.
 
+## Diagnose setup
+
+Run `./setup.sh --doctor` from any working directory by using the path to this
+checkout's `setup.sh`. It checks Docker/Compose, configuration names and required
+secret lengths, local port conflicts, service health and configuration drift, completed migration jobs,
+the business schema version, auth migration checksums, database privileges, RLS,
+and the allowed Better Auth membership roles. It does not need local Go or Node.
+Use the same `COMPOSE_PROJECT_NAME` and environment overrides as setup.
+
+The doctor reads configuration and performs read-only SQL. It never starts or
+stops services, runs migrations, changes credentials, sends email, or calls Polar.
+Values and raw Docker/database errors are suppressed. A missing `.env` or an
+unstarted stack produces a failure with the next step; run `./setup.sh` to apply
+setup, then rerun the doctor. Commands use Docker's normal lifecycle. If Docker
+itself becomes unresponsive, cancel the diagnostic with Ctrl-C and recover Docker
+Desktop; the doctor does not scan or terminate host processes.
+
+Exit status is `0` when these diagnostics pass, `1` for a detected problem, and
+`2` when a check cannot be completed. Install `lsof` or `iproute2` (`ss`) to inspect
+ports before services start, and `sha256sum` or `shasum` for migration checksums.
+Remote Docker contexts need port verification on the remote host. A passing
+doctor does not prove browser journeys, external email delivery or live billing.
+
+## Windows support
+
+Use **WSL2 with Docker Desktop's Linux-container integration**. Native PowerShell,
+Command Prompt and Git Bash are not supported setup environments. Install Ubuntu
+with `wsl --install -d Ubuntu`, confirm version 2 with `wsl --list --verbose`, and
+enable that distribution under Docker Desktop **Settings → Resources → WSL
+Integration**. Clone into the Linux home directory and run these in Ubuntu:
+
+```sh
+docker info
+docker compose version
+./setup.sh
+./setup.sh --doctor
+```
+
+Keep shell scripts with LF endings. Follow the official
+[WSL installation guide](https://learn.microsoft.com/en-us/windows/wsl/install)
+and [Docker Desktop WSL2 guide](https://docs.docker.com/desktop/features/wsl/).
+Automated shell tests run on Linux/macOS and exercise the Linux/WSL host contract;
+the Docker deployment check runs on Linux. These checks do not emulate the Windows
+Desktop integration or verify a user's WSL2 installation.
+
 ## Authentication and email
 
 Better Auth stores sessions and organization membership in PostgreSQL. The

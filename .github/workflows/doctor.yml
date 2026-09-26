@@ -1,0 +1,70 @@
+name: Setup doctor
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: doctor-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  shell-contract:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.21.0'
+      - run: node --test scripts/doctor.test.mjs
+  deployment-diagnostics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      COMPOSE_PROJECT_NAME: doctor-ci
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Fresh setup and read-only diagnostic reruns
+        run: |
+          ./setup.sh
+          cp .env /tmp/doctor-env-before
+          ./setup.sh --doctor
+          ./setup.sh --doctor
+          cmp .env /tmp/doctor-env-before
+          ./scripts/smoke.sh
+      - name: Diagnose configuration and runtime failures, then recover
+        run: |
+          if SMTP_SECURE=invalid ./setup.sh --doctor; then
+            echo 'Doctor incorrectly accepted invalid SMTP configuration.' >&2
+            exit 1
+          fi
+          docker compose stop frontend
+          if ./setup.sh --doctor; then
+            echo 'Doctor incorrectly accepted a stopped frontend.' >&2
+            exit 1
+          fi
+          ./setup.sh
+          ./setup.sh --doctor
+          cmp .env /tmp/doctor-env-before
+      - name: Reject elevated membership for either runtime database role
+        run: |
+          for runtime_role in starter_app starter_auth; do
+            docker compose exec -T postgres sh -c 'exec psql --no-psqlrc -X -v ON_ERROR_STOP=1 -v runtime_role="$1" -U "$POSTGRES_USER" -d "$POSTGRES_DB"' sh "$runtime_role" <<'SQL'
+          SELECT format('GRANT %I TO %I', current_user, :'runtime_role') \gexec
+          SQL
+            if ./setup.sh --doctor > /tmp/doctor-elevated-role; then
+              echo "Doctor incorrectly accepted elevated membership for $runtime_role." >&2
+              exit 1
+            fi
+            awk '/^FAIL database_roles / {found=1} END {exit !found}' /tmp/doctor-elevated-role
+            docker compose exec -T postgres sh -c 'exec psql --no-psqlrc -X -v ON_ERROR_STOP=1 -v runtime_role="$1" -U "$POSTGRES_USER" -d "$POSTGRES_DB"' sh "$runtime_role" <<'SQL'
+          SELECT format('REVOKE %I FROM %I', current_user, :'runtime_role') \gexec
+          SQL
+            ./setup.sh --doctor
+          done
+      - if: always()
+        run: docker compose down --volumes

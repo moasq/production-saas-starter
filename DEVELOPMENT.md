@@ -21,6 +21,12 @@ when selecting a production runtime.
 
 ## Verification
 
+Use `./setup.sh --doctor` for read-only configuration, service, migration and
+database-role diagnosis before debugging application code. Run its failure,
+recovery and redaction tests with `node --test scripts/doctor.test.mjs`; these
+use disposable fixtures and do not require Docker. The dedicated doctor CI
+workflow also exercises a fresh Compose deployment and a stopped-service recovery.
+
 ```sh
 cd go-b2b-starter
 go test -race ./...
