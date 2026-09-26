@@ -19,6 +19,9 @@ tenant override or legacy nested-customer fallback. Missing or malformed provide
 fields return an error. A documented missing customer returns an empty status.
 
 This deliberately small integration requires Polar availability for billing reads.
+The starter supports a single recurring product and hosted payments/cancellation,
+not upgrades, downgrades or an entitlement engine. See the
+[billing lifecycle and checkout limits](../../../../docs/BILLING.md).
 For application-specific entitlements, add a separately tested authorization rule.
 If your application needs offline billing reads or asynchronous fulfillment, add a
 verified, durable, idempotent webhook inbox and reconciliation at that point.

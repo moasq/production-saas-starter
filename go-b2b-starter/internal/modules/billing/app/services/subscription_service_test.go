@@ -83,6 +83,32 @@ func TestDisabledBillingDoesNotContactProvider(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestCancellationLifecycleReadsCurrentProviderState(t *testing.T) {
+	future, past := time.Now().Add(time.Hour), time.Now().Add(-time.Hour)
+	p := &providerStub{enabled: true, state: domain.CustomerState{ExternalID: "org-owned", ActiveSubscriptions: []domain.Subscription{{
+		ID: "existing-subscription", ProductID: "product-app", Status: "active", CurrentPeriodEnd: &future, CancelAtPeriodEnd: true,
+	}}}}
+	service := NewBillingService(orgStub{}, p)
+	scheduled, err := service.GetBillingStatus(context.Background(), 1)
+	if err != nil || !scheduled.HasActiveSubscription || !scheduled.CancelAtPeriodEnd || scheduled.SubscriptionID != "existing-subscription" {
+		t.Fatalf("scheduled cancellation must remain active until its end: %#v %v", scheduled, err)
+	}
+	p.state.ActiveSubscriptions[0].CancelAtPeriodEnd = false
+	reversed, err := service.GetBillingStatus(context.Background(), 1)
+	if err != nil || !reversed.HasActiveSubscription || reversed.CancelAtPeriodEnd {
+		t.Fatalf("a fresh read must reflect cancellation reversal: %#v %v", reversed, err)
+	}
+	p.state.ActiveSubscriptions[0].CancelAtPeriodEnd = true
+	p.state.ActiveSubscriptions[0].CurrentPeriodEnd = &past
+	ended, err := service.GetBillingStatus(context.Background(), 1)
+	if err != nil || ended.HasActiveSubscription || ended.SubscriptionID != "" {
+		t.Fatalf("elapsed cancellation must not remain active: %#v %v", ended, err)
+	}
+	if p.reads != 3 {
+		t.Fatalf("each refresh must read the provider, got %d reads", p.reads)
+	}
+}
 func TestProviderFailureIsNotFreeOrPaidStatus(t *testing.T) {
 	failure := errors.New("provider unavailable")
 	p := &providerStub{enabled: true, err: failure}

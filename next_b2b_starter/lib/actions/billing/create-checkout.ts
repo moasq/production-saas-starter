@@ -6,6 +6,7 @@ import { getPolarClient } from "@/lib/polar/client";
 import { loadPolarConfig } from "@/lib/polar/environment";
 import { fetchProducts } from "@/lib/polar/server-products";
 import { resolveCurrentSubscription } from "@/lib/polar/current-subscription";
+import { checkoutUnavailableReason } from "@/lib/polar/subscription-policy";
 import { createActionError, createActionSuccess, type ActionResult } from "@/lib/utils/server-action-helpers";
 export async function createCheckout(productId: string): Promise<ActionResult<{ url: string }>> {
  const session = await getMemberSession();
@@ -19,8 +20,8 @@ export async function createCheckout(productId: string): Promise<ActionResult<{ 
   const config = loadPolarConfig();
   if (!config.enabled || productId !== config.productId) return createActionError("Select an available plan.");
   const state = await resolveCurrentSubscription();
-  if (!state.backendAvailable) return createActionError("Could not verify your current subscription. Please retry.");
-  if (state.isActive) return createActionError("Use Manage billing to change your existing subscription.");
+  const unavailableReason = checkoutUnavailableReason(state);
+  if (unavailableReason) return createActionError(unavailableReason);
   const result = await fetchProducts();
   if (!result.success || !result.products?.some((p) => p.productId === productId)) return createActionError("Select an available plan.");
   const checkout = await client.checkouts.create({ products: [productId], externalCustomerId: orgId,

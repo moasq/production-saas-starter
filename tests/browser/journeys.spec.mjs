@@ -100,6 +100,7 @@ test('public routes, labels, keyboard, invalid link and fail-closed setup', asyn
 });
 
 test('real signup, workspace, profile, team dialog and keyboard navigation', async ({ page, request }, info) => {
+  test.skip(run.billingFixture, 'The separate real journey verifies billing-disabled behavior.');
   const email = `browser-${randomUUID().slice(0, 8)}@example.test`;
   await page.goto('/signup');
   await page.getByLabel('Full Name').fill('Browser Reviewer');
@@ -165,4 +166,78 @@ test('real signup, workspace, profile, team dialog and keyboard navigation', asy
   await capture(page, info, 'invite-dialog');
   await page.keyboard.press('Escape'); await expect(dialog).toBeHidden();
   await expect(addMember).toBeFocused();
+});
+
+test('billing UI fixtures: checkout, outage, cancellation and revoked access', async ({ page, request }, info) => {
+  test.skip(!run.billingFixture, 'Run with BROWSER_BILLING_FIXTURE=true for provider-free billing UI checks.');
+  for (const name of ['getSubscriptionStatus', 'getProducts', 'createCheckout', 'openBillingPortal']) {
+    expect(Object.values(run.billingActions)).toContain(name);
+  }
+  const empty = { isAuthenticated: true, isActive: false, canStartCheckout: true,
+    backendAvailable: true, productId: null, planId: null, subscription: null };
+  const active = { ...empty, isActive: true, canStartCheckout: false,
+    subscription: { id: 'fixture-subscription', status: 'active', productId: 'fixture-product',
+      productName: null, currentPeriodEnd: '2099-01-01T00:00:00Z', cancelAtPeriodEnd: false } };
+  let state = empty;
+  const actions = [];
+  // Only billing actions are mocked. Signup, session, membership and business
+  // profile use the real disposable application. The Docker network is internal
+  // so a missing interception cannot reach a provider with fixture credentials.
+  await page.route('**/dashboard/settings*', async route => {
+    const name = run.billingActions[route.request().headers()['next-action']];
+    if (!name) return route.continue();
+    actions.push(name);
+    const statusResult = state.reason === 'INSUFFICIENT_PERMISSIONS'
+      ? { success: false, error: 'You cannot view subscription details.' }
+      : { success: true, data: state };
+    const result = name === 'getSubscriptionStatus' ? statusResult
+      : name === 'getProducts' ? { success: true, data: [{ id: 'fixture-product', productId: 'fixture-product',
+        name: 'Workspace plan', description: 'Synthetic browser fixture', price: 12, currency: 'usd', interval: 'month' }] }
+      : { success: false, error: 'Synthetic billing provider is unavailable.' };
+    await route.fulfill({ status: 200, contentType: 'text/x-component',
+      body: `0:{"a":"$@1","f":[],"b":""}\n1:${JSON.stringify(result)}\n` });
+  });
+  const email = `billing-ui-${randomUUID().slice(0, 8)}@example.test`;
+  await page.goto('/signup');
+  await page.getByLabel('Full Name').fill('Billing Reviewer');
+  await page.getByLabel('Email', { exact: true }).fill(email);
+  await page.getByRole('button', { name: 'Continue' }).press('Enter');
+  await page.getByLabel('Organization Name').fill('Billing Fixture Workspace');
+  await page.getByRole('button', { name: 'Create Account' }).press('Enter');
+  await expect(page.getByRole('heading', { name: 'Check your email' })).toBeVisible();
+  await page.goto(await magicLink(request, email));
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await headers(await page.goto('/dashboard/settings?view=subscription'));
+  await expect(page.getByRole('heading', { name: 'No active subscription', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Subscribe', exact: true })).toBeVisible();
+  await expect(page.getByText('This starter supports one subscription plan. Plan switching is not available.')).toBeVisible();
+  await capture(page, info, 'billing-fixture-no-subscription');
+  await tabTo(page, page.getByRole('button', { name: 'Open billing portal', exact: true }));
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('alert').filter({ hasText: 'Synthetic billing provider is unavailable.' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Open billing portal', exact: true })).toBeEnabled();
+  await page.getByRole('button', { name: 'Subscribe', exact: true }).press('Enter');
+  await expect(page.getByRole('button', { name: 'Subscribe', exact: true })).toBeEnabled();
+  await capture(page, info, 'billing-fixture-checkout-error');
+
+  async function refresh(next, title, captureName) {
+    state = next;
+    await page.getByRole('button', { name: 'Refresh status', exact: true }).press('Enter');
+    await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Subscribe', exact: true })).toHaveCount(0);
+    await capture(page, info, captureName);
+  }
+  await refresh({ ...empty, canStartCheckout: false, backendAvailable: false,
+    backendError: 'Billing status is temporarily unavailable. Please retry.' },
+  'Billing status unavailable', 'billing-fixture-outage-hides-cached-plan');
+  await refresh(active, 'Active subscription', 'billing-fixture-active');
+  await refresh({ ...active, subscription: { ...active.subscription, cancelAtPeriodEnd: true } },
+    'Cancellation scheduled', 'billing-fixture-cancellation');
+  await refresh({ ...empty, canStartCheckout: false, reason: 'INSUFFICIENT_PERMISSIONS' },
+    'Billing status unavailable', 'billing-fixture-revoked');
+  await expect(page.getByRole('alert').filter({ hasText: 'You cannot view subscription details.' })).toBeVisible();
+  await expect(page.getByText(/Current period ends/)).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Open billing portal', exact: true })).toBeDisabled();
+  expect(actions.filter(name => name === 'createCheckout')).toHaveLength(1);
+  expect(actions.filter(name => name === 'openBillingPortal')).toHaveLength(1);
 });

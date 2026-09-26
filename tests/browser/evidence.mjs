@@ -25,10 +25,12 @@ if (process.argv[2] === 'prepare') {
   writeFileSync(runFile, JSON.stringify({ runId: process.env.BROWSER_TEST_RUN,
     revision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root }).toString().trim(),
     sourceHash: sourceHash(), builtAt: new Date().toISOString(),
+    billingFixture: process.env.BROWSER_BILLING_FIXTURE === 'true',
     baseURL: process.env.STARTER_URL, mailpitURL: process.env.MAILPIT_URL, setupURL: process.env.SETUP_URL }, null, 2));
 }
 if (process.argv[2] === 'built') {
   const data = fixture();
   data.frontendImage = process.env.BROWSER_IMAGE_ID;
+  if (data.billingFixture) data.billingActions = JSON.parse(process.env.BROWSER_BILLING_ACTIONS || '{}');
   writeFileSync(runFile, JSON.stringify(data, null, 2));
 }

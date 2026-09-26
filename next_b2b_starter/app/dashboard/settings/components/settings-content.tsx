@@ -66,7 +66,7 @@ const DETAIL_META: Record<Exclude<SettingsView, "overview">, { title: string; de
   },
   subscription: {
     title: "Subscription & billing",
-    description: "Review your subscription status, usage limits, and cancellation controls.",
+    description: "Review subscription status and open the billing portal for payments and cancellation.",
   },
 };
 
@@ -92,8 +92,8 @@ function getSubscriptionQuickStatus(
 
   if (!state) {
     return {
-      title: "No active plan",
-      helper: "Choose a plan below to unlock automations.",
+      title: "Status unavailable",
+      helper: "Refresh to check your subscription.",
     };
   }
 
@@ -112,9 +112,12 @@ function getSubscriptionQuickStatus(
   }
 
   if (!state.isActive || state.reason === "NO_ACTIVE_SUBSCRIPTION") {
+    if (!state.canStartCheckout) {
+      return { title: "Status unavailable", helper: "Refresh to check your subscription." };
+    }
     return {
       title: "No active plan",
-      helper: "Select a subscription plan below.",
+      helper: "Subscribe to the configured plan when you need billing.",
     };
   }
 
@@ -126,7 +129,7 @@ function getSubscriptionQuickStatus(
     return {
       title: "Cancels soon",
       helper: cancellationDate
-        ? `Ends on ${cancellationDate}. Update your plan below to stay active.`
+        ? `Ends on ${cancellationDate}. Review cancellation in the billing portal.`
         : "Scheduled to cancel at period end.",
       };
   }

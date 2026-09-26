@@ -62,6 +62,17 @@ It does not claim comprehensive WCAG conformance, pixel-baseline comparisons,
 Firefox/WebKit coverage, live email, invitations sent to outside recipients or
 Polar payments. Go/auth integration tests own the broader authorization matrix.
 
+The additional `BROWSER_BILLING_FIXTURE=true ./scripts/test-browser.sh` CI mode
+builds the same production app in an isolated Docker network without internet.
+Real synthetic signup and sessions lead into billing; Playwright intercepts only
+the billing server actions with labeled fixture responses. At both widths and OS
+color preferences it checks an empty subscription, failed checkout/portal action,
+provider outage after plans were cached, active subscription, scheduled
+cancellation and revoked billing access. It captures these six billing states and
+the public-route checks. This mode proves presentation and local interaction, not
+Polar checkout, portal navigation, payment, cancellation or authorization. Unit
+and Go integration tests cover the server decisions separately.
+
 Loading, empty, error, unauthorized and unconfigured behavior must be considered
 for every changed surface; extend the matrix when adding a new user-visible state.
 An empty workspace list and empty signup form differ from an empty team: the
