@@ -30,11 +30,11 @@ Thumbs.db
 **/.claude/*
 !**/.claude/CLAUDE.md
 # Generated project adapters; local settings and caches stay ignored.
-!/.claude/agents/
-!/.claude/agents/*.md
-!/.claude/skills/
-!/.claude/skills/**
-/.agents/cache/
+!**/.claude/agents/
+!**/.claude/agents/*.md
+!**/.claude/skills/
+!**/.claude/skills/**
+**/.agents/cache/
 # Browser tool evidence may contain local session or application data.
 **/.playwright-mcp/
 

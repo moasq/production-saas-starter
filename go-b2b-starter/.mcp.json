@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "better-auth": {
+      "type": "http",
+      "url": "https://mcp.better-auth.com/mcp"
+    },
+    "context7": {
+      "command": "node",
+      "args": [
+        "../scripts/mcp-launch.mjs",
+        "context7"
+      ]
+    }
+  }
+}
