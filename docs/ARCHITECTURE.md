@@ -19,6 +19,9 @@ The versioned [business API contract and generated client](decisions/0001-busine
 define the Go/Next.js boundary. Go route tests and the disposable deployment suite
 check the schema against mounted endpoints; frontend CI rejects generated drift.
 
+[Request cancellation and timeouts](REQUEST_TIMEOUTS.md) keep one response-writer
+owner and define the limits of cooperative deadlines, streams and background work.
+
 ## Authentication and authorization
 
 Better Auth owns identities, sessions, organizations, memberships and roles.
