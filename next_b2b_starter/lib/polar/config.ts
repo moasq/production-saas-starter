@@ -1,2 +1,3 @@
 import "server-only";
-export function isPolarEnabled(): boolean { return process.env.BILLING_ENABLED === "true"; }
+import { billingEnabled } from "./environment";
+export function isPolarEnabled(): boolean { return billingEnabled(); }

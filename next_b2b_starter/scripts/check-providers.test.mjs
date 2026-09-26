@@ -81,3 +81,12 @@ test("missing requested providers remain incomplete and invalid configuration fa
     })).exitCode, 1);
   }
 });
+
+test("billing probe rejects ambiguous configuration without contacting a provider", async () => {
+  for (const values of [{ BILLING_ENABLED: "1" }, { POLAR_ENVIRONMENT: "" }, { POLAR_ACCESS_TOKEN: " " }, { POLAR_PRODUCT_ID: " " }]) {
+    const report = await checkProviders({ ...config, ...values }, ["polar"], forbiddenNetwork);
+    assert.equal(report.exitCode, 1);
+    assert.equal(report.checks[1].state, "failed");
+    assert.doesNotMatch(JSON.stringify(report), /private-token|private-password/);
+  }
+});

@@ -81,7 +81,7 @@ services:
       AUTH_INTERNAL_SECRET: ${AUTH_INTERNAL_SECRET:?Run ./setup.sh first}
       BILLING_ENABLED: ${BILLING_ENABLED:-false}
       POLAR_ACCESS_TOKEN: ${POLAR_ACCESS_TOKEN:-}
-      POLAR_ENVIRONMENT: ${POLAR_ENVIRONMENT:-sandbox}
+      POLAR_ENVIRONMENT: ${POLAR_ENVIRONMENT:-}
       POLAR_PRODUCT_ID: ${POLAR_PRODUCT_ID:-}
     depends_on:
       backend-migrate:
@@ -106,7 +106,7 @@ services:
       EMAIL_FROM: ${EMAIL_FROM:-Starter <starter@localhost.test>}
       BILLING_ENABLED: ${BILLING_ENABLED:-false}
       POLAR_ACCESS_TOKEN: ${POLAR_ACCESS_TOKEN:-}
-      POLAR_ENVIRONMENT: ${POLAR_ENVIRONMENT:-sandbox}
+      POLAR_ENVIRONMENT: ${POLAR_ENVIRONMENT:-}
       POLAR_PRODUCT_ID: ${POLAR_PRODUCT_ID:-}
     depends_on:
       backend:

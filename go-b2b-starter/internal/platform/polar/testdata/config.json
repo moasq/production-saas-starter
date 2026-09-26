@@ -1,0 +1,184 @@
+[
+  {
+    "name": "omitted billing",
+    "env": {},
+    "enabled": false
+  },
+  {
+    "name": "disabled ignores unused provider settings",
+    "env": {
+      "BILLING_ENABLED": "false",
+      "POLAR_ENVIRONMENT": "typo"
+    },
+    "enabled": false
+  },
+  {
+    "name": "blank billing",
+    "env": {
+      "BILLING_ENABLED": "  "
+    },
+    "enabled": false
+  },
+  {
+    "name": "development build with sandbox",
+    "env": {
+      "BILLING_ENABLED": "true",
+      "POLAR_ENVIRONMENT": "sandbox",
+      "POLAR_ACCESS_TOKEN": "test-only-token",
+      "POLAR_PRODUCT_ID": "test-only-product",
+      "NODE_ENV": "development",
+      "ENV": "PROD"
+    },
+    "enabled": true,
+    "baseURL": "https://sandbox-api.polar.sh",
+    "accessToken": "test-only-token",
+    "productId": "test-only-product"
+  },
+  {
+    "name": "development build with production",
+    "env": {
+      "BILLING_ENABLED": "true",
+      "POLAR_ENVIRONMENT": "production",
+      "POLAR_ACCESS_TOKEN": "test-only-token",
+      "POLAR_PRODUCT_ID": "test-only-product",
+      "NODE_ENV": "development",
+      "ENV": "PROD"
+    },
+    "enabled": true,
+    "baseURL": "https://api.polar.sh",
+    "accessToken": "test-only-token",
+    "productId": "test-only-product"
+  },
+  {
+    "name": "production build with sandbox",
+    "env": {
+      "BILLING_ENABLED": "true",
+      "POLAR_ENVIRONMENT": "sandbox",
+      "POLAR_ACCESS_TOKEN": "test-only-token",
+      "POLAR_PRODUCT_ID": "test-only-product",
+      "NODE_ENV": "production",
+      "ENV": "PROD"
+    },
+    "enabled": true,
+    "baseURL": "https://sandbox-api.polar.sh",
+    "accessToken": "test-only-token",
+    "productId": "test-only-product"
+  },
+  {
+    "name": "production build with production",
+    "env": {
+      "BILLING_ENABLED": "true",
+      "POLAR_ENVIRONMENT": "production",
+      "POLAR_ACCESS_TOKEN": "test-only-token",
+      "POLAR_PRODUCT_ID": "test-only-product",
+      "NODE_ENV": "production",
+      "ENV": "PROD"
+    },
+    "enabled": true,
+    "baseURL": "https://api.polar.sh",
+    "accessToken": "test-only-token",
+    "productId": "test-only-product"
+  },
+  {
+    "name": "normalized whitespace",
+    "env": {
+      "BILLING_ENABLED": " true ",
+      "POLAR_ENVIRONMENT": " sandbox ",
+      "POLAR_ACCESS_TOKEN": " test-only-token ",
+      "POLAR_PRODUCT_ID": " test-only-product "
+    },
+    "enabled": true,
+    "baseURL": "https://sandbox-api.polar.sh",
+    "accessToken": "test-only-token",
+    "productId": "test-only-product"
+  },
+  {
+    "name": "invalid enable flag 1",
+    "env": {
+      "BILLING_ENABLED": "1",
+      "POLAR_ENVIRONMENT": "sandbox",
+      "POLAR_ACCESS_TOKEN": "test-only-token",
+      "POLAR_PRODUCT_ID": "test-only-product"
+    },
+    "error": "BILLING_ENABLED must be true or false"
+  },
+  {
+    "name": "invalid enable flag TRUE",
+    "env": {
+      "BILLING_ENABLED": "TRUE",
+      "POLAR_ENVIRONMENT": "sandbox",
+      "POLAR_ACCESS_TOKEN": "test-only-token",
+      "POLAR_PRODUCT_ID": "test-only-product"
+    },
+    "error": "BILLING_ENABLED must be true or false"
+  },
+  {
+    "name": "invalid enable flag typo",
+    "env": {
+      "BILLING_ENABLED": "typo",
+      "POLAR_ENVIRONMENT": "sandbox",
+      "POLAR_ACCESS_TOKEN": "test-only-token",
+      "POLAR_PRODUCT_ID": "test-only-product"
+    },
+    "error": "BILLING_ENABLED must be true or false"
+  },
+  {
+    "name": "invalid environment ''",
+    "env": {
+      "BILLING_ENABLED": "true",
+      "POLAR_ENVIRONMENT": "",
+      "POLAR_ACCESS_TOKEN": "test-only-token",
+      "POLAR_PRODUCT_ID": "test-only-product"
+    },
+    "error": "POLAR_ENVIRONMENT must be sandbox or production"
+  },
+  {
+    "name": "invalid environment 'staging'",
+    "env": {
+      "BILLING_ENABLED": "true",
+      "POLAR_ENVIRONMENT": "staging",
+      "POLAR_ACCESS_TOKEN": "test-only-token",
+      "POLAR_PRODUCT_ID": "test-only-product"
+    },
+    "error": "POLAR_ENVIRONMENT must be sandbox or production"
+  },
+  {
+    "name": "invalid environment 'SANDBOX'",
+    "env": {
+      "BILLING_ENABLED": "true",
+      "POLAR_ENVIRONMENT": "SANDBOX",
+      "POLAR_ACCESS_TOKEN": "test-only-token",
+      "POLAR_PRODUCT_ID": "test-only-product"
+    },
+    "error": "POLAR_ENVIRONMENT must be sandbox or production"
+  },
+  {
+    "name": "omitted environment",
+    "env": {
+      "BILLING_ENABLED": "true",
+      "POLAR_ACCESS_TOKEN": "test-only-token",
+      "POLAR_PRODUCT_ID": "test-only-product"
+    },
+    "error": "POLAR_ENVIRONMENT must be sandbox or production"
+  },
+  {
+    "name": "blank POLAR_PRODUCT_ID",
+    "env": {
+      "BILLING_ENABLED": "true",
+      "POLAR_ENVIRONMENT": "sandbox",
+      "POLAR_ACCESS_TOKEN": "test-only-token",
+      "POLAR_PRODUCT_ID": " "
+    },
+    "error": "POLAR_PRODUCT_ID is required when BILLING_ENABLED=true"
+  },
+  {
+    "name": "blank POLAR_ACCESS_TOKEN",
+    "env": {
+      "BILLING_ENABLED": "true",
+      "POLAR_ENVIRONMENT": "sandbox",
+      "POLAR_ACCESS_TOKEN": " ",
+      "POLAR_PRODUCT_ID": "test-only-product"
+    },
+    "error": "POLAR_ACCESS_TOKEN is required when BILLING_ENABLED=true"
+  }
+]
