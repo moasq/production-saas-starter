@@ -43,7 +43,10 @@ the original cookie when calling Go. Never expose bridge credentials to browsers
 Roles are scoped to a membership, not a user globally. Admin can manage the
 organization, team and billing; manager and member can view the workspace and
 edit their own profile. The manager role deliberately has no implicit elevation.
-The role-to-permission policy is defined in the auth module and tested. User
+The repository-owned [authorization policy](AUTHORIZATION.md) declares role grants
+once in `next_b2b_starter/lib/auth/rbac.ts`; both Better Auth membership operations
+and the private bridge derive their permissions from it. Go enforces the bridge's
+current explicit grants without a separate role fallback. User
 identity plus current membership plus an explicit action permission is required;
 an admin in one workspace is not an admin in another.
 

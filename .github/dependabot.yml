@@ -3,9 +3,31 @@ updates:
   - package-ecosystem: gomod
     directory: /go-b2b-starter
     schedule: {interval: weekly}
+    open-pull-requests-limit: 5
+    groups:
+      postgres-driver:
+        patterns: ["github.com/jackc/*"]
+        update-types: [minor, patch]
   - package-ecosystem: npm
     directory: /next_b2b_starter
     schedule: {interval: weekly}
+    open-pull-requests-limit: 8
+    versioning-strategy: increase
+    groups:
+      next-react:
+        patterns: [next, eslint-config-next, react, react-dom, "@types/react", "@types/react-dom"]
+        update-types: [minor, patch]
+      radix:
+        patterns: ["@radix-ui/*"]
+        update-types: [minor, patch]
+      better-auth:
+        patterns: [better-auth, "@better-auth/*"]
+        update-types: [minor, patch]
+  - package-ecosystem: npm
+    directory: /tests/browser
+    schedule: {interval: weekly}
+    open-pull-requests-limit: 2
+    versioning-strategy: increase
   - package-ecosystem: docker
     directory: /go-b2b-starter
     schedule: {interval: weekly}

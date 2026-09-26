@@ -8,6 +8,10 @@ app, applies migrations, and serves http://localhost:3000. Create a workspace an
 open its sign-in link in the local inbox at http://localhost:8025. No Stytch or
 Better Auth Cloud account is required.
 
+Linux AMD64 and ARM64 containers use the same setup. See
+[container platforms](docs/CONTAINER_PLATFORMS.md) for native CI coverage,
+Apple Silicon, WSL2 and cross-build limitations.
+
 A repeat run preserves configuration and data. `docker compose down` stops the
 services and keeps volumes; adding `--volumes` erases local data. For a second
 checkout, set a distinct `COMPOSE_PROJECT_NAME`, `HTTP_PORT`, `HTTPS_PORT`, and
