@@ -2,6 +2,7 @@ import "server-only";
 import { getMemberSession } from "@/lib/auth/server";
 import { getServerPermissions } from "@/lib/auth/server-permissions";
 import { getPolarClient } from "./client";
+import { loadPolarConfig } from "./environment";
 import type { PolarPlan } from "./plans";
 export async function fetchProducts(): Promise<{ success: boolean; products?: PolarPlan[]; error?: string }> {
  const session = await getMemberSession();
@@ -10,8 +11,9 @@ export async function fetchProducts(): Promise<{ success: boolean; products?: Po
  try {
   const client = getPolarClient();
   if (!client) return { success: false, error: "Billing is disabled." };
-  const productId = process.env.POLAR_PRODUCT_ID;
-  if (!productId) return { success: false, error: "Billing requires POLAR_PRODUCT_ID." };
+  const config = loadPolarConfig();
+  if (!config.enabled) return { success: false, error: "Billing is disabled." };
+  const productId = config.productId;
   const selected = await client.products.get({ id: productId });
   const products: PolarPlan[] = [];
   for (const product of [selected]) {

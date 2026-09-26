@@ -3,6 +3,7 @@ import { getMemberSession } from "@/lib/auth/server";
 import { getServerPermissions } from "@/lib/auth/server-permissions";
 import { getBaseUrl } from "@/lib/auth/urls";
 import { getPolarClient } from "@/lib/polar/client";
+import { loadPolarConfig } from "@/lib/polar/environment";
 import { fetchProducts } from "@/lib/polar/server-products";
 import { resolveCurrentSubscription } from "@/lib/polar/current-subscription";
 import { checkoutUnavailableReason } from "@/lib/polar/subscription-policy";
@@ -16,7 +17,8 @@ export async function createCheckout(productId: string): Promise<ActionResult<{ 
  try {
   const client = getPolarClient();
   if (!client) return createActionError("Billing is disabled.");
-  if (!process.env.POLAR_PRODUCT_ID || productId !== process.env.POLAR_PRODUCT_ID) return createActionError("Select an available plan.");
+  const config = loadPolarConfig();
+  if (!config.enabled || productId !== config.productId) return createActionError("Select an available plan.");
   const state = await resolveCurrentSubscription();
   const unavailableReason = checkoutUnavailableReason(state);
   if (unavailableReason) return createActionError(unavailableReason);

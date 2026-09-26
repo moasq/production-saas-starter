@@ -18,3 +18,4 @@ jobs:
         with:
           node-version: '24.21.0'
       - run: node --test next_b2b_starter/scripts/check-providers.test.mjs
+      - run: node --test scripts/billing-environment.test.mjs

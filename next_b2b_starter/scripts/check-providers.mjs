@@ -1,3 +1,4 @@
+import { loadPolarConfig } from "../lib/polar/environment.ts";
 import { execFileSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,7 +10,7 @@ const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // checkout, payment, customer or subscription is created by this command.
 export async function checkProviders(env, selected = [], dependencies = {}) {
   const smtp = { provider: "smtp", operation: "connection_and_authentication", state: "not_configured", environment: "external", detail: "SMTP configuration is incomplete." };
-  const polarEnvironment = env.POLAR_ENVIRONMENT || "sandbox";
+  const polarEnvironment = env.POLAR_ENVIRONMENT?.trim();
   const polar = { provider: "polar", operation: "read_recurring_product", state: "not_configured", environment: ["sandbox", "production"].includes(polarEnvironment) ? polarEnvironment : "invalid", detail: "Optional billing is disabled or incomplete." };
   const checks = [smtp, polar];
   if (["mailpit", "localhost", "127.0.0.1", "::1"].includes(env.SMTP_HOST)) smtp.environment = "local";
@@ -43,8 +44,12 @@ export async function checkProviders(env, selected = [], dependencies = {}) {
       }
     }
   }
-  if (env.BILLING_ENABLED === "true" && env.POLAR_ACCESS_TOKEN && env.POLAR_PRODUCT_ID) {
-    if (!["sandbox", "production"].includes(polar.environment) || !uuid.test(env.POLAR_PRODUCT_ID)) {
+  let polarConfig;
+  try { polarConfig = loadPolarConfig(env); } catch {
+    Object.assign(polar, { state: "failed", detail: "Invalid or incomplete billing configuration. Check BILLING_ENABLED, POLAR_ENVIRONMENT, POLAR_PRODUCT_ID and POLAR_ACCESS_TOKEN." });
+  }
+  if (polarConfig?.enabled) {
+    if (!["sandbox", "production"].includes(polar.environment) || !uuid.test(polarConfig.productId)) {
       Object.assign(polar, { state: "failed", detail: "Invalid Polar environment or product ID format." });
     } else {
       Object.assign(polar, { state: "configured", detail: "Product access and payment lifecycle not verified." });
@@ -53,13 +58,13 @@ export async function checkProviders(env, selected = [], dependencies = {}) {
           Object.assign(polar, { state: "failed", detail: "This check only permits Polar sandbox; production was not contacted." });
         } else {
           try {
-            const response = await (dependencies.fetch || fetch)(`https://sandbox-api.polar.sh/v1/products/${env.POLAR_PRODUCT_ID}`, {
-              headers: { Authorization: `Bearer ${env.POLAR_ACCESS_TOKEN}`, "Polar-Version": "2026-04" },
+            const response = await (dependencies.fetch || fetch)(`https://sandbox-api.polar.sh/v1/products/${polarConfig.productId}`, {
+              headers: { Authorization: `Bearer ${polarConfig.accessToken}`, "Polar-Version": "2026-04" },
               redirect: "error", signal: AbortSignal.timeout(10000),
             });
             if (!response.ok) throw new Error("Provider rejected product read");
             const product = await response.json();
-            if (product.id !== env.POLAR_PRODUCT_ID || product.is_archived !== false || product.is_recurring !== true) throw new Error("Expected active recurring product");
+            if (product.id !== polarConfig.productId || product.is_archived !== false || product.is_recurring !== true) throw new Error("Expected active recurring product");
             Object.assign(polar, { state: "verified", detail: "Sandbox token can read the configured active recurring product; payments/portal are NOT verified." });
           } catch {
             Object.assign(polar, { state: "failed", detail: "Sandbox product read failed or returned an incompatible product. Inspect provider diagnostics privately." });
