@@ -1,7 +1,7 @@
 # AI-assisted development
 
-The starter includes four coding roles and four focused skills. They guide work
-on Go, Next.js, auth security, and PR review without adding a service or dependency to the app.
+The starter includes five coding roles and six focused skills. They guide work
+on Go, Next.js, auth security, PR review, testing, and service connections without adding an app service or dependency.
 Normal Docker setup requires none of these tools. The harness scripts use Node.js
 22.18+ with its standard library; the project's Node 24 development runtime works.
 
@@ -14,10 +14,13 @@ only after reviewing it. Ask for a bounded change, for example:
 - “Use frontend-builder to fix invitation delivery feedback and keyboard focus.”
 - “Use auth-reviewer to inspect this session change without editing files.”
 - “Use code-reviewer and the pr-review skill to review this PR before merging.”
+- “Use quality-engineer to test signup and tenant switching with local synthetic users.”
 
 Roles inherit the caller's model. Both reviewers declare a read-only Codex sandbox
-default and a Claude tool allowlist without shell or write tools. Live parent-session
-permission overrides can supersede Codex defaults. Implementation roles use
+default, explicit project MCP restrictions, and a Claude tool allowlist without shell or write tools. Live parent-session
+permission overrides can supersede Codex defaults. Generated MCP restrictions cover
+this catalog; inspect unrelated inherited host/plugin tools before delegating a
+read-only review. Implementation roles use
 the host's existing approval policy; the harness never disables it. Dispatch is
 optional. A host without native roles can read the corresponding canonical brief
 and follow it in the main conversation. No parallel workers start automatically.
@@ -25,9 +28,9 @@ and follow it in the main conversation. No parallel workers start automatically.
 | Source | Purpose | Host delivery |
 | --- | --- | --- |
 | `AGENTS.md` | Repository rules | Codex reads directly; `CLAUDE.md` imports it |
-| `.agents/skills/*/SKILL.md` | Go, Next.js, auth, PR review procedures | Codex discovers directly; Claude receives generated copies |
+| `.agents/skills/*/SKILL.md` | Focused coding and integration procedures | Codex discovers directly; Claude receives generated copies |
 | `.agents/agents/*.md` | Bounded role input/process/output | Generated `.codex/agents/*.toml` and `.claude/agents/*.md` |
-| `.mcp.json` | One official documentation server | Claude reads directly; `.codex/config.toml` is generated |
+| `.agents/tools.json` | Tool catalog, exact executable pins, enabled selection | Generates `.mcp.json`, `.codex/config.toml`, and `.cursor/mcp.json` |
 | `.agents/sources.json` | Source revisions, hashes, adaptations | Validated by the harness script |
 
 Generated adapter directories belong to this harness. Edit canonical sources,
@@ -36,13 +39,15 @@ then run from the repository root:
 ```sh
 node scripts/harness.mjs sync
 node scripts/harness.mjs check
-node --test scripts/harness.test.mjs
+node --test scripts/harness.test.mjs scripts/mcp-probe.test.mjs
 ```
 
 `check` is offline and does not write files. CI runs the same structural and
 behavior checks. Paths are relative to the script, so invoking it by its absolute
 path from another directory works. No command modifies a global agent config,
-installs packages, changes permissions, or starts the application.
+installs packages, changes permissions, or starts the application. Tool startup and
+the opt-in MCP probes can fetch pinned npm executables. See [Tools and integrations](AI_TOOLS.md)
+for local developer tools, optional provider connections, and verification boundaries.
 
 ## Better Auth's own skills and MCP
 
@@ -109,10 +114,12 @@ plugin, agent authentication, or any AI product feature.
 
 ## Evidence and provenance
 
-The authored skills adapt Agentic Ship's canonical-source ownership, bounded
-handoffs, secret boundaries, and honest verification principles. The inspected
+The authored skills and tool catalog adapt Agentic Ship's canonical-source ownership,
+bounded handoffs, developer integrations, secret boundaries, and verification principles. The inspected
 commit and paths are in `.agents/sources.json`. No Convex implementation or toolkit
-engine was copied. New harness files use this repository's MIT license.
+engine was copied. Tool configuration provenance is also recorded in `.agents/tools.json`;
+the upstream MIT notice is retained in `.agents/licenses/agentic-ship.txt`.
+New harness files use this repository's MIT license.
 
 Host schema references: [Codex subagents](https://developers.openai.com/codex/subagents/),
 [Codex MCP](https://developers.openai.com/codex/mcp/),

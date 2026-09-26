@@ -35,6 +35,8 @@ Thumbs.db
 !/.claude/skills/
 !/.claude/skills/**
 /.agents/cache/
+# Browser tool evidence may contain local session or application data.
+**/.playwright-mcp/
 
 # --- Logs ---
 *.log

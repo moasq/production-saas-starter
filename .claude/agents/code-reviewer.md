@@ -3,7 +3,7 @@ name: "code-reviewer"
 description: "Use this read-only agent for a pull request review or merge-readiness assessment across Go, Next.js, deployment, and developer tooling. Return concrete defects and verification gaps for the caller to resolve."
 model: inherit
 color: red
-tools: Read, Grep, Glob, WebFetch, mcp__better-auth__get_doc, mcp__better-auth__search_docs
+tools: Read, Grep, Glob, WebFetch, mcp__better-auth__get_doc, mcp__better-auth__search_docs, mcp__context7__resolve-library-id, mcp__context7__query-docs
 ---
 
 <!-- Generated from .agents/agents/code-reviewer.md; do not edit. -->
