@@ -1,5 +1,9 @@
 # Verification — 25 September 2026
 
+This is historical local evidence for the Better Auth migration, not a current
+deployment readiness certificate. Use the [provider verification procedure](PROVIDER_VERIFICATION.md)
+to record current per-operation SMTP and optional Polar evidence for a release.
+
 This revision implements issue #64 with self-hosted Better Auth 1.7.6, Next.js
 16.3.6, Go 1.27.1 and PostgreSQL 17.11. Verification uses disposable local tenants
 and a captured SMTP inbox. No production identity system or customer data was

@@ -68,7 +68,11 @@ jobs:
           cache: pnpm
           cache-dependency-path: next_b2b_starter/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-      - run: pnpm api:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build
+      - run: pnpm api:check && pnpm lint && pnpm typecheck && pnpm test
+      - name: Check public secret names and production artifacts
+        run: |
+          node --test scripts/check-public-secrets.test.mjs
+          node scripts/check-public-secrets.mjs --build
       - run: pnpm audit --prod --audit-level=high
       - name: Verify legacy auth import on disposable databases
         run: node scripts/test-legacy-import.mjs
@@ -82,10 +86,14 @@ jobs:
       - run: ./setup.sh
         env:
           COMPOSE_PROJECT_NAME: starter-ci
+          POLAR_ACCESS_TOKEN: starter_synthetic_secret_DO_NOT_SHIP_39_2026
+          SMTP_PASSWORD: starter_synthetic_secret_DO_NOT_SHIP_39_2026
       - run: ./scripts/smoke.sh
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24.21.0'
+      - name: Check frontend image configuration and build history
+        run: node next_b2b_starter/scripts/check-public-secrets.mjs --image starter-ci-frontend
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
         with:
           version: 10.32.1
