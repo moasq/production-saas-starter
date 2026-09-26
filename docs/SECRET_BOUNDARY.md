@@ -26,4 +26,6 @@ with synthetic credentials in the host environment.
 These are regressions for known configuration/bundling paths, not a general secret
 scanner or proof that runtime responses cannot leak a secret. Inspect changed
 server actions and responses in review. Never use real credentials as test markers
-or upload private environment files or build logs containing them.
+or upload private environment files or build logs containing them. Child build and
+Docker output is captured rather than printed: on failure, reproduce locally with
+synthetic configuration and inspect diagnostics privately.
