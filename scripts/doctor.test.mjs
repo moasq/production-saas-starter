@@ -23,7 +23,6 @@ const fs = require('node:fs'); const args=process.argv.slice(2);
 fs.appendFileSync(process.env.TEST_DOCKER_LOG, JSON.stringify(args)+'\n');
 const bad=() => { console.error(process.env.TEST_SECRET); process.exit(7); };
 if (args[0] === 'info') {
- if (process.env.TEST_DAEMON_IGNORE_TERM) { process.on('SIGTERM',()=>{}); fs.writeFileSync(process.env.TEST_HUNG_PID,String(process.pid)); setInterval(()=>{},1000); return; }
  if (process.env.TEST_DAEMON_FAIL) bad(); process.exit(0);
 }
 if (args[0] === 'context') { console.log('unix:///test/docker.sock'); process.exit(0); }
@@ -100,11 +99,4 @@ test('setup preserves failure exit then recovers without rotating generated secr
 });
 test('unknown setup arguments fail without running Docker or writing config',t=>{
  const f=fixture(t,{configured:false});const result=f.run(['--delete-data']);assert.equal(result.status,2);assert.equal(existsSync(join(f.dir,'.env')),false);assert.deepEqual(f.calls(),[]);
-});
-test('an unresponsive Docker child that ignores TERM is killed after the deadline',t=>{
- const f=fixture(t);const pidFile=join(f.dir,'hung.pid');const started=Date.now();
- const result=f.run(['--doctor'],{DOCTOR_TIMEOUT_SECONDS:'1',TEST_DAEMON_IGNORE_TERM:'1',TEST_HUNG_PID:pidFile});
- clean(result);assert.equal(result.status,1,result.stdout);assert.match(result.stdout,/daemon is unavailable/);
- assert.ok(Date.now()-started<10000,'doctor must not wait indefinitely after TERM');
- const pid=Number(readFileSync(pidFile,'utf8'));assert.throws(()=>process.kill(pid,0),{code:'ESRCH'});
 });

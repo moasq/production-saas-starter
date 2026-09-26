@@ -37,9 +37,9 @@ The doctor reads configuration and performs read-only SQL. It never starts or
 stops services, runs migrations, changes credentials, sends email, or calls Polar.
 Values and raw Docker/database errors are suppressed. A missing `.env` or an
 unstarted stack produces a failure with the next step; run `./setup.sh` to apply
-setup, then rerun the doctor. Each Docker read has a 20-second deadline followed
-by a one-second termination grace period. Set `DOCTOR_TIMEOUT_SECONDS` (1–120)
-in the shell when a slow daemon needs a different deadline.
+setup, then rerun the doctor. Commands use Docker's normal lifecycle. If Docker
+itself becomes unresponsive, cancel the diagnostic with Ctrl-C and recover Docker
+Desktop; the doctor does not scan or terminate host processes.
 
 Exit status is `0` when these diagnostics pass, `1` for a detected problem, and
 `2` when a check cannot be completed. Install `lsof` or `iproute2` (`ss`) to inspect

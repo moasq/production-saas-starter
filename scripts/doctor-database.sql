@@ -16,7 +16,7 @@ SELECT 'database_roles=' || CASE WHEN
   AND NOT EXISTS (
     SELECT 1 FROM pg_roles r WHERE (r.rolsuper OR r.rolbypassrls OR r.rolcreaterole OR r.oid IN (
       SELECT relowner FROM pg_class WHERE oid IN ('organizations.organizations'::regclass,'organizations.accounts'::regclass)
-    )) AND pg_has_role('starter_app',r.oid,'MEMBER')
+    )) AND (pg_has_role('starter_app',r.oid,'MEMBER') OR pg_has_role('starter_auth',r.oid,'MEMBER'))
   ) THEN 'ok' ELSE 'failed' END;
 SELECT 'tenant_rls=' || CASE WHEN
   (SELECT count(*) = 2 AND bool_and(relrowsecurity AND relforcerowsecurity) FROM pg_class

@@ -4,39 +4,8 @@ set -eu
 cd "$(dirname "$0")/.."
 doctor_failures=0
 doctor_incomplete=0
-doctor_timeout=${DOCTOR_TIMEOUT_SECONDS:-20}
-if ! printf '%s\n' "$doctor_timeout" | awk '/^[0-9]+$/ && $0 >= 1 && $0 <= 120 {valid=1} END {exit !valid}'; then
-  echo 'FAIL DOCTOR_TIMEOUT_SECONDS must be an integer from 1 to 120.' >&2
-  exit 1
-fi
-# Bound each read-only Docker call, including an unresponsive daemon. The
-# watchdog owns and cleans up its sleep process; no global processes are killed.
-docker() (
-  # POSIX shells may replace stdin with /dev/null for asynchronous commands.
-  # Save it before forking so Compose model input and SQL reach Docker intact.
-  exec 3<&0
-  command docker "$@" <&3 3<&- 2>/dev/null &
-  doctor_child=$!
-  exec 3<&-
-  (
-    sleep "$doctor_timeout" & doctor_timer=$!
-    trap '[ -z "$doctor_timer" ] || kill "$doctor_timer" 2>/dev/null || true' 0
-    trap 'exit 0' TERM INT
-    wait "$doctor_timer" || exit 0
-    doctor_timer=''
-    kill -TERM "$doctor_child" 2>/dev/null || true
-    sleep 1 & doctor_timer=$!
-    wait "$doctor_timer" || exit 0
-    doctor_timer=''
-    kill -KILL "$doctor_child" 2>/dev/null || true
-  ) >/dev/null 2>&1 &
-  doctor_watchdog=$!
-  doctor_status=0
-  wait "$doctor_child" || doctor_status=$?
-  kill -TERM "$doctor_watchdog" 2>/dev/null || true
-  wait "$doctor_watchdog" 2>/dev/null || true
-  exit "$doctor_status"
-)
+# Use Docker's normal command lifecycle. Diagnostics must not inspect or signal
+# host process trees. An unresponsive Docker CLI can be cancelled with Ctrl-C.
 pass() { printf 'PASS %s\n' "$1"; }
 fail() { printf 'FAIL %s\n' "$1"; doctor_failures=$((doctor_failures + 1)); }
 warn() { printf 'WARN %s\n' "$1"; }
@@ -55,8 +24,7 @@ case "$(uname -s)" in
   Darwin|Linux) pass 'Supported POSIX host (Linux, macOS, or Linux inside WSL2).' ;;
   *) fail 'Use Linux/macOS, or WSL2 with Docker Desktop integration; native Windows shells are unsupported.'; finish ;;
 esac
-# command -v would see the wrapper above, so resolve the executable in a fresh shell.
-if ! sh -c 'command -v docker' >/dev/null 2>&1; then fail 'Install Docker with the Compose plugin.'; finish; fi
+if ! command -v docker >/dev/null 2>&1; then fail 'Install Docker with the Compose plugin.'; finish; fi
 if ! docker compose version >/dev/null 2>&1; then fail 'Install Docker Compose v2 or newer with config, up --wait, and ps --all support.'; finish; fi
 pass 'Docker CLI and Compose are available; local Go, Node and pnpm are optional.'
 if ! docker info >/dev/null 2>&1; then fail 'Docker daemon is unavailable. Start Docker/Desktop and enable WSL integration if applicable.'; finish; fi

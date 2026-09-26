@@ -50,5 +50,21 @@ jobs:
           ./setup.sh
           ./setup.sh --doctor
           cmp .env /tmp/doctor-env-before
+      - name: Reject elevated membership for either runtime database role
+        run: |
+          for runtime_role in starter_app starter_auth; do
+            docker compose exec -T postgres sh -c 'exec psql --no-psqlrc -X -v ON_ERROR_STOP=1 -v runtime_role="$1" -U "$POSTGRES_USER" -d "$POSTGRES_DB"' sh "$runtime_role" <<'SQL'
+          SELECT format('GRANT %I TO %I', current_user, :'runtime_role') \gexec
+          SQL
+            if ./setup.sh --doctor > /tmp/doctor-elevated-role; then
+              echo "Doctor incorrectly accepted elevated membership for $runtime_role." >&2
+              exit 1
+            fi
+            awk '/^FAIL database_roles / {found=1} END {exit !found}' /tmp/doctor-elevated-role
+            docker compose exec -T postgres sh -c 'exec psql --no-psqlrc -X -v ON_ERROR_STOP=1 -v runtime_role="$1" -U "$POSTGRES_USER" -d "$POSTGRES_DB"' sh "$runtime_role" <<'SQL'
+          SELECT format('REVOKE %I FROM %I', current_user, :'runtime_role') \gexec
+          SQL
+            ./setup.sh --doctor
+          done
       - if: always()
         run: docker compose down --volumes
