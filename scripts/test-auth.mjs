@@ -132,6 +132,15 @@ await ownerA.client.ok(`/api/auth/members/${memberA.member_id}`, 'PUT', {role:'m
 assert.deepEqual((await member.client.ok('/api/auth/profile/me')).data.roles, ['manager']);
 assert.equal((await member.client.request('/api/auth/members', 'POST', {email:'nobody@example.test',name:'No',role_slug:'admin'})).status,403);
 check('role changes take effect on existing session; manager cannot grant permissions');
+await ownerA.client.ok(`/api/auth/members/${memberA.member_id}`, 'PUT', {role:'admin'});
+await member.client.ok('/api/auth/members');
+assert.ok((await member.client.ok('/api/auth/profile/me')).data.permissions.includes('org:manage'));
+await ownerA.client.ok(`/api/auth/members/${memberA.member_id}`, 'PUT', {role:'manager'});
+assert.deepEqual((await member.client.ok('/api/auth/profile/me')).data.permissions, ['org:view']);
+assert.equal((await member.client.request('/api/auth/members')).status, 403);
+assert.equal((await member.client.request('/api/organizations', 'PUT', {name:'Revoked administrator'})).status, 403);
+assert.equal((await member.client.request(`/api/auth/members/${memberA.member_id}`, 'PUT', {role:'admin'})).status, 403);
+check('administrator demotion revokes management on the same session and prevents self-promotion');
 const invitationB = await invite(ownerB.client, member, 'member');
 await accept(member, invitationB.invitationId);
 const memberships = await member.client.ok('/api/workspaces');

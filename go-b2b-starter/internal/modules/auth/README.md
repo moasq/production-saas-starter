@@ -1,7 +1,12 @@
 # Authentication and tenant boundaries
 
-Next.js owns self-hosted Better Auth users, sessions, organization memberships and
-canonical admin/manager/member policy. Go sends the raw Cookie to
+Next.js owns self-hosted Better Auth users, sessions and organization memberships.
+The application owns the canonical admin/manager/member policy in
+`next_b2b_starter/lib/auth/rbac.ts`: one declaration derives both private bridge
+permissions and Better Auth operation grants. Go enforces the explicit grants;
+there is no external provider policy lookup or independent standard-role map.
+See [Authorization policy](../../../../docs/AUTHORIZATION.md) for policy changes
+and revocation limits. Go sends the raw Cookie to
 `POST /internal/auth/session`, authenticated with `X-Internal-Auth-Secret`.
 The bridge reads live session and membership state on every request. There is no
 cookie cache, bearer/JWT alternative or role-name fallback. Expiry, logout, member

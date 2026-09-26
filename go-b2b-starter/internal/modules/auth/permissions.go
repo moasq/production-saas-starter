@@ -2,7 +2,7 @@ package auth
 
 import "strings"
 
-// Permission is a provider-verified resource:action grant, such as org:manage.
+// Permission is an application resource:action grant from the verified auth bridge.
 type Permission string
 
 func NewPermission(resource, action string) Permission { return Permission(resource + ":" + action) }
