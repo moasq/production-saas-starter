@@ -1,6 +1,6 @@
-GO_VERSION := $(shell sed -n 's/^go //p' go.mod)
-GO_IMAGE := golang:$(GO_VERSION)-alpine
-SQLC_IMAGE := sqlc/sqlc:1.31.1
+# Reuse the exact multi-platform compiler image from the production Dockerfile.
+GO_IMAGE := $(shell awk '/^FROM / { for (i=2;i<=NF;i++) if ($$i ~ /^golang:/) print $$i }' Dockerfile)
+SQLC_IMAGE := sqlc/sqlc:1.31.1@sha256:70f53171d27b2424e9358869975455a6e955a5aa8e58a998a270a6e34e525537
 
 .PHONY: test test-race test-db vet fmt-check build run sqlc sqlc-check
 
