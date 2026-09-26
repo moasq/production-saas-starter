@@ -12,6 +12,13 @@ use a private local Compose override when running apps outside containers. Run
 the schema jobs before starting `go run ./cmd/api` and `pnpm dev`. Never use the
 migration owner's credentials for the running Go API.
 
+The frontend container uses Node 26.9.0 (Current). CI checks the frontend on both
+Node 24.21.0 LTS and Node 26.9.0; Node 24 LTS remains the recommended local
+development version. The container installs the pinned pnpm version directly
+because [Node no longer bundles Corepack from version 25](https://nodejs.org/download/release/v25.8.0/docs/api/corepack.html).
+Node 26 is not yet LTS; consider [Node's release guidance](https://nodejs.org/en/about/previous-releases)
+when selecting a production runtime.
+
 ## Verification
 
 ```sh
