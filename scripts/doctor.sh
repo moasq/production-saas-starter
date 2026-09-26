@@ -12,8 +12,12 @@ fi
 # Bound each read-only Docker call, including an unresponsive daemon. The
 # watchdog owns and cleans up its sleep process; no global processes are killed.
 docker() (
-  command docker "$@" <&0 2>/dev/null &
+  # POSIX shells may replace stdin with /dev/null for asynchronous commands.
+  # Save it before forking so Compose model input and SQL reach Docker intact.
+  exec 3<&0
+  command docker "$@" <&3 3<&- 2>/dev/null &
   doctor_child=$!
+  exec 3<&-
   (
     sleep "$doctor_timeout" & doctor_timer=$!
     trap '[ -z "$doctor_timer" ] || kill "$doctor_timer" 2>/dev/null || true' 0
@@ -85,7 +89,12 @@ fi
 doctor_url=$(value APP_BASE_URL)
 case "$doctor_url" in
   http://*|https://*)
-    if ! printf '%s\n' "$doctor_url" | awk '/^https?:\/\/[A-Za-z0-9.:[\]-]+\/?$/ { valid=1 } END { exit !valid }'; then fail 'APP_BASE_URL must be an HTTP(S) origin without credentials, path, query or fragment.'; fi ;;
+    if ! printf '%s\n' "$doctor_url" | awk '
+      /^https?:\/\/([A-Za-z0-9.-]+|\[[A-Fa-f0-9:]+\])(:[0-9]+)?\/?$/ {
+        origin=$0; sub(/\/$/,"",origin)
+        if (origin ~ /:[0-9]+$/) { sub(/^.*:/,"",origin); if (origin+0 < 1 || origin+0 > 65535) next }
+        valid=1
+      } END { exit !valid }'; then fail 'APP_BASE_URL must be an HTTP(S) origin without credentials, path, query or fragment, using a valid port.'; fi ;;
   *) fail 'Set APP_BASE_URL to the public HTTP(S) origin.' ;;
 esac
 doctor_profiles=$(value COMPOSE_PROFILES)

@@ -38,6 +38,7 @@ if (args[0] === 'inspect') {
 if (args[0] !== 'compose') bad();
 if (args.includes('version')) process.exit(0);
 if (args.includes('--environment')) {
+ if (!fs.readFileSync(0,'utf8').includes('image: scratch')) bad();
  const env=Object.fromEntries(fs.readFileSync('.env','utf8').split('\n').filter(x=>/^[A-Z_]+=/.test(x)).map(x=>[x.slice(0,x.indexOf('=')),x.slice(x.indexOf('=')+1)]));
  for (const [k,v] of Object.entries({...env,...JSON.parse(process.env.TEST_ENV_OVERRIDES || '{}')})) console.log(k+'='+v);
  process.exit(0);
@@ -79,7 +80,7 @@ test('daemon and invalid Compose errors fail without leaking raw output',t=>{
  for(const key of ['TEST_DAEMON_FAIL','TEST_CONFIG_FAIL','TEST_DATABASE_FAIL']){const f=fixture(t);const r=f.run(['--doctor'],{[key]:'1'});clean(r);assert.equal(r.status,1,r.stdout);}
 });
 test('configuration mistakes and optional billing are diagnosed by name',t=>{
- for(const env of [{BETTER_AUTH_SECRET:'short'},{SMTP_HOST:'mailpit',COMPOSE_PROFILES:''},{APP_BASE_URL:'https://user:password@example.com'},{BILLING_ENABLED:'true',POLAR_ACCESS_TOKEN:'',POLAR_PRODUCT_ID:''},{SMTP_SECURE:'wrong'},{HTTP_PORT:'not-a-port'},{APP_ENV:'production'}]){
+ for(const env of [{BETTER_AUTH_SECRET:'short'},{SMTP_HOST:'mailpit',COMPOSE_PROFILES:''},{APP_BASE_URL:'https://user:password@example.com'},{APP_BASE_URL:'http://localhost:99999'},{BILLING_ENABLED:'true',POLAR_ACCESS_TOKEN:'',POLAR_PRODUCT_ID:''},{SMTP_SECURE:'wrong'},{HTTP_PORT:'not-a-port'},{APP_ENV:'production'}]){
   const f=fixture(t);const r=f.run(['--doctor'],{TEST_ENV_OVERRIDES:JSON.stringify(env)});clean(r);assert.equal(r.status,1,r.stdout);
  }
 });
