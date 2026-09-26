@@ -1,6 +1,7 @@
 FROM node:26.9.0-alpine@sha256:dbaa92e5758cbbcf85d65d5403fdb530fe3442cbe8c6dbfb7ef23365450d5070 AS build
 WORKDIR /app
-RUN corepack enable && corepack prepare pnpm@10.32.1 --activate
+# Node 25+ no longer bundles Corepack. Keep the package manager pinned.
+RUN npm install --global pnpm@10.32.1
 COPY package.json pnpm-lock.yaml .npmrc* ./
 RUN pnpm install --frozen-lockfile
 COPY . .
