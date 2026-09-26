@@ -1,0 +1,142 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "repository": "https://github.com/moasq/agentic-ship",
+    "revision": "8fbf56f3d17defd0544d1d5ce328ab3c46851bf5",
+    "paths": [
+      ".mcp.json",
+      "skills.lock.json",
+      ".agents/connections/providers.json"
+    ],
+    "license": "MIT"
+  },
+  "verifiedAt": "2026-09-25",
+  "enabled": [
+    "better-auth",
+    "context7",
+    "next-devtools",
+    "shadcn",
+    "playwright"
+  ],
+  "servers": {
+    "better-auth": {
+      "purpose": "Versioned Better Auth documentation",
+      "kind": "documentation",
+      "url": "https://mcp.better-auth.com/mcp",
+      "documentation": "https://better-auth.com/docs/ai-resources/mcp",
+      "tools": [
+        "get_doc",
+        "search_docs"
+      ],
+      "auth": "none"
+    },
+    "context7": {
+      "purpose": "Version-specific library documentation",
+      "kind": "documentation",
+      "package": "@upstash/context7-mcp",
+      "version": "4.1.1",
+      "args": [],
+      "cwd": ".",
+      "documentation": "https://github.com/upstash/context7",
+      "tools": [
+        "resolve-library-id",
+        "query-docs"
+      ],
+      "auth": "none"
+    },
+    "next-devtools": {
+      "purpose": "Inspect local Next.js development errors and routes",
+      "kind": "development",
+      "package": "next-devtools-mcp",
+      "version": "0.4.0",
+      "args": [],
+      "cwd": "next_b2b_starter",
+      "documentation": "https://nextjs.org/docs/app/guides/mcp",
+      "auth": "none",
+      "tools": [
+        "nextjs_docs",
+        "nextjs_index",
+        "nextjs_call"
+      ]
+    },
+    "shadcn": {
+      "purpose": "Discover and inspect UI components in the frontend workspace",
+      "kind": "development",
+      "package": "shadcn",
+      "version": "4.21.0",
+      "args": [
+        "mcp"
+      ],
+      "cwd": "next_b2b_starter",
+      "documentation": "https://ui.shadcn.com/docs/mcp",
+      "auth": "none",
+      "tools": [
+        "get_project_registries",
+        "list_items_in_registries",
+        "search_items_in_registries",
+        "view_items_in_registries",
+        "get_item_examples_from_registries",
+        "get_add_command_for_items",
+        "get_audit_checklist"
+      ]
+    },
+    "magicui": {
+      "purpose": "Optional component and animation discovery",
+      "kind": "development",
+      "package": "@magicuidesign/mcp",
+      "version": "2.0.0",
+      "args": [],
+      "cwd": "next_b2b_starter",
+      "documentation": "https://github.com/magicuidesign/mcp",
+      "auth": "none",
+      "tools": [
+        "listRegistryItems",
+        "searchRegistryItems",
+        "getRegistryItem"
+      ]
+    },
+    "21st": {
+      "purpose": "Optional community component discovery",
+      "kind": "provider",
+      "url": "https://21st.dev/api/mcp",
+      "documentation": "https://21st.dev/mcp",
+      "auth": "host-oauth"
+    },
+    "resend": {
+      "purpose": "Optional email provider administration; runtime still uses SMTP",
+      "kind": "provider",
+      "url": "https://mcp.resend.com/mcp",
+      "documentation": "https://resend.com/docs/mcp-server",
+      "auth": "host-oauth"
+    },
+    "posthog": {
+      "purpose": "Optional analytics administration; no runtime SDK installed",
+      "kind": "provider",
+      "url": "https://mcp.posthog.com/mcp?readonly=true",
+      "documentation": "https://posthog.com/docs/model-context-protocol",
+      "auth": "host-oauth"
+    },
+    "linear": {
+      "purpose": "Optional read-only issue tracking",
+      "kind": "provider",
+      "url": "https://mcp.linear.app/mcp/readonly",
+      "documentation": "https://linear.app/docs/mcp",
+      "auth": "host-oauth"
+    },
+    "playwright": {
+      "purpose": "Isolated browser testing for local synthetic user journeys",
+      "kind": "development",
+      "package": "@playwright/mcp",
+      "version": "0.0.82",
+      "args": [
+        "--isolated",
+        "--headless",
+        "--browser",
+        "chrome"
+      ],
+      "cwd": "next_b2b_starter",
+      "documentation": "https://github.com/microsoft/playwright-mcp",
+      "auth": "none"
+    }
+  }
+}
