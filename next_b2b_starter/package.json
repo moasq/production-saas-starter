@@ -7,7 +7,9 @@
     "lint": "eslint . --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
-    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+    "verify": "pnpm api:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "api:generate": "node scripts/generate-api.mjs",
+    "api:check": "node scripts/generate-api.mjs --check"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -27,6 +29,7 @@
     "lucide-react": "1.48.0",
     "next": "16.3.6",
     "nodemailer": "10.0.10",
+    "openapi-fetch": "0.17.0",
     "pg": "8.23.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
@@ -39,9 +42,12 @@
     "@types/pg": "8.23.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
     "autoprefixer": "10.6.1",
     "eslint": "9.39.4",
     "eslint-config-next": "16.3.6",
+    "openapi-typescript": "7.13.0",
     "postcss": "8.5.28",
     "sharp": "0.35.4",
     "tailwindcss": "3.4.19",

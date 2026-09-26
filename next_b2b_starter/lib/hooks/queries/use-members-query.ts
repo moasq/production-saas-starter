@@ -34,7 +34,7 @@ export function useMembersQuery(
   return useQuery({
     queryKey: queryKeys.members.list({ organizationId, page, pageSize }),
     queryFn: () =>
-      memberRepository.getMembers({ organizationId, page, pageSize }),
+      memberRepository.getMembers(),
 
     // Only fetch if organizationId is provided and enabled is true
     enabled: Boolean(organizationId) && enabled,
