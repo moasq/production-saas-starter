@@ -35,10 +35,13 @@ func (s *HTTPServer) setupMiddleware() {
 
 func (s *HTTPServer) requestLoggingMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Skip health check logging in production
-		if s.config.IsProd() && c.Request.URL.Path == "/health" {
-			c.Next()
-			return
+		// Keep recurring probes out of production request logs.
+		if s.config.IsProd() {
+			switch c.Request.URL.Path {
+			case "/health", "/api/health", "/livez", "/api/livez", "/readyz", "/api/readyz":
+				c.Next()
+				return
+			}
 		}
 
 		start := time.Now()

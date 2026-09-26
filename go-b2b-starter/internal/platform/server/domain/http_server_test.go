@@ -33,7 +33,7 @@ func testServer() (*HTTPServer, *gin.Engine, *capturedLogger) {
 		AllowedOrigins:     []string{"http://localhost:3000"},
 		MaxRequestSize:     1024,
 		RateLimitPerSecond: 100,
-	}, router, log, nil).(*HTTPServer)
+	}, router, log, nil, nil).(*HTTPServer)
 	return srv, router, log
 }
 

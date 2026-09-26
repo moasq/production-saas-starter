@@ -3,12 +3,18 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/jackc/pgx/v5"
 )
 
 const SchemaVersion = 11
 
-func ValidateRuntime(ctx context.Context, pool *pgxpool.Pool) error {
+// RuntimeQuerier is the read-only database boundary used at startup and readiness.
+type RuntimeQuerier interface {
+	QueryRow(context.Context, string, ...any) pgx.Row
+}
+
+func ValidateRuntime(ctx context.Context, pool RuntimeQuerier) error {
 	var elevated bool
 	if err := pool.QueryRow(ctx, `SELECT EXISTS (
   SELECT 1 FROM pg_roles r WHERE

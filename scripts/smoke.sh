@@ -3,7 +3,7 @@ set -eu
 starter_url=${STARTER_URL:-http://localhost:3000}
 curl --fail --silent --show-error "$starter_url/api/health" >/dev/null
 curl --fail --silent --show-error "$starter_url/health" >/dev/null
-for path in / /auth /signup; do
+for path in / /auth /signup /livez /readyz; do
   curl --fail --silent --show-error "$starter_url$path" >/dev/null
 done
 # A fresh deployment must never invent an authenticated organization.

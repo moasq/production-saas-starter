@@ -1,0 +1,18 @@
+name: Deployment recovery
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: recovery-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  readiness-and-restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Rehearse readiness failures, migration refusal and separate-volume restore
+        run: ./scripts/test-recovery.sh

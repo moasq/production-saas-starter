@@ -1,7 +1,11 @@
 package cmd
 
 import (
+	"context"
+
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/moasq/go-b2b-starter/internal/db/postgres"
 	"github.com/moasq/go-b2b-starter/internal/modules/auth"
 	"github.com/moasq/go-b2b-starter/internal/platform/server/config"
 	"github.com/moasq/go-b2b-starter/internal/platform/server/domain"
@@ -25,6 +29,9 @@ func SetupDependencies(container *dig.Container) {
 			gin.SetMode(gin.ReleaseMode)
 		}
 		return gin.New()
+	})
+	container.Provide(func(pool *pgxpool.Pool) domain.RuntimeReadiness {
+		return func(ctx context.Context) error { return postgres.ValidateRuntime(ctx, pool) }
 	})
 	container.Provide(domain.NewHTTPServer)
 

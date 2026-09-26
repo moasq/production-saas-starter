@@ -15,8 +15,16 @@ import (
 	config "github.com/moasq/go-b2b-starter/internal/platform/server/config"
 )
 
+type readinessDatabase interface {
+	Ping(context.Context) error
+}
+
+// RuntimeReadiness validates the database contract using the request deadline.
+type RuntimeReadiness func(context.Context) error
+
 type HTTPServer struct {
-	database         *pgxpool.Pool
+	database         readinessDatabase
+	runtimeReadiness RuntimeReadiness
 	config           *config.Config
 	router           *gin.Engine
 	logger           logger.Logger
@@ -28,9 +36,11 @@ func NewHTTPServer(
 	router *gin.Engine,
 	log logger.Logger,
 	database *pgxpool.Pool,
+	runtimeReadiness RuntimeReadiness,
 ) Server {
 	server := &HTTPServer{
 		database:         database,
+		runtimeReadiness: runtimeReadiness,
 		config:           config,
 		router:           router,
 		logger:           log,
