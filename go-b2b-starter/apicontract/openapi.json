@@ -1,0 +1,1018 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Starter business API",
+    "version": "1.0.0",
+    "description": "Go-owned tenant/business boundary. Identity, workspace selection and the private Better Auth bridge are separate Next.js contracts. Clients never select a tenant with an API parameter. Server mutations forward the public Origin and request-scoped session cookie."
+  },
+  "servers": [
+    {
+      "url": "/api"
+    }
+  ],
+  "security": [
+    {
+      "sessionCookie": []
+    }
+  ],
+  "paths": {
+    "/auth/profile/me": {
+      "get": {
+        "operationId": "getProfile",
+        "summary": "getProfile",
+        "x-permission": "authenticated membership",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Validation, authentication, authorization or dependency failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied. CORS middleware can reject before the JSON handler and return an empty body.",
+            "x-empty-body": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateProfile",
+        "summary": "updateProfile",
+        "x-permission": "authenticated membership",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Success"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Validation, authentication, authorization or dependency failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied. CORS middleware can reject before the JSON handler and return an empty body.",
+            "x-empty-body": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NameInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/members": {
+      "get": {
+        "operationId": "listMembers",
+        "summary": "listMembers",
+        "x-permission": "org:manage",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberListResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Validation, authentication, authorization or dependency failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied. CORS middleware can reject before the JSON handler and return an empty body.",
+            "x-empty-body": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "inviteMember",
+        "summary": "inviteMember",
+        "x-permission": "org:manage",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Validation, authentication, authorization or dependency failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied. CORS middleware can reject before the JSON handler and return an empty body.",
+            "x-empty-body": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/members/{member_id}": {
+      "put": {
+        "operationId": "updateMemberRole",
+        "summary": "updateMemberRole",
+        "x-permission": "org:manage",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Success"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Validation, authentication, authorization or dependency failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied. CORS middleware can reject before the JSON handler and return an empty body.",
+            "x-empty-body": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleInput"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "member_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "description": "Membership ID or invitation:<id>; scoped to the verified active organization."
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "removeMember",
+        "summary": "removeMember",
+        "x-permission": "org:manage",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Success"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Validation, authentication, authorization or dependency failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Successful deletion without a response body (supported by the client)."
+          },
+          "403": {
+            "description": "Permission denied. CORS middleware can reject before the JSON handler and return an empty body.",
+            "x-empty-body": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "member_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "description": "Membership ID or invitation:<id>; scoped to the verified active organization."
+          }
+        ]
+      }
+    },
+    "/auth/members/{member_id}/resend-invitation": {
+      "post": {
+        "operationId": "resendInvitation",
+        "summary": "resendInvitation",
+        "x-permission": "org:manage",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Validation, authentication, authorization or dependency failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied. CORS middleware can reject before the JSON handler and return an empty body.",
+            "x-empty-body": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "member_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "description": "Membership ID or invitation:<id>; scoped to the verified active organization."
+          }
+        ]
+      }
+    },
+    "/organizations": {
+      "get": {
+        "operationId": "getOrganization",
+        "summary": "getOrganization",
+        "x-permission": "org:view",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Validation, authentication, authorization or dependency failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied. CORS middleware can reject before the JSON handler and return an empty body.",
+            "x-empty-body": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateOrganization",
+        "summary": "updateOrganization",
+        "x-permission": "org:manage",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Validation, authentication, authorization or dependency failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied. CORS middleware can reject before the JSON handler and return an empty body.",
+            "x-empty-body": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NameInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subscriptions/status": {
+      "get": {
+        "operationId": "getBillingStatus",
+        "summary": "getBillingStatus",
+        "x-permission": "org:view",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Validation, authentication, authorization or dependency failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied. CORS middleware can reject before the JSON handler and return an empty body.",
+            "x-empty-body": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subscriptions/verify-payment": {
+      "post": {
+        "operationId": "verifyPayment",
+        "summary": "verifyPayment",
+        "x-permission": "org:manage",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Validation, authentication, authorization or dependency failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied. CORS middleware can reject before the JSON handler and return an empty body.",
+            "x-empty-body": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyPaymentInput"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "better-auth.session_token",
+        "description": "HttpOnly session cookie; production uses the secure cookie prefix. Go verifies current membership through the private auth bridge."
+      }
+    },
+    "schemas": {
+      "Role": {
+        "type": "string",
+        "enum": [
+          "admin",
+          "manager",
+          "member"
+        ]
+      },
+      "Success": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "const": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success"
+        ]
+      },
+      "Error": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string"
+              },
+              "success": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "error"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string"
+              },
+              "success": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "message"
+            ]
+          }
+        ]
+      },
+      "NameInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "RoleInput": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      },
+      "InviteInput": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "role_slug": {
+            "$ref": "#/components/schemas/Role"
+          }
+        },
+        "required": [
+          "email",
+          "name"
+        ]
+      },
+      "VerifyPaymentInput": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "session_id"
+        ]
+      },
+      "Organization": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug"
+        ]
+      },
+      "ProfileOrganization": {
+        "type": "object",
+        "properties": {
+          "organization_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "const": "active"
+          }
+        },
+        "required": [
+          "organization_id",
+          "name",
+          "slug",
+          "status"
+        ]
+      },
+      "Profile": {
+        "type": "object",
+        "properties": {
+          "member_id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Role"
+            },
+            "minItems": 1,
+            "maxItems": 1
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "org:view",
+                "org:manage"
+              ]
+            }
+          },
+          "email_verified": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "const": "active"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/ProfileOrganization"
+          },
+          "account_id": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "member_id",
+          "email",
+          "name",
+          "roles",
+          "permissions",
+          "email_verified",
+          "status",
+          "organization",
+          "account_id",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "Member": {
+        "type": "object",
+        "properties": {
+          "member_id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Role"
+            },
+            "minItems": 1,
+            "maxItems": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "pending"
+            ]
+          },
+          "email_verified": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "member_id",
+          "email",
+          "name",
+          "roles",
+          "status",
+          "email_verified",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "MemberList": {
+        "type": "object",
+        "properties": {
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Member"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "members",
+          "total"
+        ]
+      },
+      "InvitationResult": {
+        "type": "object",
+        "properties": {
+          "member_id": {
+            "type": "string"
+          },
+          "invite_sent": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "member_id",
+          "invite_sent"
+        ]
+      },
+      "DeliveryResult": {
+        "type": "object",
+        "properties": {
+          "invite_sent": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "invite_sent"
+        ]
+      },
+      "ProfileResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/Profile"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "OrganizationResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/Organization"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "MemberListResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/MemberList"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "InvitationResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/InvitationResult"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "DeliveryResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/DeliveryResult"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "BillingStatus": {
+        "type": "object",
+        "properties": {
+          "BillingEnabled": {
+            "type": "boolean"
+          },
+          "OrganizationID": {
+            "type": "integer"
+          },
+          "ExternalID": {
+            "type": "string"
+          },
+          "HasActiveSubscription": {
+            "type": "boolean"
+          },
+          "SubscriptionID": {
+            "type": "string"
+          },
+          "SubscriptionStatus": {
+            "type": "string"
+          },
+          "ProductID": {
+            "type": "string"
+          },
+          "CurrentPeriodEnd": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "CancelAtPeriodEnd": {
+            "type": "boolean"
+          },
+          "Reason": {
+            "type": "string"
+          },
+          "CheckedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "BillingEnabled",
+          "OrganizationID",
+          "ExternalID",
+          "HasActiveSubscription",
+          "SubscriptionID",
+          "SubscriptionStatus",
+          "ProductID",
+          "CurrentPeriodEnd",
+          "CancelAtPeriodEnd",
+          "Reason",
+          "CheckedAt"
+        ]
+      }
+    }
+  }
+}

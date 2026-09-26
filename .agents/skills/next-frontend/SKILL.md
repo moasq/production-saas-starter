@@ -10,6 +10,12 @@ Read `AGENTS.md`, then the route and its data repository under
 tokens in `app/globals.css` and `tailwind.config.ts`; preserve the existing design
 unless a redesign is requested. Do not copy a different project's Tailwind version.
 
+Business API types come from `next_b2b_starter/lib/api/generated/schema.ts` through
+the existing repositories. Read `docs/decisions/0001-business-api.md` when changing
+a consumer. Run `pnpm api:check` from the frontend workspace; change the Go-owned
+schema with the backend specialist when the contract is missing or wrong. Never
+repair a mismatch by hand-editing generated types or weakening permission checks.
+
 1. Identify the user journey, backend response contract, and permission needed for
    each action. Get backend-owned contract changes agreed before inventing fields.
 2. Keep presentation separate from API/provider calls. Prefer server components;
@@ -31,9 +37,15 @@ unless a redesign is requested. Do not copy a different project's Tailwind versi
 For visible changes, exercise the actual production build at 390px and 1440px.
 Cover `/`, `/auth`, `/signup`, and the changed dashboard/settings journey, including
 keyboard use and the relevant failure states. Test only supported themes; this
-starter currently has a light UI. Record revision, route, viewport, state, and
-capture time with screenshots. Check rendered response headers using `curl -I`;
-do not infer browser behavior or security headers from source alone.
+starter currently has a light UI. Run `./scripts/test-browser.sh` after installing the optional locked package with
+`npm ci --prefix tests/browser` and Chromium with
+`npx --prefix tests/browser playwright install chromium`. It owns a fresh synthetic
+Compose stack and checks rendered response headers, labels, keyboard focus, real
+signup/profile behavior, and both OS color preferences. Dark preference must retain
+the supported light UI. See `docs/FRONTEND_CHECKS.md` for the route/state matrix,
+source/image fingerprints and ignored evidence paths. Inspect the captures at both
+widths; a passing DOM assertion cannot prove text is not overlapped. Do not reuse
+evidence after source changes or point the runner at existing customer data.
 
 Report visible changes, API contract assumptions, checks performed, and missing
 browser/provider evidence. A static screenshot does not prove signup, invitation,

@@ -227,7 +227,7 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50 py-16">
+    <main className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50 py-16">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 lg:flex-row lg:items-start">
         <section className="flex-1 space-y-8">
           <div className="space-y-4">
@@ -255,9 +255,9 @@ export default function AuthPage() {
               </p>
             </div>
           </div>
-          <dl className="space-y-3">
+          <ul className="space-y-3">
             {highlights.map((item) => (
-              <div
+              <li
                 key={item}
                 className="flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
               >
@@ -266,9 +266,9 @@ export default function AuthPage() {
                   aria-hidden
                 />
                 <p className="text-sm text-gray-600">{item}</p>
-              </div>
+              </li>
             ))}
-          </dl>
+          </ul>
           <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
             <h2 className="text-sm font-semibold text-gray-900">
               Need a hand?
@@ -412,6 +412,6 @@ export default function AuthPage() {
           </div>
         </aside>
       </div>
-    </div>
+    </main>
   );
 }

@@ -5,6 +5,32 @@ on Go, Next.js, auth security, PR review, testing, and service connections witho
 Normal Docker setup requires none of these tools. The harness scripts use Node.js
 22.18+ with its standard library; the project's Node 24 development runtime works.
 
+## Dedicated frontend and backend specialists
+
+Each implementation role has its own skill, responsibility and verification path.
+
+| Area | Agent and skill | Owns | Verification |
+| --- | --- | --- | --- |
+| Backend | [backend-builder](../.agents/agents/backend-builder.md) + [go-backend](../.agents/skills/go-backend/SKILL.md) | Go endpoints and business rules, tenant authorization/RLS, SQLC and migrations, public API schema | Formatting, deterministic SQLC, race/vet/database tests, mounted API contract checks |
+| Frontend | [frontend-builder](../.agents/agents/frontend-builder.md) + [next-frontend](../.agents/skills/next-frontend/SKILL.md) | Next.js routes and components, session-bound API consumers, loading/error states, accessibility | Generated-type drift check, lint/typecheck/tests/build, keyboard and production browser journeys |
+
+The backend role uses local Go/database tools plus the catalog's documentation
+servers. Its generated adapters disable frontend development MCPs. The frontend
+role can use Next Devtools, shadcn and Playwright when configured and available.
+Provider administration stays with the authorized main session. These are project
+tool restrictions; they do not restrict unrelated tools inherited from the host.
+
+For a feature spanning both layers, assign separate files/worktrees and an owner
+for the generated API output. The backend hands over the tested method/path,
+request/response schema, permissions, failure states and commit. The frontend
+consumes that [generated contract](decisions/0001-business-api.md), then returns
+user-journey evidence and any missing behavior. Parallel work requires a stable
+contract; do not have both specialists invent or overwrite it independently.
+
+Both specialists use the [auth-integration skill](../.agents/skills/auth-integration/SKILL.md)
+for identity or session work. `auth-reviewer` checks the shared Better Auth boundary;
+`code-reviewer` provides the separate PR review. This does not start agents automatically.
+
 ## Start with the task
 
 Open the repository in Codex or Claude Code and trust the project configuration

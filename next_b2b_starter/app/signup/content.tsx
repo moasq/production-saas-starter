@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useSignupFlow } from "@/hooks/use-signup-flow";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,11 +23,15 @@ export default function SignupPage() {
     updateOwner,
     updateOrganization,
   } = useSignupFlow();
+  const organizationInput = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (step === "organization") organizationInput.current?.focus();
+  }, [step]);
 
   // Success view after email sent
   if (emailSent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-6">
+      <main className="min-h-screen flex items-center justify-center bg-gray-50 px-6">
         <div className="w-full max-w-md text-center space-y-6">
           <div className="mx-auto h-14 w-14 bg-primary-50 rounded-full flex items-center justify-center">
             <Inbox className="h-7 w-7 text-primary-600" />
@@ -36,16 +41,14 @@ export default function SignupPage() {
             We sent a verification link to <strong>{owner.email}</strong>.
             Click the link to complete your signup.
           </p>
-          <Link href="/auth">
-            <Button variant="outline">Back to Sign In</Button>
-          </Link>
+          <Button variant="outline" asChild><Link href="/auth">Back to Sign In</Link></Button>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-6">
+    <main className="min-h-screen flex items-center justify-center bg-gray-50 px-6">
       <div className="w-full max-w-md">
         <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
           <div className="flex items-center justify-between mb-4">
@@ -64,19 +67,21 @@ export default function SignupPage() {
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+            <div role="alert" className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
               <p className="text-sm text-red-800">{error}</p>
             </div>
           )}
 
           {/* Step 1: Account */}
           {step === "account" && (
-            <div className="space-y-4">
+            <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); goNext(); }}>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="signup-name" className="block text-sm font-medium text-gray-700 mb-1">
                   Full Name
                 </label>
                 <Input
+                  id="signup-name"
+                  autoComplete="name"
                   type="text"
                   placeholder="John Doe"
                   value={owner.fullName}
@@ -85,10 +90,12 @@ export default function SignupPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="signup-email" className="block text-sm font-medium text-gray-700 mb-1">
                   Email
                 </label>
                 <Input
+                  id="signup-email"
+                  autoComplete="email"
                   type="email"
                   placeholder="you@company.com"
                   value={owner.email}
@@ -97,23 +104,26 @@ export default function SignupPage() {
                 />
               </div>
               <Button
-                onClick={goNext}
+                type="submit"
                 disabled={!canContinueAccount || isLoading}
                 className="w-full"
               >
                 Continue <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-            </div>
+            </form>
           )}
 
           {/* Step 2: Organization */}
           {step === "organization" && (
-            <div className="space-y-4">
+            <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); void sendMagicLink(); }}>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="signup-organization" className="block text-sm font-medium text-gray-700 mb-1">
                   Organization Name
                 </label>
                 <Input
+                  id="signup-organization"
+                  ref={organizationInput}
+                  autoComplete="organization"
                   type="text"
                   placeholder="Acme Inc"
                   value={organization.displayName}
@@ -124,6 +134,7 @@ export default function SignupPage() {
 
               <div className="flex gap-3">
                 <Button
+                  type="button"
                   variant="outline"
                   onClick={goBack}
                   disabled={isLoading}
@@ -132,14 +143,14 @@ export default function SignupPage() {
                   Back
                 </Button>
                 <Button
-                  onClick={sendMagicLink}
+                  type="submit"
                   disabled={!canContinueOrganization || isLoading}
                   className="flex-1"
                 >
                   {isLoading ? "Creating..." : "Create Account"}
                 </Button>
               </div>
-            </div>
+            </form>
           )}
 
           {!emailSent && (
@@ -152,6 +163,6 @@ export default function SignupPage() {
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
 }
