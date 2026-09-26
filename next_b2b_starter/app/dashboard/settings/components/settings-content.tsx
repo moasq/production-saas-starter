@@ -161,6 +161,7 @@ export function SettingsContent({ billingEnabled }: SettingsContentProps) {
   const [viewStack, setViewStack] = useState<SettingsView[]>(["overview"]);
   const currentView = viewStack[viewStack.length - 1];
   const [isInviteModalOpen, setInviteModalOpen] = useState(false);
+  const inviteTrigger = useRef<HTMLButtonElement>(null);
 
   // Track if we've shown the payment toast to prevent duplicates
   const paymentToastShownRef = useRef(false);
@@ -475,6 +476,7 @@ export function SettingsContent({ billingEnabled }: SettingsContentProps) {
                 </p>
               </div>
               <Button
+                ref={inviteTrigger}
                 onClick={() => setInviteModalOpen(true)}
                 disabled={!canInviteMembers}
                 className="w-full bg-gray-900 text-white hover:bg-gray-800 sm:w-auto"
@@ -526,7 +528,8 @@ export function SettingsContent({ billingEnabled }: SettingsContentProps) {
                 setInviteModalOpen(open);
               }}
             >
-              <DialogContent id="invite-member-dialog" className="sm:max-w-lg">
+              <DialogContent id="invite-member-dialog" className="sm:max-w-lg"
+                onCloseAutoFocus={(event) => { event.preventDefault(); inviteTrigger.current?.focus(); }}>
                 <DialogHeader className="space-y-2 text-left">
                   <DialogTitle className="text-xl font-semibold text-gray-900">
                     Add a teammate
@@ -624,7 +627,7 @@ export function SettingsContent({ billingEnabled }: SettingsContentProps) {
 
         {activeSectionSummary && SummaryIcon ? (
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="flex items-start gap-4">
+            <div className="flex min-w-0 items-start gap-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
                 <SummaryIcon className="h-5 w-5 text-gray-600" />
               </div>
@@ -675,17 +678,17 @@ export function SettingsContent({ billingEnabled }: SettingsContentProps) {
                     }
                   }}
                   disabled={isDisabled}
-                  className={`flex w-full items-start justify-between gap-6 px-6 py-5 text-left transition ${
+                  className={`flex w-full flex-col items-start justify-between gap-4 px-6 py-5 text-left transition sm:flex-row sm:gap-6 ${
                     isDisabled
                       ? "cursor-not-allowed opacity-60"
                       : "hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/10"
                   }`}
                 >
-                  <div className="flex items-start gap-4">
+                  <div className="flex min-w-0 items-start gap-4">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
                       <SectionIcon className="h-5 w-5 text-gray-600" />
                     </div>
-                    <div className="space-y-1">
+                    <div className="min-w-0 space-y-1">
                       <p className="text-sm font-semibold text-gray-900">
                         {section.title}
                       </p>
@@ -695,7 +698,7 @@ export function SettingsContent({ billingEnabled }: SettingsContentProps) {
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <div className="text-right">
+                    <div className="min-w-0 break-words text-left sm:text-right">
                       <p className="text-base font-semibold text-gray-900">
                         {section.value}
                       </p>

@@ -5,12 +5,14 @@
  */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { memberRepository } from "@/lib/api/api/repositories/member-repository";
 import { queryKeys } from "../queries/query-keys";
 import type { UpdateProfileRequest, UserProfile } from "@/lib/models/member.model";
 
 export function useUpdateProfile() {
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   return useMutation({
     mutationFn: (request: UpdateProfileRequest) =>
@@ -47,8 +49,12 @@ export function useUpdateProfile() {
     },
 
     // On success, update cache with fresh data from server
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       queryClient.setQueryData(queryKeys.profile.detail(), data);
+      // Team rows cache the same display name. Refresh both that data and the
+      // server-verified AuthContext used by the account menu after a successful save.
+      await queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
+      router.refresh();
     },
 
     // On error, rollback to previous value

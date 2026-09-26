@@ -64,7 +64,7 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="h-9 gap-2">
+        <Button variant="outline" className="h-9 gap-2" aria-label={`Account menu for ${display}`}>
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-900 text-xs font-semibold text-white">
             {initials}
           </span>

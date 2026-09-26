@@ -100,11 +100,11 @@ export default function AuthenticateRedirectPage() {
     );
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+    <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white px-8 py-10 text-center shadow-lg">
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-4" aria-live="polite">
           {icon}
-          <h1 className="text-lg font-semibold text-gray-900" role="status">
+          <h1 className="text-lg font-semibold text-gray-900">
             {status.headline}
           </h1>
           <p className="text-sm text-gray-600">{status.message}</p>
@@ -121,6 +121,6 @@ export default function AuthenticateRedirectPage() {
           ) : null}
         </div>
       </div>
-    </div>
+    </main>
   );
 }
