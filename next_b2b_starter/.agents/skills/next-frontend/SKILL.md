@@ -7,8 +7,8 @@ description: "This skill applies when building a Next.js page, changing dashboar
 
 Paths and commands below are repository-relative unless a working directory is stated.
 Read `next_b2b_starter/AGENTS.md`, then the route and its data repository under
-`next_b2b_starter/lib/api/`. Reuse `components/ui/`, the current layout, and the
-tokens in `app/globals.css` and `tailwind.config.ts`; preserve the existing design
+`next_b2b_starter/lib/api/`. Reuse `next_b2b_starter/components/ui/`, the current layout, and the
+tokens in `next_b2b_starter/app/globals.css` and `next_b2b_starter/tailwind.config.ts`; preserve the existing design
 unless a redesign is requested. Do not copy a different project's Tailwind version.
 
 Business API types come from `next_b2b_starter/lib/api/generated/schema.ts` through

@@ -48,8 +48,9 @@ export function codexName(id) { return id === "better-auth" ? id : `workspace-${
 export function codexServers(catalog, reviewer = false, { launcherPath = "scripts/mcp-launch.mjs", allowedKinds = reviewer ? ["documentation"] : ["documentation", "development", "provider"] } = {}) {
   return catalog.enabled.map((id) => {
     const server = catalog.servers[id];
-    const lines = [`[mcp_servers.${codexName(id)}]`];
-    if (!allowedKinds.includes(server.kind)) return [...lines, "enabled = false"].join("\n");
+    // Codex merges fields across directory/role layers. Omitting true inherits a
+    // parent's false; omitting transport makes a standalone disabled entry invalid.
+    const lines = [`[mcp_servers.${codexName(id)}]`, `enabled = ${allowedKinds.includes(server.kind)}`];
     if (server.url) lines.push(`url = ${JSON.stringify(server.url)}`);
     else lines.push('command = "node"', `args = ${JSON.stringify([launcherPath, id])}`, "startup_timeout_sec = 120");
     if (server.tools) lines.push(`enabled_tools = ${JSON.stringify(server.tools)}`);

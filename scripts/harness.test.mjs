@@ -218,7 +218,48 @@ test("tool selection produces matching host configs and keeps reviewers away fro
   }
   const frontend = readFileSync(join(root, "next_b2b_starter/.codex/agents/frontend-builder.toml"), "utf8");
   assert.match(frontend, /\[mcp_servers.workspace-resend\]\nenabled = false/);
-  assert.match(frontend, /\[mcp_servers.workspace-playwright\]\ncommand = "node"/);
+  assert.match(frontend, /\[mcp_servers.workspace-playwright\]\nenabled = true\ncommand = "node"/);
+});
+
+test("Codex field inheritance enables Next tools and keeps root, Go and reviewer restrictions", (t) => {
+  const root = fixture(t);
+  const catalog = toolCatalog(root);
+  catalog.enabled.push("resend");
+  writeFileSync(join(root, ".agents/tools.json"), JSON.stringify(catalog));
+  sync(root);
+  // Read actual generated tables and apply Codex's field-wise parent/child merge.
+  // An omitted child boolean must inherit the parent value, never silently reset.
+  const layer = (path) => Object.fromEntries([...readFileSync(join(root, path), "utf8").matchAll(/\[mcp_servers\.([^\]]+)\]\n([^[]*)/g)].map(([, name, body]) => {
+    const fields = Object.fromEntries([...body.matchAll(/^(enabled|command|url) = (.+)$/gm)].map(([, key, value]) => [key, JSON.parse(value)]));
+    return [name, fields];
+  }));
+  const merge = (...layers) => {
+    const result = {};
+    for (const source of layers) for (const [name, fields] of Object.entries(source)) result[name] = { ...result[name], ...fields };
+    return result;
+  };
+  const rootLayer = layer(".codex/config.toml");
+  const nextLayer = layer("next_b2b_starter/.codex/config.toml");
+  const goLayer = layer("go-b2b-starter/.codex/config.toml");
+  const nextState = merge(rootLayer, nextLayer);
+  for (const id of ["workspace-next-devtools", "workspace-shadcn", "workspace-playwright"]) {
+    assert.equal(rootLayer[id].enabled, false);
+    assert.equal(merge(rootLayer, goLayer)[id].enabled, false);
+    assert.equal(nextState[id].enabled, true);
+    assert.equal(merge(nextState, layer("next_b2b_starter/.codex/agents/frontend-builder.toml"))[id].enabled, true);
+    assert.equal(merge(nextState, layer("next_b2b_starter/.codex/agents/auth-reviewer.toml"))[id].enabled, false);
+    assert.equal(merge(nextState, layer(".codex/agents/code-reviewer.toml"))[id].enabled, false);
+  }
+  assert.equal(rootLayer["workspace-resend"].enabled, true);
+  assert.equal(nextState["workspace-resend"].enabled, false);
+  assert.equal(merge(rootLayer, goLayer)["workspace-resend"].enabled, false);
+  for (const path of [".codex/config.toml", "go-b2b-starter/.codex/config.toml", "next_b2b_starter/.codex/config.toml", ".codex/agents/orchestrator.toml", ".codex/agents/code-reviewer.toml", "go-b2b-starter/.codex/agents/backend-builder.toml", "next_b2b_starter/.codex/agents/auth-reviewer.toml", "next_b2b_starter/.codex/agents/frontend-builder.toml", "next_b2b_starter/.codex/agents/quality-engineer.toml"]) {
+    for (const fields of Object.values(layer(path))) {
+      assert.equal(typeof fields.enabled, "boolean");
+      assert.equal(typeof (fields.command || fields.url), "string", `Missing standalone transport in ${path}`);
+    }
+    if (path.includes("/agents/")) assert.equal(merge(rootLayer, layer(path))["workspace-resend"].enabled, false);
+  }
 });
 
 test("tool catalog rejects floating pins, shell metacharacters, credentials and unknown selections before writes", (t) => {

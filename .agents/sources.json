@@ -79,8 +79,8 @@
       "name": "go-backend",
       "path": "go-b2b-starter/.agents/skills/go-backend/SKILL.md",
       "source": "authored-here",
-      "version": "2.0.0",
-      "sha256": "93238d1c15973de7ae5710767a69feac440f0bc498a420e1dee133ebcd1465c5",
+      "version": "2.0.1",
+      "sha256": "f934344c527a10116eee7b3989b4fa47cedda3e17115376b686ea6a4cce3d2af",
       "license": "MIT",
       "verifiedAt": "2026-09-26",
       "references": [
@@ -89,8 +89,12 @@
         "docs/decisions/0001-business-api.md",
         "go-b2b-starter/AGENTS.md",
         "go-b2b-starter/apicontract/openapi.json",
+        "go-b2b-starter/go.mod",
+        "go-b2b-starter/internal/db/postgres/sqlc/gen",
         "go-b2b-starter/internal/db/postgres/sqlc/query",
         "go-b2b-starter/internal/modules",
+        "go-b2b-starter/internal/modules/auth",
+        "go-b2b-starter/internal/modules/organizations/authorization_contract_test.go",
         "next_b2b_starter/.agents/skills/auth-integration/SKILL.md",
         "scripts/smoke.sh"
       ],
@@ -132,8 +136,8 @@
       "name": "next-frontend",
       "path": "next_b2b_starter/.agents/skills/next-frontend/SKILL.md",
       "source": "authored-here",
-      "version": "2.0.0",
-      "sha256": "7ea8b95887bf0c0637f6f269d95d4ca2cd308b855f1b204991b6e51ee645aa52",
+      "version": "2.0.1",
+      "sha256": "6c1d0e97179f1e7fb9900296bef090bc560dbeebd13a63738bd49eedd2d0942e",
       "license": "MIT",
       "verifiedAt": "2026-09-26",
       "references": [
@@ -141,8 +145,11 @@
         "docs/decisions/0001-business-api.md",
         "next_b2b_starter/.agents/skills/auth-integration/SKILL.md",
         "next_b2b_starter/AGENTS.md",
+        "next_b2b_starter/app/globals.css",
+        "next_b2b_starter/components/ui",
         "next_b2b_starter/lib/api",
         "next_b2b_starter/lib/api/generated/schema.ts",
+        "next_b2b_starter/tailwind.config.ts",
         "next_b2b_starter/tests"
       ],
       "adaptations": "Next.js and Better Auth ownership, server-only boundaries and synthetic browser checks; no Agentic Ship runtime."

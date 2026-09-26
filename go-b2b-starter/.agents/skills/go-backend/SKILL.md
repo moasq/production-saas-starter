@@ -17,13 +17,13 @@ run `pnpm --dir next_b2b_starter api:generate`, check the generated diff, and ru
 frontend specialist; generated types do not replace Go authorization or validation.
 
 1. State the actor, tenant, input, response shape, and failure behavior. Trace the
-   route through `internal/modules/auth/` to the organization/account resolver.
+   route through `go-b2b-starter/internal/modules/auth/` to the organization/account resolver.
    Require identity, current membership, action permission, and resource ownership
    before mutation. A request header, resource ID or role label is never authority.
    Finish a new endpoint with an HTTP contract test for its status/body and a
    denied request that proves the repository/provider was not called. Route
    registration alone is not completion. Organization mutation examples are in
-   `internal/modules/organizations/authorization_contract_test.go`.
+   `go-b2b-starter/internal/modules/organizations/authorization_contract_test.go`.
    For identity or membership changes, also use `next_b2b_starter/.agents/skills/auth-integration/SKILL.md`.
 2. Keep HTTP decoding/status translation in handlers and application decisions in
    services. Pass request context to SQL/provider calls, bound outbound timeouts,
@@ -37,7 +37,7 @@ frontend specialist; generated types do not replace Go authorization or validati
    `make -C go-b2b-starter sqlc`. Inspect the generated diff, then run `sqlc-check`
    from the same Makefile. It compares two clean generations with the working tree,
    including added/deleted output files, without rewriting it. Generated code in
-   `internal/db/postgres/sqlc/gen/` may be read for debugging; change SQL/config and
+   `go-b2b-starter/internal/db/postgres/sqlc/gen/` may be read for debugging; change SQL/config and
    regenerate instead of hand-editing the output. Add forward-only migrations
    for schema changes; test both a fresh database and preserved historical data.
 5. Use a transaction for local changes that must commit together. External provider
@@ -54,7 +54,7 @@ frontend specialist; generated types do not replace Go authorization or validati
 
 From `go-b2b-starter/`, run `make fmt-check`, `make sqlc-check`,
 `go test -race ./...` (or `make test-race`), and `go vet ./...` with the version in
-`go.mod`. Formatting and SQLC checks use pinned Docker tool images. The existing
+`go-b2b-starter/go.mod`. Formatting and SQLC checks use pinned Docker tool images. The existing
 backend CI runs race tests, vet and vulnerability checks; the backend-source job
 enforces formatting and deterministic generation. A passing source check does
 not replace behavior tests.
