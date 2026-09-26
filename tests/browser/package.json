@@ -1,0 +1,7 @@
+{
+  "name": "starter-browser-checks",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "playwright test", "report": "playwright show-report" },
+  "devDependencies": { "@playwright/test": "1.63.0" }
+}

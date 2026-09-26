@@ -19,7 +19,7 @@ function fixture(t) {
   cpSync(join(repository, "scripts/harness.mjs"), join(root, "scripts/harness.mjs"));
   cpSync(join(repository, "scripts/tool-catalog.mjs"), join(root, "scripts/tool-catalog.mjs"));
   // Only path contracts are needed, not a copied app or installed dependencies.
-  for (const path of ["docs/ARCHITECTURE.md", "docs/AI_TOOLS.md", "go-b2b-starter/internal/modules", "go-b2b-starter/internal/modules/auth", "go-b2b-starter/internal/db/postgres/sqlc/query", "next_b2b_starter/lib/api", "next_b2b_starter/tests"]) {
+  for (const path of ["docs/ARCHITECTURE.md", "docs/AI_TOOLS.md", "docs/FRONTEND_CHECKS.md", "go-b2b-starter/internal/modules", "go-b2b-starter/internal/modules/auth", "go-b2b-starter/internal/db/postgres/sqlc/query", "next_b2b_starter/lib/api", "next_b2b_starter/tests"]) {
     if (path.endsWith(".md")) { mkdirSync(dirname(join(root, path)), { recursive: true }); writeFileSync(join(root, path), "Fixture"); }
     else mkdirSync(join(root, path), { recursive: true });
   }

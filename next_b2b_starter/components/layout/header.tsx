@@ -63,7 +63,7 @@ export function Header({ isSidebarCollapsed, onToggleSidebar }: {
           )}
         />
 
-        <div className="flex-1 px-6 py-4">
+        <div className="min-w-0 flex-1 py-4 pl-16 pr-6 lg:pl-6">
           <div className="flex flex-col gap-4">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-3">
@@ -84,8 +84,8 @@ export function Header({ isSidebarCollapsed, onToggleSidebar }: {
                 <span className="hidden h-8 w-px bg-gray-200 lg:block" aria-hidden="true" />
 
                 <div>
-                  <h1 className="text-lg font-semibold text-gray-900">{pageTitle}</h1>
-                  <nav className="mt-1 flex flex-wrap items-center gap-1 text-sm text-gray-500">
+                  <p className="text-lg font-semibold text-gray-900">{pageTitle}</p>
+                  <nav aria-label="Breadcrumb" className="mt-1 flex flex-wrap items-center gap-1 text-sm text-gray-500">
                     {breadcrumbItems.map((item, index) => (
                       <span key={item.href} className="flex items-center gap-1">
                         {item.isLast ? (
