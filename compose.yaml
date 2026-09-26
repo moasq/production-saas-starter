@@ -1,12 +1,14 @@
 services:
   postgres:
-    image: postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+    image: postgres:18.6-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-starter}
       POSTGRES_DB: ${POSTGRES_DB:-starter}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run ./setup.sh or set POSTGRES_PASSWORD in .env}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # PostgreSQL 18+ keeps PGDATA in a major-version subdirectory. Keep the
+      # volume name so the upstream entrypoint detects and rejects old data.
+      - postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
@@ -15,7 +17,7 @@ services:
     restart: unless-stopped
 
   database-init:
-    image: postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+    image: postgres:18.6-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
     entrypoint: ["sh", "/scripts/database-roles.sh"]
     environment:
       PGHOST: postgres

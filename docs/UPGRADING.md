@@ -25,6 +25,98 @@ The previous lean release retired document, OCR, AI/RAG, storage, Redis and
 webhook billing domains. Their legacy tables are not automatically dropped.
 Fresh installations use ordinary PostgreSQL and create only current schemas.
 
+## PostgreSQL 17 to 18
+
+The default image is now PostgreSQL 18.6. Its data directory is
+`/var/lib/postgresql/18/docker`, with the named volume mounted at
+`/var/lib/postgresql`. The volume name remains `postgres_data`: when an existing
+17 volume is mounted there, the official image detects its `PG_VERSION` file and
+refuses startup instead of creating an empty replacement database. See the
+[official image's storage layout](https://hub.docker.com/_/postgres#pgdata) and
+[PostgreSQL's major-version upgrade guidance](https://www.postgresql.org/docs/18/upgrading.html).
+
+Do not delete the volume, remove its `PG_VERSION` file, or change `PGDATA` to
+bypass this check. An image update does not convert PostgreSQL data files. Use a
+logical backup and restore into a **different, fresh volume**. Rehearse before
+the maintenance window; the following procedure covers the starter's default
+database and its three roles. Additional roles, extensions (including pgvector),
+tablespaces or databases require their own reviewed restore plan and compatible
+PostgreSQL 18 image. Do not continue past any restore error.
+
+1. Keep the old checkout, Compose project name, images, private environment and
+   volume available. In that checkout, stop the application writers while leaving
+   PostgreSQL 17 running. Substitute your actual old project name. Keep the dump
+   directory outside this repository; it contains private data and role hashes.
+
+   ```sh
+   umask 077
+   mkdir -p "$HOME/starter-upgrade-backup"
+   docker compose -p starter-old stop caddy frontend backend
+   docker compose -p starter-old exec -T postgres sh -ec \
+     'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' \
+     > "$HOME/starter-upgrade-backup/database.dump"
+   docker compose -p starter-old exec -T postgres sh -ec \
+     'pg_dumpall -U "$POSTGRES_USER" --roles-only' \
+     > "$HOME/starter-upgrade-backup/roles.sql"
+   ```
+
+   Check both commands succeeded and securely retain both files. A successful
+   restore and behavioral checks below are the backup verification. Review
+   `roles.sql`: the standard roles are the configured database owner,
+   `starter_app` and `starter_auth`. Provision any additional required roles in
+   the destination before restoring, preserving their privileges. Do not blindly
+   apply a roles dump over the bootstrap owner or drop existing roles.
+
+2. In the new checkout, prepare a private `.env` as described above, with the
+   **same database owner name and database name**, and configured application and
+   auth passwords. Use a never-used Compose project name such as `starter-pg18`
+   and different local HTTP, HTTPS and Mailpit ports for rehearsal. Start only the
+   fresh database, then provision its restricted roles; this does not run app
+   schema migrations or start application writers.
+
+   ```sh
+   docker compose -p starter-pg18 up -d --wait postgres
+   docker compose -p starter-pg18 run --rm --no-deps database-init
+   docker compose -p starter-pg18 exec -T postgres sh -ec \
+     'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists --exit-on-error' \
+     < "$HOME/starter-upgrade-backup/database.dump"
+   ```
+
+   `--clean` is only for the separate destination: it replaces any empty schemas
+   created by role provisioning and preserves the dump's table owners, grants and
+   RLS policies. Never direct this command at the source cluster. The old volume
+   is not mounted in this project. The role provisioning job sets runtime role
+   passwords from the new private configuration; the database dump does not
+   restore role passwords.
+
+3. Verify the restored organization/account counts, auth identities, migration
+   ledgers, object owners, grants and RLS policies before starting the application.
+   Run schema jobs and the auth cutover procedure below if needed. Then start the
+   new project and check its application and tenancy behavior.
+
+   ```sh
+   docker compose -p starter-pg18 up --build -d --wait
+   STARTER_URL=http://localhost:YOUR_REHEARSAL_HTTP_PORT ./scripts/smoke.sh
+   ```
+
+   Do not run `scripts/test-auth.mjs` against restored customer data: that script
+   creates synthetic users and mutates sessions. Use approved rehearsal accounts
+   for the real-user acceptance checks. Repeat the final backup/restore with
+   writes paused for cutover, and retain the same chosen destination project name
+   on subsequent deployments so Compose reuses its restored volume.
+
+Before new writes, rollback is to the saved old checkout and its original
+PostgreSQL 17 mount (`postgres_data:/var/lib/postgresql/data`), environment and
+project name. The old volume remains intact. If already checked out at the new
+release and startup refused, return to that saved checkout to start 17 and take
+the backup. After new writes, reconcile them before rollback as described below.
+Never use `docker compose down --volumes` on either retained installation.
+
+For a disposable regression without customer data, run
+`./scripts/test-postgres-upgrade.sh`. It uses unique projects, removes only its
+own resources, and checks rejection of a real 17 volume, recovery of its original
+rows, a fresh 18 restore with ownership/RLS, and persistence after recreation.
+
 ## Reconcile identities before importing
 
 Stytch represents a member separately in every organization. Better Auth uses
