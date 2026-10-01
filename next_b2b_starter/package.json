@@ -49,7 +49,7 @@
     "eslint-config-next": "16.3.6",
     "openapi-typescript": "7.13.0",
     "postcss": "8.5.28",
-    "sharp": "0.35.4",
+    "sharp": "0.35.5",
     "tailwindcss": "3.4.19",
     "tailwindcss-animate": "1.0.7",
     "typescript": "5.9.3",
