@@ -1,5 +1,9 @@
 # Frontend browser checks
 
+The [browser and tooling contract](decisions/0002-frontend-tooling.md) defines the
+compatibility targets and migration gates. The Chromium matrix below is the
+automated evidence available today; it does not verify every target browser.
+
 The starter uses the current light UI, system font, Tailwind 3 and existing Radix
 components. `app/globals.css` owns semantic color/radius tokens;
 `tailwind.config.ts` maps those tokens into utilities. Prefer those tokens for new
