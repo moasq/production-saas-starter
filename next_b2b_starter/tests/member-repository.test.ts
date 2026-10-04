@@ -24,3 +24,15 @@ test("resending invitations uses the authenticated member route and verifies del
    await assert.rejects(repo.resendInvitation("member-a"), /could not be sent/);
  } finally { globalThis.fetch = original; }
 });
+
+
+test("invitation cooldown is shown to the caller without retrying the mutation", async () => {
+ const original = globalThis.fetch;
+ let calls = 0;
+ globalThis.fetch = async () => { calls++; return Response.json({ success: false, error: "Too many invitation requests. Please wait before trying again." }, { status: 429 }); };
+ try {
+   const repo = new MemberRepository(new ApiClient({ baseUrl: "https://example.test/api" }));
+   await assert.rejects(repo.resendInvitation("invitation:pending"), /Please wait before trying again/);
+   assert.equal(calls, 1);
+ } finally { globalThis.fetch = original; }
+});

@@ -1,6 +1,6 @@
 // Integration tests against a disposable local Compose stack, with real auth/email.
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 const base = process.env.STARTER_URL || 'http://localhost:3000';
 const inbox = process.env.MAILPIT_URL || 'http://localhost:8025';
@@ -57,6 +57,19 @@ async function mail(email, contains) {
     await new Promise(resolve => setTimeout(resolve, 250));
   }
   throw new Error(`Expected local email was not delivered for ${email}`);
+}
+async function invitationMailCount(email) {
+  const list = await fetch(`${inbox}/api/v1/messages`).then(r => r.json());
+  return (list.messages || []).filter(item => (item.To || []).some(to => to.Address === email) && item.Subject?.startsWith('Invitation to ')).length;
+}
+// Only used under the existing disposable database-fixture opt-in.
+function sql(query) {
+  assert.equal(process.env.TEST_SESSION_EXPIRY, 'true');
+  return execFileSync('docker',['compose','exec','-T','postgres','sh','-c','psql -At -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'], {input:query,encoding:'utf8',stdio:['pipe','pipe','pipe']}).trim();
+}
+function expireInvitationCooldown(organizationId, email) {
+  const key = createHash('sha256').update(`invitation:${organizationId}:${email.toLowerCase()}`).digest('hex');
+  sql(`UPDATE auth.auth_rate_limit SET expires_at = now() - interval '1 second' WHERE key = '${key}';`);
 }
 async function login(label) {
   const client = new Client();
@@ -118,10 +131,26 @@ assert.ok([400,401,403,404].includes(crossMember.status), `Cross-tenant member d
 assert.equal((await ownerB.client.ok('/api/auth/profile/me')).data.member_id, profileB.member_id);
 check('forged tenant headers, workspace selection and cross-tenant member ID denied');
 const invitationA = await invite(ownerA.client, member, 'member');
-await ownerA.client.ok(`/api/auth/members/${encodeURIComponent(invitationA.pendingId)}/resend-invitation`, 'POST');
+const resendPath = `/api/auth/members/${encodeURIComponent(invitationA.pendingId)}/resend-invitation`;
+const firstMailCount = await invitationMailCount(member.email);
+const blockedResend = await ownerA.client.request(resendPath, 'POST', undefined, {}, 2);
+assert.equal(blockedResend.status, 429, 'Immediate resend is cooled down without automatic test retry');
+assert.match(blockedResend.data.error, /Please wait/);
+assert.equal(await invitationMailCount(member.email), firstMailCount, 'Cooldown does not send an email');
+const crossInvite = await ownerB.client.request(resendPath, 'POST');
+assert.equal(crossInvite.status, 404, 'Another tenant cannot resend this invitation');
+if (process.env.TEST_SESSION_EXPIRY === 'true') {
+  expireInvitationCooldown(orgA.id, member.email);
+  const concurrentResends = await Promise.all(Array.from({length: 3}, () => ownerA.client.request(resendPath, 'POST', undefined, {}, 2)));
+  assert.deepEqual(concurrentResends.map(result => result.status).sort(), [200, 429, 429], 'Only one concurrent resend can reserve delivery');
+} else {
+  await ownerA.client.ok(resendPath, 'POST'); // Real cooldown elapsed via bounded test retry.
+}
+assert.equal(await invitationMailCount(member.email), firstMailCount + 1, 'Successful resend delivers exactly one additional message');
 const wrongRecipient = await ownerB.client.request('/api/workspaces/accept-invitation', 'POST', {invitationId:invitationA.invitationId});
 assert.ok([400,401,403,404].includes(wrongRecipient.status));
 const memberA = await accept(member, invitationA.invitationId);
+assert.equal((await member.client.request('/api/workspaces/accept-invitation', 'POST', {invitationId:invitationA.invitationId})).status, 400, 'Accepted invitation cannot be replayed');
 assert.deepEqual(memberA.roles, ['member']);
 assert.equal((await member.client.request('/api/auth/members')).status, 403);
 assert.equal((await member.client.request('/api/organizations', 'PUT', {name:'Unauthorized'})).status, 403);
@@ -156,6 +185,7 @@ assert.ok([401,403].includes((await member.client.request('/api/auth/profile/me'
 assert.ok([400,401,403,404].includes((await member.client.request('/api/workspaces/select','POST',{organizationId:orgA.id})).status));
 await member.client.ok('/api/workspaces/select','POST',{organizationId:orgB.id});
 assert.equal((await member.client.ok('/api/auth/profile/me')).data.organization.organization_id,orgB.id);
+if (process.env.TEST_SESSION_EXPIRY === 'true') expireInvitationCooldown(orgA.id, member.email);
 const renewed = await invite(ownerA.client,member,'member');
 await accept(member,renewed.invitationId);
 check('removal immediately denies old membership, preserves other tenant and allows reinvitation');
@@ -183,6 +213,60 @@ assert.equal(billing.BillingEnabled, false, 'Billing is disabled');
 assert.equal(billing.HasActiveSubscription, false);
 assert.equal((await ownerA.client.request('/api/subscriptions/verify-payment', 'POST', {session_id:randomUUID()})).status, 503);
 check('cross-origin writes denied, private bridge hidden, billing disabled');
+if (process.env.TEST_SESSION_EXPIRY === 'true') {
+  const expiring = await invite(ownerA.client, ownerB, 'member');
+  sql(`UPDATE auth.invitation SET "expiresAt" = now() - interval '1 second' WHERE id = '${expiring.invitationId}';`);
+  const expired = await ownerB.client.request('/api/workspaces/accept-invitation', 'POST', {invitationId:expiring.invitationId});
+  assert.equal(expired.status, 400, 'The correct recipient cannot accept an expired invitation');
+  assert.equal((await ownerA.client.request(`/api/auth/members/${encodeURIComponent(expiring.pendingId)}/resend-invitation`, 'POST')).status, 404, 'Expired invitation IDs cannot silently send a different invitation');
+  assert.ok(!(await ownerA.client.ok('/api/auth/members')).data.members.some(item => item.member_id === expiring.pendingId), 'Expired invitation is not presented as pending');
+  expireInvitationCooldown(orgA.id, ownerB.email);
+  const fresh = await invite(ownerA.client, ownerB, 'member');
+  assert.notEqual(fresh.invitationId, expiring.invitationId, 'Inviting the email again creates a fresh invitation');
+  await ownerA.client.ok(`/api/auth/members/${encodeURIComponent(fresh.pendingId)}`, 'DELETE');
+  assert.equal((await ownerB.client.request('/api/workspaces/accept-invitation', 'POST', {invitationId:fresh.invitationId})).status, 400, 'Correct recipient cannot accept a canceled invitation');
+  const quotaEmail = `auth-${run}-quota@example.test`;
+  const bucket = Math.floor(Date.now() / 600000);
+  const quotaKeys = [bucket, bucket + 1].map(window => createHash('sha256').update(`invitation-org:${orgA.id}:${window}`).digest('hex'));
+  try {
+    // Seed the boundary rather than sending 20 test emails. Include the next
+    // fixed window so a clock-boundary crossing cannot make this test flaky.
+    for (const key of quotaKeys) sql(`INSERT INTO auth.auth_rate_limit(key,count,expires_at) VALUES ('${key}',20,now()+interval '20 minutes') ON CONFLICT(key) DO UPDATE SET count=20;`);
+    assert.equal((await ownerA.client.request('/api/auth/members', 'POST', {email:quotaEmail,name:'Quota fixture',role_slug:'member'}, {}, 2)).status, 429, 'Workspace quota applies to a new recipient');
+    assert.equal(await invitationMailCount(quotaEmail), 0, 'Workspace quota blocks SMTP');
+  } finally {
+    sql(`DELETE FROM auth.auth_rate_limit WHERE key IN ('${quotaKeys.join("','")}');`);
+  }
+  check('expired and canceled invitations fail closed; fresh invitation IDs and workspace email quota apply');
+}
+if (process.env.TEST_INVITATION_FAILURES === 'true') {
+  assert.equal(process.env.TEST_SESSION_EXPIRY, 'true', 'SMTP failure checks require the disposable fixture opt-in');
+  assert.ok(process.env.COMPOSE_PROJECT_NAME, 'SMTP failure checks require an explicit disposable Compose project');
+  const failedEmail = `auth-${run}-delivery-failure@example.test`;
+  let failedInvitation;
+  try {
+    execFileSync('docker', ['compose', 'stop', 'mailpit'], {stdio:'pipe'});
+    const result = await ownerA.client.ok('/api/auth/members', 'POST', {email:failedEmail,name:'Delivery failure',role_slug:'member'});
+    assert.equal(result.data.invite_sent, false, 'Saved invitation never claims failed SMTP delivery succeeded');
+    failedInvitation = result.data.member_id;
+    assert.ok(failedInvitation.startsWith('invitation:'));
+    expireInvitationCooldown(orgA.id, failedEmail);
+    assert.equal((await ownerA.client.request(`/api/auth/members/${encodeURIComponent(failedInvitation)}/resend-invitation`, 'POST')).status, 502, 'Resend SMTP failure is surfaced as a dependency failure');
+  } finally {
+    execFileSync('docker', ['compose', 'start', '--wait', 'mailpit'], {stdio:'pipe'});
+  }
+  const retryPath = `/api/auth/members/${encodeURIComponent(failedInvitation)}/resend-invitation`;
+  assert.equal((await ownerA.client.request(retryPath, 'POST', undefined, {}, 2)).status, 429, 'SMTP failure retains cooldown against retry storms and ambiguous delivery');
+  expireInvitationCooldown(orgA.id, failedEmail);
+  assert.equal((await ownerA.client.ok(retryPath, 'POST')).data.invite_sent, true);
+  await mail(failedEmail, failedInvitation.slice(11));
+  assert.equal(await invitationMailCount(failedEmail), 1, 'Recovery delivers one message after the deliberate failed attempts');
+  await ownerA.client.ok(`/api/auth/members/${encodeURIComponent(failedInvitation)}`, 'DELETE');
+  assert.equal((await ownerA.client.request(retryPath, 'POST')).status, 404, 'Canceled invitation cannot be resent');
+  const canceled = await member.client.request('/api/workspaces/accept-invitation', 'POST', {invitationId:failedInvitation.slice(11)});
+  assert.equal(canceled.status, 400, 'Canceled invitation cannot be accepted');
+  check('SMTP failure stays truthful; cooldown persists, delivery recovers and cancellation revokes the invitation');
+}
 const oldCookies = new Map(member.client.cookies);
 await member.client.ok('/api/identity/sign-out','POST',{});
 member.client.cookies=oldCookies;
@@ -190,7 +274,6 @@ assert.ok([401,403].includes((await member.client.request('/api/auth/profile/me'
 check('logout revokes the server session even when replaying the old cookie');
 // Force expiry for this test-created user; this is a negative-path fixture, not an auth bypass.
 if (process.env.TEST_SESSION_EXPIRY === 'true') {
-  const sql = (query) => execFileSync('docker',['compose','exec','-T','postgres','sh','-c','psql -At -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'], {input:query,encoding:'utf8',stdio:['pipe','pipe','pipe']}).trim();
   const filter = `"userId" IN (SELECT id FROM auth."user" WHERE email = '${ownerB.email}')`;
   sql(`UPDATE auth.session SET "expiresAt"=now()+interval '1 hour', "updatedAt"=now()-interval '7 hours' WHERE ${filter};`);
   const expiresBefore = sql(`SELECT "expiresAt" FROM auth.session WHERE ${filter};`);

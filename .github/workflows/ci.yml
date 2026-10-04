@@ -105,6 +105,7 @@ jobs:
         env:
           COMPOSE_PROJECT_NAME: starter-ci
           TEST_SESSION_EXPIRY: 'true'
+          TEST_INVITATION_FAILURES: 'true'
           API_CONTRACT_CHECK: 'true'
       - name: Check setup does not replace existing configuration
         run: |

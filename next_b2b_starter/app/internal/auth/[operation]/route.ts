@@ -32,7 +32,7 @@ export async function POST(request: Request, context: { params: Promise<{ operat
         FROM member m JOIN "user" u ON u.id = m."userId" WHERE m."organizationId" = $1 ORDER BY m."createdAt", m.id`, [organizationId]);
       const pending = await getAuthDatabase().query(`SELECT 'invitation:' || id AS member_id, email, '' AS name, ARRAY[role] AS roles,
         'pending' AS status, false AS email_verified, "createdAt" AS created_at, "createdAt" AS updated_at
-        FROM invitation WHERE "organizationId" = $1 AND status = 'pending' ORDER BY "createdAt", id`, [organizationId]);
+        FROM invitation WHERE "organizationId" = $1 AND status = 'pending' AND \"expiresAt\" > now() ORDER BY "createdAt", id`, [organizationId]);
       const members = [...active.rows, ...pending.rows];
       return Response.json({ success: true, data: { members, total: members.length } });
     }
@@ -46,7 +46,7 @@ export async function POST(request: Request, context: { params: Promise<{ operat
         // represents partial success when delivery or another server dependency failed.
         const status = error && typeof error === "object" && "statusCode" in error ? Number(error.statusCode) : 500;
         if (status >= 400 && status < 500) throw error;
-        const pending = await getAuthDatabase().query("SELECT id FROM invitation WHERE \"organizationId\" = $1 AND email = $2 AND status = 'pending' ORDER BY \"createdAt\" DESC LIMIT 1", [organizationId, String(body.email).trim().toLowerCase()]);
+        const pending = await getAuthDatabase().query("SELECT id FROM invitation WHERE \"organizationId\" = $1 AND email = $2 AND status = 'pending' AND \"expiresAt\" > now() ORDER BY \"createdAt\" DESC LIMIT 1", [organizationId, String(body.email).trim().toLowerCase()]);
         if (pending.rows[0]) return Response.json({ success: true, data: { member_id: `invitation:${pending.rows[0].id}`, invite_sent: false } });
         throw error;
       }
@@ -60,7 +60,7 @@ export async function POST(request: Request, context: { params: Promise<{ operat
     if (!memberId || memberId.length > 200) return Response.json({ error: "Member required" }, { status: 400 });
     if (memberId.startsWith("invitation:")) {
       const invitationId = memberId.slice("invitation:".length);
-      const pending = await getAuthDatabase().query("SELECT id, email, role FROM invitation WHERE id = $1 AND \"organizationId\" = $2 AND status = 'pending'", [invitationId, organizationId]);
+      const pending = await getAuthDatabase().query("SELECT id, email, role FROM invitation WHERE id = $1 AND \"organizationId\" = $2 AND status = 'pending' AND \"expiresAt\" > now()", [invitationId, organizationId]);
       const invitation = pending.rows[0];
       if (!invitation) return Response.json({ error: "Invitation not found" }, { status: 404 });
       if (operation === "members-remove") {
@@ -86,6 +86,6 @@ export async function POST(request: Request, context: { params: Promise<{ operat
     const code = typeof error === "object" && error !== null && "statusCode" in error ? Number(error.statusCode) : 500;
     const constraintError = typeof error === "object" && error !== null && "code" in error && error.code === "23514";
     const status = constraintError ? 409 : code >= 400 && code < 500 ? code : 503;
-    return Response.json({ success: false, error: status === 503 ? "Authentication service temporarily unavailable" : "Operation not permitted" }, { status });
+    return Response.json({ success: false, error: status === 503 ? "Authentication service temporarily unavailable" : status === 429 ? "Too many invitation requests. Please wait before trying again." : "Operation not permitted" }, { status });
   }
 }

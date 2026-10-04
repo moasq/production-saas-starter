@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Starter business API",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Go-owned tenant/business boundary. Identity, workspace selection and the private Better Auth bridge are separate Next.js contracts. Clients never select a tenant with an API parameter. Server mutations forward the public Origin and request-scoped session cookie."
   },
   "servers": [
@@ -178,6 +178,16 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Invitation email cooldown (60 seconds per workspace and recipient) or workspace delivery limit (20 attempts per 10-minute window). No email was sent by this attempt.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         },
         "requestBody": {
@@ -338,6 +348,16 @@
           "403": {
             "description": "Permission denied. CORS middleware can reject before the JSON handler and return an empty body.",
             "x-empty-body": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Invitation email cooldown (60 seconds per workspace and recipient) or workspace delivery limit (20 attempts per 10-minute window). No email was sent by this attempt.",
             "content": {
               "application/json": {
                 "schema": {

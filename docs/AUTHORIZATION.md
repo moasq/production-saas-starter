@@ -79,3 +79,30 @@ cached visibility never authorizes an API call.
 
 Fixtures verify application behavior. Local Compose uses synthetic accounts and
 Mailpit; neither check establishes external email delivery or live Polar behavior.
+
+## Invitation delivery and retry
+
+Invitations remain pending until the verified recipient accepts them. Both initial
+send and resend await SMTP acceptance; this confirms acceptance by the configured
+mail server, not delivery to the recipient's inbox. An initial SMTP failure returns
+`invite_sent: false` with the saved invitation ID. A failed resend returns a dependency
+error. No email mutation is retried automatically by the frontend.
+
+The Better Auth delivery callback reserves a PostgreSQL cooldown shared by all
+application replicas: one attempt per workspace and normalized recipient every
+60 seconds, plus 20 attempts per workspace in each 10-minute window. Concurrent
+resends cannot bypass the cooldown. Both the create and resend operations return
+HTTP 429 with a wait message when limited. The reservation remains after SMTP
+failure because a timeout may follow mail-server acceptance; an administrator can
+retry after the cooldown. Resend keeps an unexpired pending invitation and renews
+its 48-hour expiry. Expired invitations leave the pending list; invite the email
+again to create a fresh invitation. Expired or canceled IDs cannot be resent or
+accepted.
+
+The disposable auth suite checks initial and repeat Mailpit captures, concurrent
+resend denial, tenant and recipient checks, and accepted-link replay. With
+`TEST_SESSION_EXPIRY=true TEST_INVITATION_FAILURES=true` and an explicit synthetic
+`COMPOSE_PROJECT_NAME`, it also stops and restores that project's Mailpit service
+to exercise saved-but-unsent invitations and failed/recovered resends. These are
+local SMTP checks; separately verify a production provider and real inbox delivery
+before launch. No external email account is used by this suite.
