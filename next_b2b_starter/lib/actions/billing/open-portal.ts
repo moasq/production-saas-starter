@@ -12,7 +12,7 @@ export async function openBillingPortal(): Promise<ActionResult<{ url: string }>
  try {
   const client = getPolarClient();
   if (!client) return createActionError("Billing is disabled.");
-  const portal = await client.customerSessions.create({ externalCustomerId: orgId });
-  return createActionSuccess({ url: portal.customerPortalUrl });
+  const portal = await client.createPortal(orgId);
+  return createActionSuccess({ url: portal.url });
  } catch { return createActionError("Could not open the billing portal. Please retry."); }
 }
