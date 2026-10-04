@@ -78,8 +78,16 @@ case "$(value SMTP_SECURE)" in ''|true|false) ;; *) fail 'SMTP_SECURE must be tr
 if [ "$(value APP_ENV)" = PROD ]; then
   case "$doctor_url" in https://*) ;; *) fail 'Production APP_BASE_URL must use HTTPS.' ;; esac
   if [ "$doctor_local" = true ]; then fail 'Disable the local Mailpit profile for production and configure external SMTP.'; fi
+  case "$doctor_smtp" in [Mm][Aa][Ii][Ll][Pp][Ii][Tt]|[Mm][Aa][Ii][Ll][Pp][Ii][Tt].) fail 'Production SMTP_HOST must not use local Mailpit capture.' ;; esac
+  for doctor_key in BETTER_AUTH_SECRET AUTH_INTERNAL_SECRET; do
+    if ! value "$doctor_key" | awk '
+      { lower=tolower($0); repeated=0; for(i=2;i<=length($0);i++) if(substr($0,i,1)!=substr($0,1,1)) repeated=1
+        if (length($0)>=32 && $0 !~ /^[[:space:]]|[[:space:]]$/ && repeated==1 && lower !~ /(change[-_]?me|replace[-_]?me|placeholder|your[-_]secret|test[-_]only)/) valid=1
+      } END {exit !valid}'; then fail "$doctor_key must not be a placeholder, repeated character or padded value in production (value hidden)."; fi
+  done
+  if [ "$(value BETTER_AUTH_SECRET)" = "$(value AUTH_INTERNAL_SECRET)" ]; then fail 'BETTER_AUTH_SECRET and AUTH_INTERNAL_SECRET must be independent in production.'; fi
 fi
-case "$(value APP_ENV)" in ''|DEV|PROD) ;; *) fail 'APP_ENV must be DEV or PROD.' ;; esac
+case "$(value APP_ENV)" in DEV|PROD) ;; *) fail 'APP_ENV must be DEV or PROD.' ;; esac
 case "$(value BILLING_ENABLED)" in
   true)
     for doctor_key in POLAR_ACCESS_TOKEN POLAR_PRODUCT_ID; do

@@ -66,7 +66,7 @@ services:
   backend:
     build: ./go-b2b-starter
     environment:
-      ENV: ${APP_ENV:-DEV}
+      ENV: ${APP_ENV:?Set APP_ENV to DEV or PROD in .env}
       APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
       SERVER_ADDRESS: :8080
       TLS_TERMINATED_BY_PROXY: "true"
@@ -94,6 +94,7 @@ services:
     build: ./next_b2b_starter
     environment:
       <<: *auth_database
+      APP_ENV: ${APP_ENV:?Set APP_ENV to DEV or PROD in .env}
       APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
       API_BASE_URL_INTERNAL: http://backend:8080/api
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Run ./setup.sh first}

@@ -139,6 +139,21 @@ APP_ENV=PROD
 COMPOSE_PROFILES=
 ```
 
+`APP_ENV` must be exactly `DEV` or `PROD`; Compose passes it to both applications
+(as `ENV` in Go). Set `ENV` explicitly when running Go outside Compose, and
+`APP_ENV` in the Next.js environment. Lowercase, unknown and omitted modes are
+rejected. `NODE_ENV=production` selects Next.js optimizations and is also used by
+the local Docker image; it does not select the deployment security policy.
+
+In `PROD`, both applications require HTTPS origins and reject missing, short or
+obvious placeholder auth secrets. Next.js also requires independent session and
+bridge secrets, database configuration, SMTP and a sender before accepting
+requests; local Mailpit capture is rejected. Use independently generated random
+secrets: these checks catch copied examples, not the entropy of arbitrary input.
+Keep `DEV` only for local development and synthetic tests. An unconfigured DEV
+frontend shows setup instructions and does not authenticate anyone. There is no
+mock authentication, seed bypass or file-storage fallback in this starter.
+
 Configure SMTP as above. Run `docker compose up --build -d --wait`. Caddy manages
 HTTPS and certificate renewal; keep its data volume. The same frontend image
 uses runtime domain and email configuration. Never expose Next.js or Go ports
