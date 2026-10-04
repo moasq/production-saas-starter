@@ -24,8 +24,8 @@ export async function createCheckout(productId: string): Promise<ActionResult<{ 
   if (unavailableReason) return createActionError(unavailableReason);
   const result = await fetchProducts();
   if (!result.success || !result.products?.some((p) => p.productId === productId)) return createActionError("Select an available plan.");
-  const checkout = await client.checkouts.create({ products: [productId], externalCustomerId: orgId,
-    customerEmail: permissions.profile!.email, customerName: permissions.profile!.name,
+  const checkout = await client.createCheckout({ productId, organizationId: orgId,
+    email: permissions.profile!.email, name: permissions.profile!.name,
     successUrl: `${getBaseUrl()}/dashboard?checkout_id={CHECKOUT_ID}`, returnUrl: `${getBaseUrl()}/dashboard/settings?view=subscription` });
   return createActionSuccess({ url: checkout.url });
  } catch { return createActionError("Could not start checkout. Please retry."); }
