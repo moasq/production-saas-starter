@@ -100,3 +100,11 @@ test('setup preserves failure exit then recovers without rotating generated secr
 test('unknown setup arguments fail without running Docker or writing config',t=>{
  const f=fixture(t,{configured:false});const result=f.run(['--delete-data']);assert.equal(result.status,2);assert.equal(existsSync(join(f.dir,'.env')),false);assert.deepEqual(f.calls(),[]);
 });
+
+test('production configuration rejects capture SMTP, copied secrets and implicit modes', t => {
+ const production={APP_ENV:'PROD',APP_BASE_URL:'https://app.example.com',COMPOSE_PROFILES:'',SMTP_HOST:'smtp.example.com',BETTER_AUTH_SECRET:'2ec34d0f74fe8a9c164fb05920abc285',AUTH_INTERNAL_SECRET:'9a429cbf2dd80e61423bd94aa7bfe501'};
+ for(const changes of [{APP_ENV:''},{SMTP_HOST:'MAILPIT.'},{BETTER_AUTH_SECRET:'change-me-before-production-12345678'},{AUTH_INTERNAL_SECRET:'a'.repeat(40)},{AUTH_INTERNAL_SECRET:production.BETTER_AUTH_SECRET}]) {
+  const f=fixture(t);const r=f.run(['--doctor'],{TEST_ENV_OVERRIDES:JSON.stringify({...production,...changes})}); clean(r); assert.equal(r.status,1,r.stdout);
+ }
+ const f=fixture(t);const r=f.run(['--doctor'],{TEST_ENV_OVERRIDES:JSON.stringify(production)});clean(r);assert.equal(r.status,0,r.stdout+r.stderr);
+});

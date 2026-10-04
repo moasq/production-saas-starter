@@ -73,6 +73,8 @@ jobs:
         run: |
           node --test scripts/check-public-secrets.test.mjs
           node scripts/check-public-secrets.mjs --build
+      - name: Verify built server rejects unsafe production configuration
+        run: node scripts/test-runtime-config.mjs
       - run: pnpm audit --prod --audit-level=high
       - name: Verify legacy auth import on disposable databases
         run: node scripts/test-legacy-import.mjs

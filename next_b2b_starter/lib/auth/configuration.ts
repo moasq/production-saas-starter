@@ -7,11 +7,10 @@ import { getAuthDatabase } from "./database.ts";
 import { sendAuthEmail } from "./email.ts";
 import { consumeAuthLimit } from "./rate-limit.ts";
 import { accessControl, roles } from "./rbac.ts";
+import { readAuthConfiguration } from "./runtime-config.ts";
 
 export function createAuth() {
-  const baseURL = process.env.APP_BASE_URL || "http://localhost:3000";
-  const secret = process.env.BETTER_AUTH_SECRET;
-  if (!secret || secret.length < 32) throw new Error("BETTER_AUTH_SECRET must contain at least 32 characters");
+  const { baseURL, secret } = readAuthConfiguration();
   return betterAuth({
     appName: "B2B SaaS Starter", baseURL, basePath: "/api/identity", secret,
     trustedOrigins: [new URL(baseURL).origin], database: getAuthDatabase(),

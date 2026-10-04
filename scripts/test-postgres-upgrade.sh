@@ -12,7 +12,7 @@ pg_test_container="$pg_test_id-source"
 export POSTGRES_USER=starter POSTGRES_DB=starter POSTGRES_PASSWORD=test-only
 export APP_DATABASE_PASSWORD=test-app AUTH_DATABASE_PASSWORD=test-auth
 export BETTER_AUTH_SECRET=test-only AUTH_INTERNAL_SECRET=test-only
-export COMPOSE_PROFILES=
+export APP_ENV=DEV COMPOSE_PROFILES=
 # Explicit project names and an empty env file keep the running app untouched.
 old_compose() { docker compose --env-file /dev/null -f compose.yaml -p "$pg_test_old" "$@"; }
 new_compose() { docker compose --env-file /dev/null -f compose.yaml -p "$pg_test_new" "$@"; }
