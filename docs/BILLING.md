@@ -1,7 +1,7 @@
 # Billing scope
 
 Billing is optional. An organization administrator can subscribe to the single
-fixed recurring product configured by `POLAR_PRODUCT_ID`, see its current status,
+fixed recurring product (one price charged every single interval) configured by `POLAR_PRODUCT_ID`, see its current status,
 and open Polar's hosted customer portal for payments and cancellation. Workspace,
 team and profile access do not require payment. See [setup](../SETUP.md) for the
 server-only credentials and matching provider environment.
@@ -44,6 +44,9 @@ reconciliation design before accepting payments. Do not automatically retry a
 checkout mutation after an ambiguous network failure.
 
 ## Verification boundary
+
+The [provider SDK contract](PROVIDER_CONTRACTS.md) records the Polar API version,
+validated response fields, timeout and retry behavior, and auth upgrade procedure.
 
 Frontend regressions cover unavailable, revoked, disabled, active and scheduled
 cancellation states. Run `BROWSER_BILLING_FIXTURE=true ./scripts/test-browser.sh`
