@@ -243,18 +243,35 @@ if (process.env.TEST_INVITATION_FAILURES === 'true') {
   assert.equal(process.env.TEST_SESSION_EXPIRY, 'true', 'SMTP failure checks require the disposable fixture opt-in');
   assert.ok(process.env.COMPOSE_PROJECT_NAME, 'SMTP failure checks require an explicit disposable Compose project');
   const failedEmail = `auth-${run}-delivery-failure@example.test`;
+  const chaosURL = `${inbox}/api/v1/chaos`;
+  const originalChaosResponse = await fetch(chaosURL, {signal:AbortSignal.timeout(5000)});
+  assert.equal(originalChaosResponse.status, 200, 'Start the disposable stack with tests/mailpit-failures.compose.yaml');
+  const originalChaos = await originalChaosResponse.json();
+  async function setChaos(settings) {
+    const response = await fetch(chaosURL, {method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(settings),signal:AbortSignal.timeout(5000)});
+    assert.equal(response.status, 200, 'Mailpit fault settings updated');
+  }
   let failedInvitation;
+  let testFailure;
   try {
-    execFileSync('docker', ['compose', 'stop', 'mailpit'], {stdio:'pipe'});
+    await setChaos({Recipient:{ErrorCode:451,Probability:100}});
     const result = await ownerA.client.ok('/api/auth/members', 'POST', {email:failedEmail,name:'Delivery failure',role_slug:'member'});
     assert.equal(result.data.invite_sent, false, 'Saved invitation never claims failed SMTP delivery succeeded');
     failedInvitation = result.data.member_id;
     assert.ok(failedInvitation.startsWith('invitation:'));
     expireInvitationCooldown(orgA.id, failedEmail);
     assert.equal((await ownerA.client.request(`/api/auth/members/${encodeURIComponent(failedInvitation)}/resend-invitation`, 'POST')).status, 502, 'Resend SMTP failure is surfaced as a dependency failure');
+  } catch (error) {
+    testFailure = error;
   } finally {
-    execFileSync('docker', ['compose', 'start', '--wait', 'mailpit'], {stdio:'pipe'});
+    try { await setChaos(originalChaos); }
+    catch (error) {
+      if (testFailure) throw new AggregateError([testFailure, error], 'Invitation test and SMTP fixture restoration both failed');
+      throw error;
+    }
   }
+  if (testFailure) throw testFailure;
+  assert.equal(await invitationMailCount(failedEmail), 0, 'Rejected SMTP attempts did not deliver mail');
   const retryPath = `/api/auth/members/${encodeURIComponent(failedInvitation)}/resend-invitation`;
   assert.equal((await ownerA.client.request(retryPath, 'POST', undefined, {}, 2)).status, 429, 'SMTP failure retains cooldown against retry storms and ambiguous delivery');
   expireInvitationCooldown(orgA.id, failedEmail);
@@ -266,6 +283,29 @@ if (process.env.TEST_INVITATION_FAILURES === 'true') {
   const canceled = await member.client.request('/api/workspaces/accept-invitation', 'POST', {invitationId:failedInvitation.slice(11)});
   assert.equal(canceled.status, 400, 'Canceled invitation cannot be accepted');
   check('SMTP failure stays truthful; cooldown persists, delivery recovers and cancellation revokes the invitation');
+  const unavailableEmail = `auth-${run}-smtp-unavailable@example.test`;
+  let outageFailure;
+  try {
+    execFileSync('docker', ['compose', 'stop', 'mailpit'], {stdio:'pipe'});
+    const outcome = await ownerA.client.request('/api/auth/members', 'POST', {email:unavailableEmail,name:'Unavailable SMTP',role_slug:'member'});
+    assert.ok([200,502].includes(outcome.status), 'SMTP outage is explicit partial success or a bridge dependency failure');
+    assert.notEqual(outcome.data.data?.invite_sent, true, 'An unavailable or timed-out mail server never establishes delivery success');
+    if (outcome.status === 200) assert.equal(outcome.data.data.invite_sent, false);
+  } catch (error) {
+    outageFailure = error;
+  } finally {
+    try { execFileSync('docker', ['compose', 'up', '-d', '--no-deps', '--no-build', '--wait', '--wait-timeout', '30', 'mailpit'], {stdio:'pipe'}); }
+    catch (error) {
+      if (outageFailure) throw new AggregateError([outageFailure, error], 'Invitation outage test and Mailpit restoration both failed');
+      throw error;
+    }
+  }
+  if (outageFailure) throw outageFailure;
+  const saved = (await ownerA.client.ok('/api/auth/members')).data.members.find(item => item.email === unavailableEmail);
+  assert.ok(saved?.member_id.startsWith('invitation:'), 'Timeout does not lose the saved invitation');
+  assert.equal((await ownerA.client.request(`/api/auth/members/${encodeURIComponent(saved.member_id)}/resend-invitation`, 'POST', undefined, {}, 2)).status, 429, 'Ambiguous SMTP outcome retains cooldown after restoration');
+  await ownerA.client.ok(`/api/auth/members/${encodeURIComponent(saved.member_id)}`, 'DELETE');
+  check('SMTP outage never claims delivery; saved invitation and cooldown survive an ambiguous bridge timeout');
 }
 const oldCookies = new Map(member.client.cookies);
 await member.client.ok('/api/identity/sign-out','POST',{});

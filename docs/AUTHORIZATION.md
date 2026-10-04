@@ -87,9 +87,14 @@ send and resend await SMTP acceptance; this confirms acceptance by the configure
 mail server, not delivery to the recipient's inbox. The bridge sends explicitly after
 authorized Better Auth creation; SDK success alone is insufficient because its
 organization email callback logs and swallows delivery errors. Public organization
-mutation endpoints remain blocked, and no second callback sends duplicate mail. An initial SMTP failure returns
+mutation endpoints remain blocked, and no second callback sends duplicate mail. An explicit SMTP rejection returns
 `invite_sent: false` with the saved invitation ID. A failed resend returns a dependency
-error. No email mutation is retried automatically by the frontend.
+error. Go bounds bridge requests at 10 seconds; a slower or unreachable mail server
+can instead produce HTTP 502 after the invitation is saved. That outcome is
+ambiguous: inspect the pending list and wait for the cooldown before a manual
+retry. A timeout never establishes successful delivery, and SMTP acceptance may
+have occurred before the timeout. Neither Go nor the frontend retries the email
+mutation automatically.
 
 The private bridge reserves a PostgreSQL cooldown shared by all
 application replicas: one attempt per workspace and normalized recipient every
@@ -103,9 +108,15 @@ again to create a fresh invitation. Expired or canceled IDs cannot be resent or
 accepted.
 
 The disposable auth suite checks initial and repeat Mailpit captures, concurrent
-resend denial, tenant and recipient checks, and accepted-link replay. With
-`TEST_SESSION_EXPIRY=true TEST_INVITATION_FAILURES=true` and an explicit synthetic
-`COMPOSE_PROJECT_NAME`, it also stops and restores that project's Mailpit service
-to exercise saved-but-unsent invitations and failed/recovered resends. These are
-local SMTP checks; separately verify a production provider and real inbox delivery
-before launch. No external email account is used by this suite.
+resend denial, tenant and recipient checks, and accepted-link replay. Start a fresh
+test stack with `COMPOSE_FILE=compose.yaml:tests/mailpit-failures.compose.yaml` and
+an explicit synthetic `COMPOSE_PROJECT_NAME`. With `TEST_SESSION_EXPIRY=true
+TEST_INVITATION_FAILURES=true`, the suite enables deterministic SMTP 451 rejection
+through [Mailpit's test API](https://mailpit.axllent.org/docs/integration/chaos/),
+then restores its prior settings. This exercises saved-but-unsent invitations and
+failed/recovered resends while preserving any original assertion if restoration
+also fails. A separate outage case stops and restores only that test project's Mailpit service,
+checking the saved invitation and cooldown after an ambiguous bridge timeout.
+Default local and production Compose do not enable the fault API.
+These are local SMTP checks; separately verify a production provider and real
+inbox delivery before launch. No external email account is used by this suite.
