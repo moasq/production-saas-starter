@@ -1,6 +1,6 @@
 # Business API ownership and generated client
 
-Status: accepted. API contract version: 1.0.0.
+Status: accepted. API contract version: 1.0.1.
 
 Go remains the authority for business authorization, tenant data, and the current
 billing snapshot. Next.js owns presentation, HTTP-only sessions, and the self-hosted

@@ -83,6 +83,8 @@ jobs:
   deployment:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      COMPOSE_FILE: compose.yaml:tests/mailpit-failures.compose.yaml
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: ./setup.sh
@@ -107,6 +109,7 @@ jobs:
         env:
           COMPOSE_PROJECT_NAME: starter-ci
           TEST_SESSION_EXPIRY: 'true'
+          TEST_INVITATION_FAILURES: 'true'
           API_CONTRACT_CHECK: 'true'
       - name: Check setup does not replace existing configuration
         run: |

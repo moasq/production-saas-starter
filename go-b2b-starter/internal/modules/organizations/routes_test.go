@@ -88,3 +88,48 @@ func TestMemberMutationsRequireLivePermissionAndDropClientTenant(t *testing.T) {
 		}
 	}
 }
+
+func TestInvitationDeliveryFailuresKeepTheirPublicMeaning(t *testing.T) {
+	t.Setenv("APP_BASE_URL", "https://app.example")
+	for _, tc := range []struct {
+		name, path, body, response string
+		bridgeStatus, wantStatus   int
+	}{
+		{"invite cooldown", "/api/auth/members", `{"email":"two@example.com","name":"Two","role_slug":"member"}`, `{"success":false,"error":"Too many invitation requests. Please wait before trying again."}`, 429, 429},
+		{"resend cooldown", "/api/auth/members/invitation:pending/resend-invitation", ``, `{"success":false,"error":"Too many invitation requests. Please wait before trying again."}`, 429, 429},
+		{"saved but unsent", "/api/auth/members", `{"email":"two@example.com","name":"Two","role_slug":"member"}`, `{"success":true,"data":{"member_id":"invitation:pending","invite_sent":false}}`, 200, 200},
+		{"resend SMTP failure", "/api/auth/members/invitation:pending/resend-invitation", ``, `{"success":false,"error":"Authentication service temporarily unavailable"}`, 503, 502},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			operations := 0
+			bridge := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path == "/internal/auth/session" {
+					json.NewEncoder(w).Encode(map[string]any{"user_id": "user", "member_id": "member", "email": "one@example.com", "email_verified": true, "organization_id": "verified-org", "organization": map[string]string{"id": "verified-org", "name": "Company", "slug": "company"}, "roles": []string{"admin"}, "permissions": []string{"org:manage"}, "expires_at": time.Now().Add(time.Hour)})
+					return
+				}
+				operations++
+				w.WriteHeader(tc.bridgeStatus)
+				w.Write([]byte(tc.response))
+			}))
+			defer bridge.Close()
+			client, err := betterauth.New(bridge.URL, strings.Repeat("s", 32))
+			if err != nil {
+				t.Fatal(err)
+			}
+			router := gin.New()
+			NewRoutes(client).Routes(router.Group("/api"), middlewareResolver{auth.NewMiddleware(client, scopeFixture{})})
+			req := httptest.NewRequest("POST", "https://app.example"+tc.path, strings.NewReader(tc.body))
+			req.Header.Set("Cookie", "better-auth.session_token=opaque")
+			req.Header.Set("Origin", "https://app.example")
+			req.Header.Set("Content-Type", "application/json")
+			rec := httptest.NewRecorder()
+			router.ServeHTTP(rec, req)
+			if rec.Code != tc.wantStatus || operations != 1 {
+				t.Fatalf("status=%d want=%d operations=%d body=%s", rec.Code, tc.wantStatus, operations, rec.Body)
+			}
+			if tc.wantStatus < 500 && strings.TrimSpace(rec.Body.String()) != tc.response {
+				t.Fatalf("delivery result changed: %s", rec.Body)
+			}
+		})
+	}
+}

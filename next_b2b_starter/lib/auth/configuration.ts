@@ -24,11 +24,6 @@ export function createAuth() {
         ac: accessControl, roles, creatorRole: "admin", requireEmailVerificationOnInvitation: true,
         allowUserToCreateOrganization: (user) => user.emailVerified,
         organizationLimit: 10, membershipLimit: 100, invitationExpiresIn: 60 * 60 * 48,
-        async sendInvitationEmail(data) {
-          const url = new URL("/invite", baseURL); url.searchParams.set("id", data.id);
-          await sendAuthEmail(data.email, `Invitation to ${data.organization.name}`,
-            `You have been invited to ${data.organization.name}. Sign in with this email address and accept your invitation:\n\n${url}\n\nThis invitation expires in 48 hours.`);
-        },
       }),
       magicLink({ expiresIn: 600, storeToken: "hashed", sendMagicLink: async ({ email, url }) => {
         if (!await consumeAuthLimit(`delivery:${email.toLowerCase()}`, 5, 600)) throw new Error("Too many email requests");

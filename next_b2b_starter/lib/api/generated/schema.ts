@@ -410,6 +410,15 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
+            /** @description Invitation email cooldown (60 seconds per workspace and recipient) or workspace delivery limit (20 attempts per 10-minute window). No email was sent by this attempt. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
             /** @description Validation, authentication, authorization or dependency failure */
             default: {
                 headers: {
@@ -537,6 +546,15 @@ export interface operations {
             };
             /** @description Permission denied. CORS middleware can reject before the JSON handler and return an empty body. */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Invitation email cooldown (60 seconds per workspace and recipient) or workspace delivery limit (20 attempts per 10-minute window). No email was sent by this attempt. */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };

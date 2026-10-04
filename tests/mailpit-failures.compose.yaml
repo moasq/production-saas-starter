@@ -1,0 +1,5 @@
+# Test-only opt-in; normal local and production Compose keep Chaos disabled.
+services:
+  mailpit:
+    environment:
+      MP_ENABLE_CHAOS: "true"
