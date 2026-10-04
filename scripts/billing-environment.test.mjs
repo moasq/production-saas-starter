@@ -16,7 +16,7 @@ test("Compose passes the same explicit provider environment to both runtimes", (
   }
   try {
     for (const value of [undefined, "", "sandbox", "production"]) {
-      writeFileSync(path, ["POSTGRES_PASSWORD=test-only", "APP_DATABASE_PASSWORD=test-only",
+      writeFileSync(path, ["APP_ENV=DEV", "POSTGRES_PASSWORD=test-only", "APP_DATABASE_PASSWORD=test-only",
         "AUTH_DATABASE_PASSWORD=test-only", "BETTER_AUTH_SECRET=test-only", "AUTH_INTERNAL_SECRET=test-only",
         "BILLING_ENABLED=true", "POLAR_ACCESS_TOKEN=test-only", "POLAR_PRODUCT_ID=test-only",
         ...(value === undefined ? [] : [`POLAR_ENVIRONMENT=${value}`]), ""].join("\n"), { mode: 0o600 });

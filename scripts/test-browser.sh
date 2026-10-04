@@ -88,6 +88,6 @@ fi
 node tests/browser/evidence.mjs built
 # A second instance of the same production image has no secrets/database/SMTP.
 # This exercises the actual fail-closed setup screen, not a mocked component.
-docker run -d --name "$browser_setup" -p "127.0.0.1:$browser_setup_port:3000" "$BROWSER_IMAGE_ID" >/dev/null
+docker run -d --name "$browser_setup" -e APP_ENV=DEV -p "127.0.0.1:$browser_setup_port:3000" "$BROWSER_IMAGE_ID" >/dev/null
 ./scripts/smoke.sh
 npm test --prefix tests/browser -- "$@"

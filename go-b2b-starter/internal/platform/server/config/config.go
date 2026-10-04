@@ -2,7 +2,10 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"reflect"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -17,7 +20,8 @@ const (
 
 type Config struct {
 	// Environment (cannot be disabled in production)
-	Env Environment `mapstructure:"ENV"`
+	Env                Environment `mapstructure:"ENV"`
+	AuthInternalSecret string      `mapstructure:"AUTH_INTERNAL_SECRET"`
 
 	// Server settings
 	ServerAddress string `mapstructure:"SERVER_ADDRESS"`
@@ -60,7 +64,6 @@ func LoadConfig() (*Config, error) {
 	}
 
 	// Set default values
-	v.SetDefault("ENV", "DEV")
 	v.SetDefault("SERVER_ADDRESS", ":8080")
 	v.SetDefault("RATE_LIMIT_PER_SECOND", 100)
 	v.SetDefault("MAX_REQUEST_SIZE", 1024*1024*10) // 10MB
@@ -73,6 +76,10 @@ func LoadConfig() (*Config, error) {
 
 	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, err
+	}
+
+	if cfg.Env != DEV && cfg.Env != PROD {
+		return nil, fmt.Errorf("ENV must be explicitly set to DEV or PROD")
 	}
 
 	// Validate production configuration
@@ -103,9 +110,29 @@ func validateProductionConfig(cfg *Config) error {
 		}
 	}
 
+	if !validProductionSecret(cfg.AuthInternalSecret) {
+		errors = append(errors, "AUTH_INTERNAL_SECRET must contain at least 32 characters and must not be a placeholder or repeated character")
+	}
+
 	// Allowed origins must be set in production
 	if len(cfg.AllowedOrigins) == 0 {
 		errors = append(errors, "Allowed origins must be set in production")
+	}
+
+	for _, origin := range cfg.AllowedOrigins {
+		u, err := url.Parse(origin)
+		if err != nil || u.Scheme != "https" || u.Hostname() == "" || u.User != nil || (u.Path != "" && u.Path != "/") || strings.ContainsAny(origin, "?#") || strings.TrimSpace(origin) != origin {
+			errors = append(errors, "Allowed origins must be HTTPS origins without credentials, paths, query strings or fragments in production")
+			break
+		}
+
+		if port := u.Port(); port != "" {
+			number, err := strconv.Atoi(port)
+			if err != nil || number < 1 || number > 65535 {
+				errors = append(errors, "Allowed origins must use valid TCP ports")
+				break
+			}
+		}
 	}
 
 	// Rate limiting must be reasonable in production
@@ -118,4 +145,22 @@ func validateProductionConfig(cfg *Config) error {
 	}
 
 	return nil
+}
+
+// This catches common copied examples, not the entropy of an arbitrary secret.
+var placeholderSecret = regexp.MustCompile(`(?i)(change[-_]?me|replace[-_]?me|placeholder|your[-_]secret|test[-_]only)`)
+
+func validProductionSecret(value string) bool {
+	if len(value) < 32 || strings.TrimSpace(value) != value || placeholderSecret.MatchString(value) {
+		return false
+	}
+	var first rune
+	for index, character := range value {
+		if index == 0 {
+			first = character
+		} else if character != first {
+			return true
+		}
+	}
+	return false
 }
