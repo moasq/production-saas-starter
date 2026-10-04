@@ -5,7 +5,6 @@ import { magicLink } from "better-auth/plugins/magic-link";
 import { nextCookies } from "better-auth/next-js";
 import { getAuthDatabase } from "./database.ts";
 import { sendAuthEmail } from "./email.ts";
-import { sendInvitationEmail } from "./invitation-email.ts";
 import { consumeAuthLimit } from "./rate-limit.ts";
 import { accessControl, roles } from "./rbac.ts";
 
@@ -26,7 +25,6 @@ export function createAuth() {
         ac: accessControl, roles, creatorRole: "admin", requireEmailVerificationOnInvitation: true,
         allowUserToCreateOrganization: (user) => user.emailVerified,
         organizationLimit: 10, membershipLimit: 100, invitationExpiresIn: 60 * 60 * 48,
-        sendInvitationEmail: (data) => sendInvitationEmail(data, baseURL),
       }),
       magicLink({ expiresIn: 600, storeToken: "hashed", sendMagicLink: async ({ email, url }) => {
         if (!await consumeAuthLimit(`delivery:${email.toLowerCase()}`, 5, 600)) throw new Error("Too many email requests");

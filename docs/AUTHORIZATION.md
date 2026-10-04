@@ -84,11 +84,14 @@ Mailpit; neither check establishes external email delivery or live Polar behavio
 
 Invitations remain pending until the verified recipient accepts them. Both initial
 send and resend await SMTP acceptance; this confirms acceptance by the configured
-mail server, not delivery to the recipient's inbox. An initial SMTP failure returns
+mail server, not delivery to the recipient's inbox. The bridge sends explicitly after
+authorized Better Auth creation; SDK success alone is insufficient because its
+organization email callback logs and swallows delivery errors. Public organization
+mutation endpoints remain blocked, and no second callback sends duplicate mail. An initial SMTP failure returns
 `invite_sent: false` with the saved invitation ID. A failed resend returns a dependency
 error. No email mutation is retried automatically by the frontend.
 
-The Better Auth delivery callback reserves a PostgreSQL cooldown shared by all
+The private bridge reserves a PostgreSQL cooldown shared by all
 application replicas: one attempt per workspace and normalized recipient every
 60 seconds, plus 20 attempts per workspace in each 10-minute window. Concurrent
 resends cannot bypass the cooldown. Both the create and resend operations return

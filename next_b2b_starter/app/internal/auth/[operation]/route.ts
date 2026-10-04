@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { getAuth } from "@/lib/auth/configuration";
 import { getAuthDatabase } from "@/lib/auth/database";
 import { verifyIdentity, bridgeIdentity } from "@/lib/auth/identity";
+import { reserveInvitationDelivery, sendInvitationEmail } from "@/lib/auth/invitation-email";
 import { isRole } from "@/lib/auth/rbac";
 
 export async function POST(request: Request, context: { params: Promise<{ operation: string }> }) {
@@ -32,14 +33,16 @@ export async function POST(request: Request, context: { params: Promise<{ operat
         FROM member m JOIN "user" u ON u.id = m."userId" WHERE m."organizationId" = $1 ORDER BY m."createdAt", m.id`, [organizationId]);
       const pending = await getAuthDatabase().query(`SELECT 'invitation:' || id AS member_id, email, '' AS name, ARRAY[role] AS roles,
         'pending' AS status, false AS email_verified, "createdAt" AS created_at, "createdAt" AS updated_at
-        FROM invitation WHERE "organizationId" = $1 AND status = 'pending' AND \"expiresAt\" > now() ORDER BY "createdAt", id`, [organizationId]);
+        FROM invitation WHERE "organizationId" = $1 AND status = 'pending' AND "expiresAt" > now() ORDER BY "createdAt", id`, [organizationId]);
       const members = [...active.rows, ...pending.rows];
       return Response.json({ success: true, data: { members, total: members.length } });
     }
     if (operation === "members-invite") {
       if (!isRole(body.role) || typeof body.email !== "string" || body.email.length > 254) return Response.json({ error: "Valid email and role required" }, { status: 400 });
+      await reserveInvitationDelivery(organizationId, body.email);
       try {
         const result = await auth.api.createInvitation({ headers, body: { email: body.email.trim().toLowerCase(), role: body.role, organizationId, resend: true } });
+        await sendInvitationEmail({ id: result.id, email: result.email, organization: identity.membership }, (await auth.$context).baseURL);
         return Response.json({ success: true, data: { member_id: `invitation:${result.id}`, invite_sent: true } });
       } catch (error) {
         // Keep authorization/validation failures visible. A saved pending invitation only
@@ -68,7 +71,9 @@ export async function POST(request: Request, context: { params: Promise<{ operat
         return Response.json({ success: true });
       }
       if (operation === "members-resend" && isRole(invitation.role)) {
-        await auth.api.createInvitation({ headers, body: { email: invitation.email, role: invitation.role, organizationId, resend: true } });
+        await reserveInvitationDelivery(organizationId, invitation.email);
+        const result = await auth.api.createInvitation({ headers, body: { email: invitation.email, role: invitation.role, organizationId, resend: true } });
+        await sendInvitationEmail({ id: result.id, email: result.email, organization: identity.membership }, (await auth.$context).baseURL);
         return Response.json({ success: true, data: { invite_sent: true } });
       }
     } else {
