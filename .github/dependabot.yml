@@ -13,6 +13,17 @@ updates:
     schedule: {interval: weekly}
     open-pull-requests-limit: 8
     versioning-strategy: increase
+    # These majors require the coordinated migrations in docs/decisions/0002-frontend-tooling.md.
+    # Leave ESLint major proposals visible: the retained v9 line is already EOL.
+    ignore:
+      - dependency-name: tailwindcss
+        update-types: ["version-update:semver-major"]
+      - dependency-name: tailwind-merge
+        update-types: ["version-update:semver-major"]
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     groups:
       next-react:
         patterns: [next, eslint-config-next, react, react-dom, "@types/react", "@types/react-dom"]
@@ -22,6 +33,9 @@ updates:
         update-types: [minor, patch]
       better-auth:
         patterns: [better-auth, "@better-auth/*"]
+        update-types: [minor, patch]
+      css-tooling:
+        patterns: [tailwindcss, tailwind-merge, tailwindcss-animate, postcss, autoprefixer]
         update-types: [minor, patch]
   - package-ecosystem: npm
     directory: /tests/browser

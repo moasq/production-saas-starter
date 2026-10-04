@@ -26,8 +26,13 @@ the Go-owned OpenAPI file generates the frontend contract with locked
 
 Dependabot checks Go, the frontend, browser tooling, Dockerfiles, Compose and
 GitHub Actions weekly. Next/React and their declarations move together for minor
-and patch updates; Radix and Better Auth have separate small groups. Major updates,
-the Polar SDK and other ungrouped dependencies remain individual review units.
+and patch updates; Radix, Better Auth and CSS tooling have separate small groups.
+Tailwind CSS, tailwind-merge, TypeScript and Node declaration majors require the
+manual [frontend migration plan](decisions/0002-frontend-tooling.md) and are excluded
+from routine version-update proposals. Their minor/patch updates remain eligible.
+ESLint major proposals remain visible because the retained v9 line is EOL.
+Other major updates, the Polar SDK and ungrouped dependencies remain individual
+review units. A green install is not approval to combine incompatible tool majors.
 SQLC and govulncheck versions inside build commands require a manual weekly review;
 Dependabot does not promise to discover arbitrary tool versions in scripts.
 
