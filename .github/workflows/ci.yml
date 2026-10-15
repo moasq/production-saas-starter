@@ -62,7 +62,7 @@ jobs:
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
         with:
           version: 10.32.1
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ matrix.node }}
           cache: pnpm
@@ -93,7 +93,7 @@ jobs:
           POLAR_ACCESS_TOKEN: starter_synthetic_secret_DO_NOT_SHIP_39_2026
           SMTP_PASSWORD: starter_synthetic_secret_DO_NOT_SHIP_39_2026
       - run: ./scripts/smoke.sh
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24.21.0'
       - name: Check frontend image configuration and build history
