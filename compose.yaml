@@ -124,7 +124,7 @@ services:
     restart: unless-stopped
 
   caddy:
-    image: caddy:2.11.3-alpine@sha256:86deaf5e3d3408a6ccec08fbb79989783dd26e206ae10bcf78a801dc8c9ab794
+    image: caddy:2.11.9-alpine@sha256:0bbb055bda6793c999bde78b1b5ce3e89f829fb031af2cf50056ea1246559fee
     environment:
       SITE_ADDRESS: ${SITE_ADDRESS:-:80}
     ports:
