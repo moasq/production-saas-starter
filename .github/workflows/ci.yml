@@ -59,7 +59,7 @@ jobs:
         working-directory: next_b2b_starter
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
         with:
           version: 10.32.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -98,7 +98,7 @@ jobs:
           node-version: '24.21.0'
       - name: Check frontend image configuration and build history
         run: node next_b2b_starter/scripts/check-public-secrets.mjs --image starter-ci-frontend
-      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
         with:
           version: 10.32.1
       - run: pnpm --dir next_b2b_starter install --frozen-lockfile
